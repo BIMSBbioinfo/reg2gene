@@ -8,4 +8,4 @@ Ideally it should contain the following:
 - enhancer target prediction (targetPrediction)
   - This should contain the code for target prediction methods
 - performance metrics (performance):
-  - should contain the code for performance
+  - should contain the code for performance metrics.
