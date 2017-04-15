@@ -1,3 +1,7 @@
+reg2gene
+================
+Altuna Akalin
+
 This repo contains the code for predicting the target genes for regulatory elements
 
 Ideally it should contain the following:

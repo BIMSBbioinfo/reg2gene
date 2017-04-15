@@ -1,9 +1,8 @@
 ---
 title: "reg2gene"
 author: Altuna Akalin
-output:
-  md_document:
-    variant: markdown_github
+output: github_document
+
 ---
 
 

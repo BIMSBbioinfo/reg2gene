@@ -10,6 +10,6 @@ resampleMat<-function(mat,col=1,B=1000){
 
 # function estimates gamma distribution based P-values from the null
 # distribution obtained from resampling
-esimateGammaPval<-function(){
+estimateGammaPval<-function(){
   
 }
