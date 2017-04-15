@@ -1,5 +1,5 @@
 
-#' Measures regulatory activity over pre-defined regions
+#' Calculates regulatory activity over pre-defined regions
 #' 
 #' The function calculates regulatory activity from histone
 #' modification, DNAse or methylation signals.
@@ -7,10 +7,11 @@
 #' @param regRegions a GRanges object that contains regulatory regions
 #' over which the regulatory activity will be calculated.
 #' @param activitySignals a named list of BigWig files. Names correspond to 
-#'        unique sample ids or names
+#'        unique sample ids/names.
 #' @param isCovNA (def:FALSE), if this is set to TRUE, uncovered
 #' bases are set to NA, this is important when dealing with methylation
-#' data.
+#' data, where uncovered bases on a bigWig file
+#'  do not mean zero methylation.
 #' @param summaryOperation "mean"(default),"median" or "sum". This
 #' designates which summary operation should be used over the regions
 #' @param normalize NULL(default). If set to "quantile" returned activity
@@ -22,12 +23,62 @@
 #' 
 #' @import genomation #NB list any other packages needed
 #' 
-#' @details           
-#'
+#' @details regulatory activity is measured by averaging logFC for
+#' histone modification ChIP-seq profiles, or DNAse signal, or methylation
+#' per base.Currently, relevant bigWig files are required to calculate activity       
+#' activity. This function might be extended to work with BAM files
+#' in the future. 
+#' 
 #' @examples #NB 10 regions and over 2 bw files provide small examples that work on beast
 #' 
 regActivity<-function(regRegions,activitySignals,
                       isCovNA=FALSE,summaryOperation="mean",
                       normalize=NULL){
+  
+}
+
+#' Identify regulatory regions around provided TSSes
+#' 
+#' The function identifies the regulatory regions around provided
+#' TSSes over a pre-defined window. The function needs a GRanges
+#' object for TSSes with meta-columns corresponding to expression
+#' levels in different cell types or conditions. 
+#' 
+#' @param regActivity a GRanges object output from \code{regActivity}
+#'        function
+#' @param TSS a GRanges object that have the TSS location and associated
+#' gene expression values per cell type or condition as meta data. Each
+#' row should have a "name" and "name2" columns for unique id or name/symbol
+#' for the gene which the TSS is associated with. One could be Ensembl id and the
+#' other could be used for gene symbol.
+#' Other metadata column names should represent sample names/ids and should
+#' match the GRanges object provided via regActivity argument.
+#' @param upstream number of basepairs upstream from TSS to look for regulatory
+#' regions. default 500kb
+#' @param downstream number of basepairs downstream from TSS to look for regulatory
+#' regions. default 500kb
+#' 
+#' @return a GRangesList object per gene that contain location of TSS
+#' and regulatory regions around that gene. Names for the GRangesList
+#' are unique gene ids/names. Metadata for a GRanges
+#' object in the list represents regulatory activity and gene expression accross
+#' the same samples. The GRanges objects have the following 
+#' metadata columns:
+#' featureType: either "gene" or "regulatory"
+#' name: name/id for gene and enhancers. Gene name could be id from a database
+#' enhancer name should be in the format as follows "chr:start-end"
+#' name2: a secondary name for the feature, such as gene symbol "PAX6" etc. not
+#' necessary for enhancers could be NA
+#' other columns: numeric values for gene expression or regulatory actvity.
+#' Column names represent sample names/ids.
+#' 
+#' @examples #NB provide minimal examples that work on beast
+#' 
+#' @details 
+#' 
+#' @import # provide a list of required packages and functions
+#' 
+regActivityAroundTSS<-function(regActivity,TSS,upstream=500000,
+                               downstream=500000){
   
 }
