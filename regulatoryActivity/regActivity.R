@@ -2,7 +2,9 @@
 #' Calculates regulatory activity over pre-defined regions
 #' 
 #' The function calculates regulatory activity from histone
-#' modification, DNAse or methylation signals.
+#' modification, DNAse or methylation signals for pre-defined regulatory
+#' regions and returns a GRanges object with regulatory region locations
+#' and their activity over a set of samples.
 #' 
 #' @param regRegions a GRanges object that contains regulatory regions
 #' over which the regulatory activity will be calculated.
