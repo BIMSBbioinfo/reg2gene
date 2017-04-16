@@ -1,5 +1,6 @@
-# correlation and distance correlation based methods to measure
-# association
+# correlation and distance correlation(dcor) based methods to measure association
+# dcor is used to measure linear and non-linear associations
+
 source("targetPrediction/predUtils")
 
 corMat<-function(mat,method="pearson",col=1){
