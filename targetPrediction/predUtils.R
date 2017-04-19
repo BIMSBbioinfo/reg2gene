@@ -4,33 +4,53 @@
 
 
 # function estimates gamma distribution based P-values from the null
-# distribution obtained from resampling
+# distribution obtained from resampling, a gamma distribution is fit
+# to the null distribution and p-values are calculated based on that fitted
+# distribution
+# @param vals a vector or matrix of column vectors. Each column corresponds
+# to coefficients obtained from resampling fit
+# @param orig a single value or a vector of original coefficients obtained from the
+# original matrix 
+# @param abs if TRUE, use absolute values of coefficients to fit a distribution
+# @param add an numeric value defaults to 0. if more than 0, add that value to
+# orig and vals. This way gamma distribution can model null distributions that
+# have negative values.
 estimateGammaPval<-function(vals,orig,abs=TRUE,add=0){
   
+  orig2=(orig) # keep original values
   
+  # if needed take absolute values
   if(abs){
     vals=abs(vals)
+    orig2=abs(orig2)
   }
-  if(add){
+  if(add){ # adding numbers might be needed, gamma can only modep positive values
     vals=vals+add
+    orig=orig+add
   }
   
   if(class(vals) != "matrix"){
     param <-  fitdistrplus::fitdist(vals,"gamma") # fit gamma
   
-    pvals=1-pgamma(orig,param$estimate[1],param$estimate[2]) # p-val based on gamma
+    # p-val based on gamma
+    pval=1-pgamma(orig2,param$estimate[1],param$estimate[2]) 
+    
+    # if 0 p-val returned set it to minimum possible or another option is
+    # 2.2e-16 
+    if(pval==0){pval=1-pgamma(max(vals),param$estimate[1],param$estimate[2])}
     
     # result vector
-    result=c(coefs=orig,pvals=pvals,p2=sum(vals >= orig)/length(vals))
+    result=c(coefs=orig,pval=pval,p2=sum(vals >= orig2)/length(vals))
   }else{
     
     # same as above it is just when the input is a matrix
-    result=mapply(function(x,orig){
+    result=mapply(function(x,orig2,orig){
       param <-  fitdistrplus::fitdist(x,"gamma")
       
-      pvals=1-pgamma(orig,param$estimate[1],param$estimate[2])
-      c(coefs=orig,pvals=pvals,p2=sum(x >= orig)/length(x) )
-    },split(t(vals),1:ncol(vals)),orig)
+      pval=1-pgamma(orig2,param$estimate[1],param$estimate[2])
+      if(pval==0){pval=1-pgamma(max(x),param$estimate[1],param$estimate[2])}
+      c(coefs=orig,pval=pval,p2=sum(x >= orig2)/length(x) )
+    },split(t(vals),1:ncol(vals)),orig2,orig)
     
   }
 }
