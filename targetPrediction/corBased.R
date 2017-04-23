@@ -1,7 +1,7 @@
 # correlation and distance correlation(dcor) based methods to measure association
 # dcor is used to measure linear and non-linear associations
 
-source("targetPrediction/predUtils")
+source("predUtils.R")
 
 #' Correlation between a col matrix and a vector
 #' 
@@ -82,7 +82,10 @@ corResample<-function(mat,method="pearson",col=1,B=1000){
 #' @param B number of random samples (shuffling) of given column
 #' @keywords internal
 #' @example 
+#' m=readRDS("data/sample_rawActivityMatrices/Roadmap/H3K27ac/ENSG00000140718_FTO.rds")
 #' 
+#' m=apply(m, 2,as.numeric) # change to numeric matrix
+#' dcorResample(m,col=1,B=1000) 
 dcorResample<-function(mat,col=1,B=1000){
   
   # resample response variables Ys
