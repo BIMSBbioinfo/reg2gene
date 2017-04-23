@@ -9,6 +9,7 @@ open01<-function (p, B)
   (p + 1/(2 * B))/(1 + 1/B)
 }
 
+# combine p-vals using Fisher's method
 fisherComb<-function(p, B) 
 {
   if(missing(B)){

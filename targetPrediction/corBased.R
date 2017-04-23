@@ -3,8 +3,8 @@
 
 source("targetPrediction/predUtils")
 
-# a convenience function that computes the the correlation of a given column
-# with all the other columns
+# a convenience function that computes the the correlation of a given vector
+# with all the other column vectors of a matrix
 corMat<-function(y,mat,method="pearson"){
   
   apply(mat,2,function(x,y,method){cor(x,y,method=method)},
@@ -12,7 +12,7 @@ corMat<-function(y,mat,method="pearson"){
 }
 
 # a convenience function that computes the the distance correlation of a given 
-# column with all the other columns
+# vector (y) with all the other columns of a matrix (mat)
 dcorMat<-function(y,mat){
   require(energy)
   apply(mat,2,function(x,y){dcor(x,y)},
