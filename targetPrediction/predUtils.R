@@ -18,6 +18,9 @@
 #' @param add an numeric value defaults to 0. if more than 0, add that value to
 #' orig and vals. This way gamma distribution can model null distributions that
 #' have negative values.
+#' 
+#' @importFrom fitdistrplus fitdist
+#' 
 estimateGammaPval<-function(vals,orig,abs=TRUE,add=0){
   
   orig2=(orig) # keep original values
@@ -33,7 +36,7 @@ estimateGammaPval<-function(vals,orig,abs=TRUE,add=0){
   }
   
   if(class(vals) != "matrix"){
-    param <-  fitdistrplus::fitdist(vals,"gamma") # fit gamma
+    param <-  fitdistrplus::fitdist(vals,"gamma",method="mme") # fit gamma
   
     # p-val based on gamma
     pval=1-pgamma(orig2,param$estimate[1],param$estimate[2]) 
@@ -48,7 +51,7 @@ estimateGammaPval<-function(vals,orig,abs=TRUE,add=0){
     
     # same as above it is just when the input is a matrix
     result=mapply(function(x,orig2,orig){
-      param <-  fitdistrplus::fitdist(x,"gamma")
+      param <-  fitdistrplus::fitdist(x,"gamma",method="mme")
       
       pval=1-pgamma(orig2,param$estimate[1],param$estimate[2])
       if(pval==0){pval=1-pgamma(max(x),param$estimate[1],param$estimate[2])}

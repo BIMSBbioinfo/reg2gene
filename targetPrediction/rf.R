@@ -15,11 +15,16 @@
 #'
 #' @keywords internal
 #' 
+#' @importFrom randomForest randomForest
 #' @example 
 #' 
 #' 
+#' m=readRDS("data/sample_rawActivityMatrices/Roadmap/H3K27ac/ENSG00000140718_FTO.rds")
 #' 
-glmnetResample<-function(mat,col=1,B=1000,...){
+#' m=apply(m, 2,as.numeric) # change to numeric matrix
+#' rfResample(scale(m),col=1,B=1000) 
+#' 
+rfResample<-function(mat,col=1,B=1000,...){
   require(randomForest)
   
   # resample response variables Ys
@@ -29,7 +34,7 @@ glmnetResample<-function(mat,col=1,B=1000,...){
   mod<- randomForest(x = mat[,-col], y = mat[,col],
                      importance=TRUE,na.action=na.omit)
   
-  orig=importance(mod)[,1]
+  orig=importance(mod)[,2] # gini index
   
   #coefs from resampling
   coefs=matrix(0.0,ncol=ncol(mat[,-col]),nrow=(B))
@@ -40,7 +45,7 @@ glmnetResample<-function(mat,col=1,B=1000,...){
     mod<- randomForest(x = mat[,-col], y = Ys[[i]],
                        importance=TRUE,na.action=na.omit)
     
-    coefs[i,]=importance(mod)[,1]
+    coefs[i,]=importance(mod)[,2]
   }
   
   # calculate p-vals 

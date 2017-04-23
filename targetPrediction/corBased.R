@@ -31,7 +31,7 @@ dcorMat<-function(y,mat){
 #' Correlation with resampling p-values
 #' 
 #' private function that calculate correlation of given
-#' column matrix with a vector and assigns significance to
+#' column matrix with a column and assigns significance to
 #' correlation coefficents based on resampling
 #' 
 #' @param mat 
@@ -41,7 +41,11 @@ dcorMat<-function(y,mat){
 #' @keywords internal
 #' @example 
 #' 
+#' m=readRDS("data/sample_rawActivityMatrices/Roadmap/H3K27ac/ENSG00000140718_FTO.rds")
 #' 
+#' m=apply(m, 2,as.numeric) # change to numeric matrix
+#' corResample(m,method="pearson",col=1,B=1000)
+#'
 corResample<-function(mat,method="pearson",col=1,B=1000){
   
   # resample response variables Ys

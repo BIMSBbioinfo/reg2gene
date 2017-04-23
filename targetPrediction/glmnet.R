@@ -11,9 +11,14 @@
 #' @param B number of random samples (shuffling) of response variables
 #' @param ... further arguments to glmnet, not implemented yet
 #' @keywords internal
+#' @importFrom glmnet glmnet
+#' 
 #' @example 
 #' 
+#' m=readRDS("data/sample_rawActivityMatrices/Roadmap/H3K27ac/ENSG00000140718_FTO.rds")
 #' 
+#' m=apply(m, 2,as.numeric) # change to numeric matrix
+#' glmnetResample(scale(m),col=1,B=1000)
 glmnetResample<-function(mat,col=1,B=1000,...){
   require(glmnet)
   
