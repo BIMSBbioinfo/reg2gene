@@ -3,29 +3,45 @@
 
 source("targetPrediction/predUtils")
 
-# a convenience function that computes the the correlation of a given vector
-# with all the other column vectors of a matrix
+#' Correlation between a col matrix and a vector
+#' 
+#' A convenience function that computes the the correlation of a given vector
+#' with all the other column vectors of a matrix
+#' @keywords internal
+#' @example 
 corMat<-function(y,mat,method="pearson"){
   
   apply(mat,2,function(x,y,method){cor(x,y,method=method)},
         y=y,method=method)
 }
 
-# a convenience function that computes the the distance correlation of a given 
-# vector (y) with all the other columns of a matrix (mat)
+#' Distance correlation between a col matrix and a vector
+#' 
+#' a convenience function that computes the the distance correlation of a given 
+#' vector (y) with all the other columns of a matrix (mat)
+#'
+#' @keywords internal
+#' @example 
 dcorMat<-function(y,mat){
   require(energy)
   apply(mat,2,function(x,y){dcor(x,y)},
         y=y)
 }
 
-# private function that calculate correlation of given
-# column with other columns and assigns significance to
-# correlation coefficents based on resampling
-# @param mat 
-# @param method
-# @param col
-# @param B number of random samples (shuffling) of given column
+#' Correlation with resampling p-values
+#' 
+#' private function that calculate correlation of given
+#' column matrix with a vector and assigns significance to
+#' correlation coefficents based on resampling
+#' 
+#' @param mat 
+#' @param method
+#' @param col
+#' @param B number of random samples (shuffling) of given column
+#' @keywords internal
+#' @example 
+#' 
+#' 
 corResample<-function(mat,method="pearson",col=1,B=1000){
   
   # resample response variables Ys
@@ -51,12 +67,18 @@ corResample<-function(mat,method="pearson",col=1,B=1000){
   return(pvals)
 }
 
-# private function that calculats distance correlation of given
-# column with other columns and assigns significance to
-# correlation coefficents based on resampling
-# @param mat 
-# @param col
-# @param B number of random samples (shuffling) of given column
+
+#' Distance correlation with resampling p-values
+#'
+#' private function that calculates distance correlation of given
+#' column matrix with a vector and assigns significance to
+#' correlation coefficents based on resampling
+#' @param mat 
+#' @param col
+#' @param B number of random samples (shuffling) of given column
+#' @keywords internal
+#' @example 
+#' 
 dcorResample<-function(mat,col=1,B=1000){
   
   # resample response variables Ys

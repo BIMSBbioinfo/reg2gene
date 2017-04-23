@@ -1,13 +1,24 @@
 # randomForest based prediction functions
 
 
-# private function that uses randomForest to predict fiven column from the rest
-# and assigns significance to
-# correlation coefficents based on resampling
-# @param mat matrix of response and predictor variables
-# @param col column number of response variables
-# @param B number of random samples (shuffling) of response variables
-# @param ... further arguments to randomForest, not implemented yet
+#' internal RandomForest prediction function
+#' 
+#' private function that uses randomForest to predict fiven column from the rest
+#' and assigns significance to
+#' correlation coefficents based on resampling
+#' 
+#'
+#' @param mat matrix of response and predictor variables
+#' @param col column number of response variables
+#' @param B number of random samples (shuffling) of response variables
+#' @param ... further arguments to randomForest, not implemented yet
+#'
+#' @keywords internal
+#' 
+#' @example 
+#' 
+#' 
+#' 
 glmnetResample<-function(mat,col=1,B=1000,...){
   require(randomForest)
   

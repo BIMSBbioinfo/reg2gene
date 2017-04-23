@@ -3,18 +3,21 @@
 
 
 
-# function estimates gamma distribution based P-values from the null
-# distribution obtained from resampling, a gamma distribution is fit
-# to the null distribution and p-values are calculated based on that fitted
-# distribution
-# @param vals a vector or matrix of column vectors. Each column corresponds
-# to coefficients obtained from resampling fit
-# @param orig a single value or a vector of original coefficients obtained from the
-# original matrix 
-# @param abs if TRUE, use absolute values of coefficients to fit a distribution
-# @param add an numeric value defaults to 0. if more than 0, add that value to
-# orig and vals. This way gamma distribution can model null distributions that
-# have negative values.
+#' Estimate P-values from resampling statistics using Gamma distribution
+#' 
+#' The function estimates gamma distribution based P-values from the null
+#' distribution obtained from resampling, a gamma distribution is fit
+#' to the null distribution and p-values are calculated based on that fitted
+#' distribution
+#' 
+#' @param vals a vector or matrix of column vectors. Each column corresponds
+#' to coefficients obtained from resampling fit
+#' @param orig a single value or a vector of original coefficients obtained from the
+#' original matrix 
+#' @param abs if TRUE, use absolute values of coefficients to fit a distribution
+#' @param add an numeric value defaults to 0. if more than 0, add that value to
+#' orig and vals. This way gamma distribution can model null distributions that
+#' have negative values.
 estimateGammaPval<-function(vals,orig,abs=TRUE,add=0){
   
   orig2=(orig) # keep original values
