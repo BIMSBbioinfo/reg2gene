@@ -31,21 +31,21 @@ corResample<-function(mat,method="pearson",col=1,B=1000){
   # resample response variables Ys
   Ys=lapply(1:B,function(x) sample(mat[,col],nrow(mat)))
   
-  # original coeff
+  # original coefs
   orig=corMat(y=mat[,col],mat=mat[,-col],method)
   
-  #coefs
-  coefs=matrix(0.0,ncol=ncol(mat[,-col]),nrow=(B+1))
-  coefs[1,]=orig
+  #coefs from resampling
+  coefs=matrix(0.0,ncol=ncol(mat[,-col]),nrow=(B))
+
   
   # calculate coeff for resampled Ys
   for(i in 1:B){
     
-    coefs[i+1,] = corMat(Ys[[i]],mat=mat[,-col],method)
+    coefs[i,] = corMat(Ys[[i]],mat=mat[,-col],method)
   }
   
   # calculate p-vals 
-  pvals=estimateGammaPval(coefs[,-1],orig=coefs[1,],abs=TRUE,add=0)
+  pvals=estimateGammaPval(coefs,orig=orig,abs=TRUE,add=0)
   
   # arrange output format and return
   return(pvals)
@@ -66,17 +66,17 @@ dcorResample<-function(mat,col=1,B=1000){
   orig=dcorMat(y=mat[,col],mat=mat[,-col])
   
   #coefs
-  coefs=matrix(0.0,ncol=ncol(mat[,-col]),nrow=(B+1))
-  coefs[1,]=orig
+  coefs=matrix(0.0,ncol=ncol(mat[,-col]),nrow=(B))
+
   
   # calculate coeff for resampled Ys
   for(i in 1:B){
     
-    coefs[i+1,] = dcorMat(Ys[[i]],mat=mat[,-col])
+    coefs[i,] = dcorMat(Ys[[i]],mat=mat[,-col])
   }
   
   # calculate p-vals 
-  pvals=estimateGammaPval(coefs[,-1],orig=coefs[1,],abs=TRUE,add=0)
+  pvals=estimateGammaPval(coefs,orig=orig,abs=TRUE,add=0)
   
   # arrange output format and return
   return(pvals)
