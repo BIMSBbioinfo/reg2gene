@@ -34,7 +34,8 @@
 #'         to calculated acvitity measures and column names 
 #'         correspond to provided sample ids or names.
 #' 
-#' @import genomation #NB list any other packages needed
+#' @import genomation
+#' @import GenomicRanges
 #' 
 #' @details regulatory activity is measured by averaging logFC for
 #' histone modification ChIP-seq profiles, or DNAse signal, or methylation
@@ -42,12 +43,14 @@
 #' activity. This function might be extended to work with BAM files
 #' in the future. 
 #' 
-#' @examples library(genomation);library(GenomicRanges)
-#' load("pkg/inst/extdata/regRegions.RData")
-#' activitySignals <- c("pkg/inst/extdata/E085-H3K27ac.chr10.fc.signal.bigwig",
-#' "pkg/inst/extdata/E066-H3K27ac.chr10.fc.signal.bigwig")
-#' regActivity <- regActivity(regRegions,activitySignals)
-#' 
+#' @examples 
+#'      library(genomation)
+#'      library(GenomicRanges)
+#'      load("pkg/inst/extdata/regRegions.RData")
+#'      activitySignals <- c("pkg/inst/extdata/E085-H3K27ac.chr10.fc.signal.bigwig",
+#'                           "pkg/inst/extdata/E066-H3K27ac.chr10.fc.signal.bigwig")
+#'      regActivity <- regActivity(regRegions,activitySignals)
+#'      regActivity
 #' 
 
 regActivity<-function(regRegions,activitySignals,
