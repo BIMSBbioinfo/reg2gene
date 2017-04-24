@@ -48,6 +48,24 @@ regActivity<-function(regRegions,activitySignals,
                       isCovNA=FALSE,summaryOperation="mean",
                       normalize=NULL){
   
+  
+          # test input - ranges
+          if ( !exists("regRegions")) { stop("regRegions object missing") }
+          # test input - bigwig files
+          if ( !min(sapply(activitySignals,file.exists))) { stop("regRegions object missing") }
+          
+          
+          
+          #scores.exp=mclapply(activitySignals,ScoreMatrixBin,windows = regRegions,bin.num = 1,type = "bigWig", is.noCovNA=isCovNA),mc.cores=round(length(activitySignals)/5))
+          # calculating coverage
+          scores.per.cell.type <- lapply(activitySignals,ScoreMatrixBin,windows = regRegions,bin.num = 1,type = "bigWig", is.noCovNA=isCovNA,bin.op=summaryOperation)
+          # adding scores as mcols  
+          mcols(regRegions) <- .ScoresAsMcols(scores.per.cell.type,activitySignals)
+         
+          return(regRegions)
+          
+  
+  
 }
 
 #' Identify regulatory regions around provided TSSes
