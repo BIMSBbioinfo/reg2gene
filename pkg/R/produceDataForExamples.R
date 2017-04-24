@@ -2,12 +2,22 @@
 
 setwd("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/")
 
+# GET enhancer regions; GRanges object with 10 enhancer ranges, for FAS example such that results can overlap
+       library(stringr)
+       library(GenomicRanges)
 
-# GET enhancer regions; GRanges object with 10 enhancer ranges
-
-        Enhancer_regions <- readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Data/Enhancer_regions_def/Roadmap/Pooled_unique_stack_tiled_mnemonics_GRanges_124cells_6_EnhG_7_Enh_121116.rds")
-        enhRegions <- GRanges(Enhancer_regions[1:10])
+        GenExpEnhancerReg <- readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Data/RPKM_EnhActivity_Pairs_Rdmp/Roadmap/H3K27ac/ENSG00000026103_FAS.rds")
+        #GenExpEnhancerReg <- readRDS("~/ENSG00000026103_FAS.rds")
         
+      # get GRanges for enhancer regions around FAS
+        EnhancerReg <- colnames(GenExpEnhancerReg)[-1]
+        EnhancerReg <- unlist(str_split(EnhancerReg,"_"))
+        EnhancerReg.gr <-  GRanges(EnhancerReg[ seq(1,length(EnhancerReg),3)],IRanges(start=as.integer(EnhancerReg[seq(2,length(EnhancerReg),3)]),end=as.integer(EnhancerReg[seq(3,length(EnhancerReg),3)])))
+       
+      # sample 20 GRanges   
+        enhRegions <- sample(EnhancerReg.gr,20)
+        
+      # save an example  
         save(enhRegions,file="pkg/inst/extdata/enhRegions.RData")
         
 
