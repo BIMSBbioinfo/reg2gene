@@ -67,3 +67,18 @@ setwd("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/")
                                  mcols(TSS.location.gr) <- cbind(name,name2,gene.expression)
                         TSS <- TSS.location.gr  
                  save(TSS,file="pkg/inst/extdata/TSS.RData")
+
+
+
+ # get regActivity example
+                 
+                 library(genomation)
+                 library(GenomicRanges)
+                 load("pkg/inst/extdata/regRegions.RData")
+                 activitySignals <- c("pkg/inst/extdata/E085-H3K27ac.chr10.fc.signal.bigwig",
+                                      "pkg/inst/extdata/E066-H3K27ac.chr10.fc.signal.bigwig")
+                 
+                 regActivity <- regActivity(regRegions,activitySignals)
+                 
+                 colnames(mcols(regActivity)) <- c("E085","EO66")
+                 save(regActivity,file="pkg/inst/extdata/regActivity.RData")
