@@ -1,3 +1,14 @@
+.ScoresAsMcols <- function(scores.per.cell.type,activitySignals){
+  
+  # function that rearranges list of scores calculated per cell type
+  mcols.per.cell.type <- rbind.data.frame(scores.per.cell.type,stringsAsFactors =F, make.row.names=T)
+  
+  # adjust column names - remove bw extension
+  bw.exts = c(".bw",".bigWig",".bigwig",".BigWig", ".BIGWIG", ".BW")
+  colnames(mcols.per.cell.type) <- str_replace(basename(activitySignals),paste(bw.exts,collapse="|"),"")
+  
+  return(mcols.per.cell.type)
+}
 
 #' Calculates regulatory activity over pre-defined regions
 #' 
