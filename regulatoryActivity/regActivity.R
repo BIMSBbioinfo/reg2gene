@@ -1,3 +1,14 @@
+.ScoresAsMcols <- function(scores.per.cell.type,activitySignals){
+  
+  # function that rearranges list of scores calculated per cell type
+  mcols.per.cell.type <- rbind.data.frame(scores.per.cell.type,stringsAsFactors =F, make.row.names=T)
+  
+  # adjust column names - remove bw extension
+  bw.exts = c(".bw",".bigWig",".bigwig",".BigWig", ".BIGWIG", ".BW")
+  colnames(mcols.per.cell.type) <- str_replace(basename(activitySignals),paste(bw.exts,collapse="|"),"")
+  
+  return(mcols.per.cell.type)
+}
 
 #' Calculates regulatory activity over pre-defined regions
 #' 
@@ -23,7 +34,8 @@
 #'         to calculated acvitity measures and column names 
 #'         correspond to provided sample ids or names.
 #' 
-#' @import genomation #NB list any other packages needed
+#' @import genomation
+#' @import GenomicRanges
 #' 
 #' @details regulatory activity is measured by averaging logFC for
 #' histone modification ChIP-seq profiles, or DNAse signal, or methylation
@@ -31,11 +43,37 @@
 #' activity. This function might be extended to work with BAM files
 #' in the future. 
 #' 
-#' @examples #NB 10 regions and over 2 bw files provide small examples that work on beast
+#' @examples 
+#'      library(genomation)
+#'      library(GenomicRanges)
+#'      load("pkg/inst/extdata/regRegions.RData")
+#'      activitySignals <- c("pkg/inst/extdata/E085-H3K27ac.chr10.fc.signal.bigwig",
+#'                           "pkg/inst/extdata/E066-H3K27ac.chr10.fc.signal.bigwig")
+#'      regActivity <- regActivity(regRegions,activitySignals)
+#'      regActivity
 #' 
+
 regActivity<-function(regRegions,activitySignals,
                       isCovNA=FALSE,summaryOperation="mean",
                       normalize=NULL){
+  
+  
+          # test input - ranges
+          if ( !exists("regRegions")) { stop("regRegions object missing") }
+          # test input - bigwig files
+          if ( !min(sapply(activitySignals,file.exists))) { stop("regRegions object missing") }
+          
+          
+          
+          #scores.exp=mclapply(activitySignals,ScoreMatrixBin,windows = regRegions,bin.num = 1,type = "bigWig", is.noCovNA=isCovNA),mc.cores=round(length(activitySignals)/5))
+          # calculating coverage
+          scores.per.cell.type <- lapply(activitySignals,ScoreMatrixBin,windows = regRegions,bin.num = 1,type = "bigWig", is.noCovNA=isCovNA,bin.op=summaryOperation)
+          # adding scores as mcols  
+          mcols(regRegions) <- .ScoresAsMcols(scores.per.cell.type,activitySignals)
+         
+          return(regRegions)
+          
+  
   
 }
 
