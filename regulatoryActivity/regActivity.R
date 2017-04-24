@@ -42,8 +42,14 @@
 #' activity. This function might be extended to work with BAM files
 #' in the future. 
 #' 
-#' @examples #NB 10 regions and over 2 bw files provide small examples that work on beast
+#' @examples library(genomation);library(GenomicRanges)
+#' load("pkg/inst/extdata/regRegions.RData")
+#' activitySignals <- c("pkg/inst/extdata/E085-H3K27ac.chr10.fc.signal.bigwig",
+#' "pkg/inst/extdata/E066-H3K27ac.chr10.fc.signal.bigwig")
+#' regActivity <- regActivity(regRegions,activitySignals)
 #' 
+#' 
+
 regActivity<-function(regRegions,activitySignals,
                       isCovNA=FALSE,summaryOperation="mean",
                       normalize=NULL){
