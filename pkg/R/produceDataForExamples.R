@@ -55,6 +55,5 @@ setwd("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/")
                          gene.expression <- t(TSS[,1])
                          
                                  mcols(TSS.location.gr) <- cbind(name,name2,gene.expression)
-              
-                            
-                 save(TSS.location.gr,file="pkg/inst/extdata/TSS.RData")
+                        TSS <- TSS.location.gr  
+                 save(TSS,file="pkg/inst/extdata/TSS.RData")
