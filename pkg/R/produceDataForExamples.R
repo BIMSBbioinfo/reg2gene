@@ -15,10 +15,10 @@ setwd("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/")
         EnhancerReg.gr <-  GRanges(EnhancerReg[ seq(1,length(EnhancerReg),3)],IRanges(start=as.integer(EnhancerReg[seq(2,length(EnhancerReg),3)]),end=as.integer(EnhancerReg[seq(3,length(EnhancerReg),3)])))
        
       # sample 20 GRanges   
-        enhRegions <- sample(EnhancerReg.gr,20)
+        regRegions <- sample(EnhancerReg.gr,20)
         
       # save an example  
-        save(enhRegions,file="pkg/inst/extdata/enhRegions.RData")
+        save(regRegions,file="pkg/inst/extdata/regRegions.RData")
         
 
 # GET 2 bw files with as an example.
