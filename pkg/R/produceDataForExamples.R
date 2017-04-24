@@ -33,7 +33,7 @@ setwd("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/")
                # E085 Fetal_Intestine_Small
         BW.files.FIS <- "/data/akalin/Base/RoadmapEpigenomics/Experiment/H3K27ac/bigwig/E085-H3K27ac.fc.signal.bigwig"
                
-          Chr10.bw = import(BW.files.LIVER, which=seqinfo(BigWigFile(BW.files.LIVER))["chr10"])  
+          Chr10.bw = import(BW.files.FIS, which=seqinfo(BigWigFile(BW.files.FIS))["chr10"])  
                export.bw(Chr10.bw,"pkg/inst/extdata/E085-H3K27ac.chr10.fc.signal.bigwig")
        
         
