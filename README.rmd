@@ -1,6 +1,6 @@
 ---
 title: "reg2gene"
-author: Altuna Akalin
+author: Inga Patarcic, Altuna Akalin
 output: github_document
 
 ---
