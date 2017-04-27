@@ -65,9 +65,8 @@ setwd("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/")
                          gene.expression <- t(TSS[,1])
                          
                                  mcols(TSS.location.gr) <- cbind(name,name2,gene.expression)
-                        TSS <- TSS.location.gr  
+                        TSS <- promoters(TSS.location.gr,1,1)  
                  save(TSS,file="pkg/inst/extdata/TSS.RData")
-
 
 
  # get regActivity example

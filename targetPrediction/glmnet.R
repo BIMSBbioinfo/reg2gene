@@ -1,13 +1,24 @@
 # glmnet based prediction functions
 
 
-# private function that uses glmnet to predict fiven column from the rest
-# and assigns significance to
-# correlation coefficents based on resampling
-# @param mat matrix of response and predictor variables
-# @param col column number of response variables
-# @param B number of random samples (shuffling) of response variables
-# @param ... further arguments to glmnet, not implemented yet
+#' internal function that uses glmnet for prediction
+#' 
+#' private function that uses glmnet to predict fiven column from the rest
+#' and assigns significance to
+#' correlation coefficents based on resampling
+#' @param mat matrix of response and predictor variables
+#' @param col column number of response variables
+#' @param B number of random samples (shuffling) of response variables
+#' @param ... further arguments to glmnet, not implemented yet
+#' @keywords internal
+#' @importFrom glmnet glmnet
+#' 
+#' @example 
+#' 
+#' m=readRDS("data/sample_rawActivityMatrices/Roadmap/H3K27ac/ENSG00000140718_FTO.rds")
+#' 
+#' m=apply(m, 2,as.numeric) # change to numeric matrix
+#' glmnetResample(scale(m),col=1,B=1000)
 glmnetResample<-function(mat,col=1,B=1000,...){
   require(glmnet)
   

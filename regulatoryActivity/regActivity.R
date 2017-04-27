@@ -100,25 +100,71 @@ regActivity<-function(regRegions,activitySignals,
 #' 
 #' @return a GRangesList object per gene that contain location of TSS
 #' and regulatory regions around that gene. Names for the GRangesList
-#' are unique gene ids/names. Metadata for a GRanges
-#' object in the list represents regulatory activity and gene expression accross
-#' the same samples. The GRanges objects have the following 
-#' metadata columns:
-#' featureType: either "gene" or "regulatory"
-#' name: name/id for gene and enhancers. Gene name could be id from a database
-#' enhancer name should be in the format as follows "chr:start-end"
-#' name2: a secondary name for the feature, such as gene symbol "PAX6" etc. not
-#' necessary for enhancers could be NA
-#' other columns: numeric values for gene expression or regulatory actvity.
-#' Column names represent sample names/ids.
+#' are unique gene ids/names. 
+#' Metadata for a GRanges object in the list represents regulatory 
+#' activity and gene expression accross the same samples. 
+#' The GRanges objects have the following metadata columns:
+#'  1. featureType: either "gene" or "regulatory"
+#'  2. name: name/id for gene and enhancers. Gene name could be id from a database
+#'          enhancer name should be in the format as follows "chr:start-end"
+#'  3. name2: a secondary name for the feature, such as gene symbol "PAX6" etc. not
+#'    necessary for enhancers could be NA
+#'  4. other columns: numeric values for gene expression or regulatory actvity.
+#'    Column names represent sample names/ids.
 #' 
-#' @examples #NB provide minimal examples that work on beast
+#' @examples 
+#'  load("~/TSS.RData")
+#'  load("~/regActivity.RData")
+#'  regActivityAroundTSS(regActivity=regActivity,TSS=TSS,upstream=500000,downstream=500000)
 #' 
-#' @details 
 #' 
-#' @import # provide a list of required packages and functions
+#' @details only enhancers located within (+/-)upstream/downstream of TSS 
+#' are identified,extracted and reported in output (together with info
+#' about gene expression). Sample id's (corresponding to the cell types 
+#' or conditions) are included only if both, 1) gene expression values and
+#' 2) quantified regulatory activity are available in TSS and 
+#' regActivity objects. Non-overlapping cell types are excluded.
+#'  
 #' 
-regActivityAroundTSS<-function(regActivity,TSS,upstream=500000,
-                               downstream=500000){
+#' @import GenomicRanges
+#' 
+#' 
+
+
+regActivityAroundTSS <- function(regActivity,TSS,upstream=500000,
+                                 downstream=500000){
+  
+  
+  # extend TSS for wanted region
+  TSS.extended <- promoters(TSS,upstream=upstream,downstream=downstream)
+  # getting EnhRegions which overlap extended TSS
+        TSS.regAct.overlap <- as.data.frame(findOverlaps(TSS.extended,regActivity))
+        regActivity <- regActivity[TSS.regAct.overlap$subjectHits]
+        
+  # adjusting mcols
+        name <- as.character(regActivity)
+        featureType <- rep("regulatory",length(name))
+        name2 <- rep(NA,length(name))
+        
+    mcols(regActivity) <- cbind(featureType,name,name2,data.frame(mcols(regActivity)))
+        
+  # adjusting mcols for gene expression object
+        featureType <- "gene"
+        mcols(TSS) <- cbind(featureType,data.frame(mcols(TSS)))
+  
+  
+  # adjusting corresponding colnames
+  
+          TSS.colnames <- colnames(mcols(TSS))[colnames(mcols(TSS))%in%colnames(mcols(regActivity))]
+                   mcols(TSS) <-  mcols(TSS)[TSS.colnames]
+                   mcols(regActivity) <-  mcols(regActivity)[TSS.colnames]
+          
+ 
+  TSSexprRegActivity <- GRangesList("TSS"=TSS,"regActivity"=regActivity)
+        names(TSSexprRegActivity) <- paste0(names(TSSexprRegActivity),"_",TSS$name)
+  
+  
+  
+  return(TSSexprRegActivity)
   
 }
