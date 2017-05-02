@@ -145,13 +145,16 @@ regActivityAroundTSS <- function(regActivity,TSS,upstream=500000,
         name <- as.character(regActivity)
         featureType <- rep("regulatory",length(name))
         name2 <- rep(NA,length(name))
-        
-    mcols(regActivity) <- cbind(featureType,name,name2,data.frame(mcols(regActivity)))
-        
+        gene.indicator <- TSS.regAct.overlap$queryHits
+  
+    mcols(regActivity) <- cbind(gene.indicator,featureType,name,name2,data.frame(mcols(regActivity)))
+     
   # adjusting mcols for gene expression object
         featureType <- "gene"
-        mcols(TSS) <- cbind(featureType,data.frame(mcols(TSS)))
-  
+       # adding gene indicator
+            gene.indicator <- unique(TSS.regAct.overlap$queryHits)
+            mcols(TSS) <- cbind(gene.indicator,featureType,data.frame(mcols(TSS)))
+
   
   # adjusting corresponding colnames
   
@@ -160,9 +163,10 @@ regActivityAroundTSS <- function(regActivity,TSS,upstream=500000,
                    mcols(regActivity) <-  mcols(regActivity)[TSS.colnames]
           
  
-  TSSexprRegActivity <- GRangesList("TSS"=TSS,"regActivity"=regActivity)
-        names(TSSexprRegActivity) <- paste0(names(TSSexprRegActivity),"_",TSS$name)
-  
+  TSSexprRegActivity <- c(TSS,regActivity)
+      TSSexprRegActivity$gene.indicator <- TSS$name[TSSexprRegActivity$gene.indicator]
+      TSSexprRegActivity <- split(TSSexprRegActivity,TSSexprRegActivity$gene.indicator)
+     
   
   
   return(TSSexprRegActivity)
