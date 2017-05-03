@@ -81,3 +81,37 @@ setwd("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/")
                  
                  colnames(mcols(regActivity)) <- c("E085","EO66")
                  save(regActivity,file="pkg/inst/extdata/regActivity.RData")
+                 
+
+                 
+                                  
+# Get an example of paths to RNA-Seq .bw files and corresponding strands 
+                 
+                 
+                 library(stringr)
+                 source("/data/akalin/Projects/AAkalin_Catalog_RI/Scripts/Data_Integration/16_05_27_Consortium_data_Integration/Getting_Full_Paths_for_IndexFile_Function_2.R")
+                 
+                 # detecting index files for all cohorts - master table with all .bw files integrated
+                 Index.files=readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Results/Index_file_ALL_4_COHORT/6_12_08_All_4cohortsIndex_file_ver2.rds")    
+                 
+                 
+                 # extracting full paths to RNA-Seq .bw files from Roadmap
+                 
+                       RoadMap_RNASeqExample <- Complete.paths.function("/data/akalin/Base/RoadmapEpigenomics/Experiment/",Index.files,COHORT = "Roadmap","RNA-Seq")
+                       
+                       
+                       RoadMap_RNASeqExample.paths <- RoadMap_RNASeqExample[,"bw.full.names"]
+                       RoadMap_RNASeqExample.strands <- RoadMap_RNASeqExample[,"Strand"]
+                       
+                        # subsetting
+                           RNASeq_example <- RoadMap_RNASeqExample.paths[19:24]
+                           RNASeq_example_strand <- RoadMap_RNASeqExample.strands[19:24]
+                           
+                           save(RNASeq_example,file="~/RNASeqPaths.RData")
+                           save(RNASeq_example_strand,file="~/RNASeqStrands.RData")
+                           
+                 
+                 #save(RNASeq_example,file="pkg/inst/extdata/RNASeqPaths.RData")
+                 #save(RNASeq_example_strand,file="pkg/inst/extdata/RNASeqStrands.RData")
+                 
+      
