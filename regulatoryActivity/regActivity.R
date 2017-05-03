@@ -37,6 +37,7 @@
 #' @import genomation
 #' @import GenomicRanges
 #' 
+#' 
 #' @details regulatory activity is measured by averaging logFC for
 #' histone modification ChIP-seq profiles, or DNAse signal, or methylation
 #' per base.Currently, relevant bigWig files are required to calculate activity       
@@ -86,7 +87,7 @@ regActivity<-function(regRegions,activitySignals,
 #' 
 #' @param regActivity a GRanges object output from \code{regActivity}
 #'        function
-#' @param TSS a GRanges object that have the TSS location and associated
+#' @param TSS a GRanges object that contains the TSS location and associated
 #' gene expression values per cell type or condition as meta data. Each
 #' row should have a "name" and "name2" columns for unique id or name/symbol
 #' for the gene which the TSS is associated with. One could be Ensembl id and the
@@ -172,3 +173,67 @@ regActivityAroundTSS <- function(regActivity,TSS,upstream=500000,
   return(TSSexprRegActivity)
   
 }
+
+
+
+
+#' Quantifies gene expression measured by RNA-Seq  
+#' 
+#' 
+#'  The function quantifies gene expression over pre-defined gene
+#'  regions using signal from RNA-Seq tracks (bigwig files) and 
+#'  returns a GRanges object with TSS location and corresponding gene
+#'  expression levels quantified over a set of samples. 
+#'  For a given geneExpression is firstly calculated across all exon 
+#'  regions. Then, per gene exon expression  scores are summed together
+#'  and divided by a total exon length. 
+#' 
+#' 
+#'  @param exons A GRanges object that contains exon regions over which 
+#'  the expression will be calculated. A meta-column with corresponding 
+#'  gene names is necessary.
+#'    
+#'  @param GeneExpSignals a named list of RNA-Seq BigWig files. Names correspond to 
+#'       the unique sample ids/names. Stranded and unstranded libraries allowed.
+#'        
+#'  @param LibStrand a vector of "*","+,"-" (defualt "*" for all RNA-Seq tracks)
+#'   to the + and - strand) are expected to be listed in a row 
+#' bases are set to NA, this is important when dealing with methylation
+#' data, where uncovered bases on a bigWig file
+#'  do not mean zero methylation. 
+#' 
+#' @param is.noCovNA Possibly, need to test
+#' 
+#' @param mc.cores (def:1)
+#' 
+#' @param normalize ("deseqnorm")
+#' 
+#' 
+#' @return
+#' 
+#' @details  regulatory activity is measured by averaging logFC for
+#' histone modification ChIP-seq profiles, or DNAse signal, or methylation
+#' per base.Currently, relevant bigWig files are required to calculate activity       
+#' activity. This function might be extended to work with BAM files
+#' in the future. 
+#' 
+#' @import GenomicRanges
+#' @import genomation
+#' @import parallel
+#' @import DESeq2
+#' 
+#' @examples
+
+
+estimateSizeFactorsForMatrix
+library(DESeq2)
+
+exons=readRDS("/data/akalin/Base/Annotation/hg19/GENCODE/v24/gencode.v24lift37.basicAnnAndNoncodingGRanges.FilteringExLngth.ExonsReduced16_06_07.rds")
+
+
+
+
+bwToGeneExp <- function(exons,GeneExpSignals,isStrandedLib=FALSE,mc.cores=1,normalize="DESEQ",is.noCovNA=?){}
+
+
+
