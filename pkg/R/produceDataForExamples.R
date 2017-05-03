@@ -85,9 +85,10 @@ setwd("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/")
 
                  
                                   
-# Get an example of paths to RNA-Seq .bw files and corresponding strands 
-                 
-                 
+# Get an example of  GeneExpSignals and LibStrand
+        
+            #  paths to RNA-Seq .bw files and corresponding strands 
+                
                  library(stringr)
                  source("/data/akalin/Projects/AAkalin_Catalog_RI/Scripts/Data_Integration/16_05_27_Consortium_data_Integration/Getting_Full_Paths_for_IndexFile_Function_2.R")
                  
@@ -104,14 +105,25 @@ setwd("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/")
                        RoadMap_RNASeqExample.strands <- RoadMap_RNASeqExample[,"Strand"]
                        
                         # subsetting
-                           RNASeq_example <- RoadMap_RNASeqExample.paths[19:24]
-                           RNASeq_example_strand <- RoadMap_RNASeqExample.strands[19:24]
+                           GeneExpSignals <- RoadMap_RNASeqExample.paths[19:24]
+                           LibStrand <- RoadMap_RNASeqExample.strands[19:24]
                            
-                           save(RNASeq_example,file="~/RNASeqPaths.RData")
-                           save(RNASeq_example_strand,file="~/RNASeqStrands.RData")
+                           save(GeneExpSignals,file="~/GeneExpSignals.RData")
+                           save(LibStrand,file="~/LibStrand.RData")
                            
                  
-                 #save(RNASeq_example,file="pkg/inst/extdata/RNASeqPaths.RData")
-                 #save(RNASeq_example_strand,file="pkg/inst/extdata/RNASeqStrands.RData")
+                 #save(GeneExpSignals,file="pkg/inst/extdata/GeneExpSignals.RData")
+                 #save(LibStrand,file="pkg/inst/extdata/LibStrand.RData")
                  
-      
+
+# Get an example of exon GRanges object
+                           
+      library(GenomicRanges)             
+                          
+           Exons=readRDS("/data/akalin/Base/Annotation/hg19/GENCODE/v24/gencode.v24lift37.basicAnnAndNoncodingGRanges.FilteringExLngth.ExonsReduced16_06_07.rds")
+           # add 2 genes from both strands as an example 
+           Exons <- Exons[which(Exons$sample%in%c("ENSG00000026103","ENSG00000113119","ENSG00000025039","ENSG00000261469"))]
+           
+                         save(Exons,file="~/Exons.RData")
+                         #save(Exons,file="pkg/inst/extdata/Exons.RData")
+                           
