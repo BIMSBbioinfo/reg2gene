@@ -116,14 +116,26 @@ setwd("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/")
                  #save(LibStrand,file="pkg/inst/extdata/LibStrand.RData")
                  
 
-# Get an example of exon GRanges object
+# Get an example of Exons GRanges object
                            
       library(GenomicRanges)             
                           
            Exons=readRDS("/data/akalin/Base/Annotation/hg19/GENCODE/v24/gencode.v24lift37.basicAnnAndNoncodingGRanges.FilteringExLngth.ExonsReduced16_06_07.rds")
-           # add 2 genes from both strands as an example 
+           GRanges_genes <- readRDS("/data/akalin/Base/Annotation/hg19/GENCODE/v24/gencode.v24lift37.basicannotationAndNoncodingGRanges.Genes.160602.rds")
+            
+           GENES <- data.frame(GRanges_genes) 
+                  GENES <- GENES[,c("seqnames","start","end","strand","gene.id","gene.name")]
+           
+              Genes.order <- match(as.character(Exons$sample),GENES$gene.id)
+           
+        mcols(Exons) <- cbind(mcols(Exons),GENES[Genes.order,])
+           
+           
+            # add 2 genes from both strands as an example 
            Exons <- Exons[which(Exons$sample%in%c("ENSG00000026103","ENSG00000113119","ENSG00000025039","ENSG00000261469"))]
            
+           
+           
                          save(Exons,file="~/Exons.RData")
-                         #save(Exons,file="pkg/inst/extdata/Exons.RData")
+#                         save(Exons,file="pkg/inst/extdata/Exons.RData")
                            
