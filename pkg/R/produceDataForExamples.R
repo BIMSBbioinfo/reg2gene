@@ -81,3 +81,74 @@ setwd("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/")
                  
                  colnames(mcols(regActivity)) <- c("E085","EO66")
                  save(regActivity,file="pkg/inst/extdata/regActivity.RData")
+                 
+
+                 
+                                  
+# Get an example of  GeneExpSignals and LibStrand
+        
+            #  paths to RNA-Seq .bw files and corresponding strands 
+                
+                 library(stringr)
+                 source("/data/akalin/Projects/AAkalin_Catalog_RI/Scripts/Data_Integration/16_05_27_Consortium_data_Integration/Getting_Full_Paths_for_IndexFile_Function_2.R")
+                 
+                 # detecting index files for all cohorts - master table with all .bw files integrated
+                 Index.files=readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Results/Index_file_ALL_4_COHORT/6_12_08_All_4cohortsIndex_file_ver2.rds")    
+                 
+                 
+                 # extracting full paths to RNA-Seq .bw files from Roadmap
+                 
+                       RoadMap_RNASeqExample <- Complete.paths.function("/data/akalin/Base/RoadmapEpigenomics/Experiment/",Index.files,COHORT = "Roadmap","RNA-Seq")
+                       
+                       
+                       RoadMap_RNASeqExample.paths <- RoadMap_RNASeqExample[,"bw.full.names"]
+                       RoadMap_RNASeqExample.strands <- RoadMap_RNASeqExample[,"Strand"]
+                       
+                        # subsetting
+                           GeneExpSignals <- RoadMap_RNASeqExample.paths[19:24]
+                           LibStrand <- RoadMap_RNASeqExample.strands[19:24]
+                           
+                           save(GeneExpSignals,file="~/GeneExpSignals.RData")
+                           save(LibStrand,file="~/LibStrand.RData")
+                           
+                 
+                 #save(GeneExpSignals,file="pkg/inst/extdata/GeneExpSignals.RData")
+                 #save(LibStrand,file="pkg/inst/extdata/LibStrand.RData")
+                 
+
+# Get an example of Exons GRanges object
+                           
+      library(GenomicRanges)             
+                          
+           Exons=readRDS("/data/akalin/Base/Annotation/hg19/GENCODE/v24/gencode.v24lift37.basicAnnAndNoncodingGRanges.FilteringExLngth.ExonsReduced16_06_07.rds")
+           GRanges_genes <- readRDS("/data/akalin/Base/Annotation/hg19/GENCODE/v24/gencode.v24lift37.basicannotationAndNoncodingGRanges.Genes.160602.rds")
+            
+           GENES <- data.frame(GRanges_genes) 
+                  GENES <- GENES[,c("seqnames","start","end","strand","gene.id","gene.name")]
+           
+              Genes.order <- match(as.character(Exons$sample),GENES$gene.id)
+           
+        mcols(Exons) <- cbind(mcols(Exons),GENES[Genes.order,])
+           
+           
+            # add 2 genes from both strands as an example 
+           Exons <- Exons[which(Exons$sample%in%c("ENSG00000026103","ENSG00000113119","ENSG00000025039","ENSG00000261469"))]
+           
+           
+           
+                         save(Exons,file="~/Exons.RData")
+#                         save(Exons,file="pkg/inst/extdata/Exons.RData")
+  
+                         
+                         
+                         
+# Get an example of  GeneExpSignals 
+                         load("~/GeneExpSignals.RData")        
+
+                         sampleNames <- str_extract(basename(GeneExpSignals),"E[0-9]{3}")
+                             
+                         
+                         
+                         save(sampleNames,file="~/sampleNames.RData")
+#                                             save(sampleNames,file="pkg/inst/extdata/sampleNames.RData")
+                         
