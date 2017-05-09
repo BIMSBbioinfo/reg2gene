@@ -138,4 +138,17 @@ setwd("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/")
            
                          save(Exons,file="~/Exons.RData")
 #                         save(Exons,file="pkg/inst/extdata/Exons.RData")
-                           
+  
+                         
+                         
+                         
+# Get an example of  GeneExpSignals 
+                         load("~/GeneExpSignals.RData")        
+
+                         sampleNames <- str_extract(basename(GeneExpSignals),"E[0-9]{3}")
+                             
+                         
+                         
+                         save(sampleNames,file="~/sampleNames.RData")
+#                                             save(sampleNames,file="pkg/inst/extdata/sampleNames.RData")
+                         
