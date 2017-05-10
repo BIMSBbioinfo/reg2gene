@@ -65,8 +65,12 @@
     
     # forward strand
     ExonScoresForwardStrand <- mclapply(GeneExpSignals[ForwardLibraries], 
-                                        function(x) {try(ScoreMatrixBin(x,windows =  Exons$`+`,bin.num = 1,
-                                                                        type = "bigWig",bin.op=summaryOperation, is.noCovNA=T),
+                                        function(x) {try(ScoreMatrixBin(x,
+                                                                        windows =  Exons$`+`,
+                                                                        bin.num = 1,
+                                                                        type = "bigWig",
+                                                                        bin.op=summaryOperation, 
+                                                                        is.noCovNA=T),
                                                          silent = T)},mc.cores=mc.cores)
     
           if (max(sapply(ExonScoresForwardStrand,class)=="try-error")){
@@ -74,12 +78,17 @@
                             GeneExpSignals[ForwardLibraries][sapply(ExonScoresForwardStrand,
                             class)=="try-error"]))}                                      
     
-    ExonScoresForwardStrand.df <- .ScoresAsMcols(ExonScoresForwardStrand,GeneExpSignals[ForwardLibraries],sampleNames[ForwardLibraries])
+    ExonScoresForwardStrand.df <- .ScoresAsMcols(ExonScoresForwardStrand,
+                                                 GeneExpSignals[ForwardLibraries],
+                                                 sampleNames[ForwardLibraries])
     
     # reverse strand               
     ExonScoresReverseStrand <- mclapply(GeneExpSignals[!(ForwardLibraries|Unstranded.libraries)], 
-                                        function(x) {try(ScoreMatrixBin(x,windows =  Exons$`-`,bin.num = 1,
-                                                                        type = "bigWig", bin.op=summaryOperation,is.noCovNA=T),
+                                        function(x) {try(ScoreMatrixBin(x,windows =  Exons$`-`,
+                                                                        bin.num = 1,
+                                                                        type = "bigWig", 
+                                                                        bin.op=summaryOperation,
+                                                                        is.noCovNA=T),
                                                          silent = T)},mc.cores=mc.cores)
     
           if (max(sapply(ExonScoresReverseStrand,class)=="try-error")){
@@ -87,7 +96,9 @@
                           GeneExpSignals[!(ForwardLibraries|Unstranded.libraries)][sapply(ExonScoresReverseStrand,
                           class)=="try-error"]))}
     
-    ExonScoresReverseStrand.df <- abs(.ScoresAsMcols(ExonScoresReverseStrand,GeneExpSignals[ForwardLibraries],sampleNames[ForwardLibraries]))
+    ExonScoresReverseStrand.df <- abs(.ScoresAsMcols(ExonScoresReverseStrand,
+                                                     GeneExpSignals[ForwardLibraries],
+                                                     sampleNames[ForwardLibraries]))
     # pool reverse and forward strand together        
     Exons <- unlist(Exons)
     values(Exons) <- (cbind(mcols(Exons),rbind(ExonScoresForwardStrand.df,ExonScoresReverseStrand.df)))
@@ -109,7 +120,9 @@
                       class)=="try-error"]))}                                      
             
             
-    ExonScoresUnstranded.df <- .ScoresAsMcols(ExonScoresUnstranded,GeneExpSignals[Unstranded.libraries],sampleNames[Unstranded.libraries])                  
+    ExonScoresUnstranded.df <- .ScoresAsMcols(ExonScoresUnstranded,
+                                              GeneExpSignals[Unstranded.libraries],
+                                              sampleNames[Unstranded.libraries])                  
     
     values(Exons) <- (cbind(mcols(Exons),rbind(ExonScoresUnstranded.df)))
     
@@ -202,7 +215,7 @@
 
 
 
-regActivity<-function(regRegions,activitySignals,sampleNames=NULL,isCovNA=FALSE,
+regActivity <- function(regRegions,activitySignals,sampleNames=NULL,isCovNA=FALSE,
                       summaryOperation="mean",normalize=NULL,mc.cores=1){
   
   
@@ -217,11 +230,17 @@ regActivity<-function(regRegions,activitySignals,sampleNames=NULL,isCovNA=FALSE,
           
           
   # calculating coverage
-          #scores.per.cell.type <- lapply(activitySignals,ScoreMatrixBin,windows = regRegions,bin.num = 1,type = "bigWig", is.noCovNA=isCovNA,bin.op=summaryOperation)
-          scores.per.cell.type <- mclapply(activitySignals,ScoreMatrixBin,windows = regRegions,bin.num = 1,type = "bigWig", is.noCovNA=isCovNA,bin.op=summaryOperation,mc.cores = mc.cores)
+         
+          scores.per.cell.type <- mclapply(activitySignals,ScoreMatrixBin,
+                                           windows = regRegions,
+                                           bin.num = 1,type = "bigWig", 
+                                           is.noCovNA=isCovNA,
+                                           bin.op=summaryOperation,
+                                           mc.cores = mc.cores)
           
   # add normalization
-          if (!is.null(normalize)) {scores.per.cell.type <-  .NormalizeScores(ScoresDF=scores.per.cell.type,NormalizationMet=normalize)}
+          if (!is.null(normalize)) {scores.per.cell.type <-  .NormalizeScores(ScoresDF=scores.per.cell.type,
+                                                                              NormalizationMet=normalize)}
           
            # adding scores as mcols  
           mcols(regRegions) <- .ScoresAsMcols(scores.per.cell.type,activitySignals,sampleNames)
@@ -314,7 +333,7 @@ regActivity<-function(regRegions,activitySignals,sampleNames=NULL,isCovNA=FALSE,
 #' 
 
 
-regActivityAroundTSS <- function(regActivity=DNAme.bp,TSS,upstream=500000,
+regActivityAroundTSS <- function(regActivity,TSS,upstream=500000,
                                  downstream=500000){
   
   
@@ -455,13 +474,15 @@ regActivityAroundTSS <- function(regActivity=DNAme.bp,TSS,upstream=500000,
 #'    bwToGeneExp(Exons=Exons,GeneExpSignals=GeneExpSignals,LibStrand=LibStrand, mc.cores=1,normalize="ratio")
 #'    bwToGeneExp(Exons=Exons,GeneExpSignals=GeneExpSignals,LibStrand=LibStrand, mc.cores=1,normalize="quantile")
 #'    bwToGeneExp(Exons=Exons,GeneExpSignals=GeneExpSignals,LibStrand=LibStrand, mc.cores=1,normalize=NULL)
-#'    bwToGeneExp(Exons=Exons,GeneExpSignals=GeneExpSignals,LibStrand=LibStrand,sampleNames=sampleNames, mc.cores=1,normalize=NULL)
+#'    bwToGeneExp(Exons=Exons,GeneExpSignals=GeneExpSignals,LibStrand=LibStrand,sampleNames=sampleNames, 
+#'                 mc.cores=1,normalize=NULL)
 #' 
 #' 
 
 
 
-bwToGeneExp <- function(Exons,GeneExpSignals,sampleNames=NULL,LibStrand=NULL,summaryOperation="mean",
+bwToGeneExp <- function(Exons,GeneExpSignals,sampleNames=NULL,LibStrand=NULL,
+                        summaryOperation="mean",
                         mc.cores=1,normalize="ratio"){
   
   # test if there is any info about genes in exon granges object
@@ -479,9 +500,12 @@ bwToGeneExp <- function(Exons,GeneExpSignals,sampleNames=NULL,LibStrand=NULL,sum
              if (is.null(LibStrand)) {LibStrand <- rep("*",length(GeneExpSignals))}
         
                     # quantify expression per exon with adjustment to strandness of RNA-Seq libraries
-                       ExonExpression <- .ExonExpressionStrandAdjusted(Exons=Exons.splitted,GeneExpSignals=GeneExpSignals,
-                                                                       sampleNames=sampleNames, LibStrand=LibStrand,
-                                                                       mc.cores=mc.cores,summaryOperation=summaryOperation)
+                       ExonExpression <- .ExonExpressionStrandAdjusted(Exons=Exons.splitted,
+                                                                       GeneExpSignals=GeneExpSignals,
+                                                                       sampleNames=sampleNames, 
+                                                                       LibStrand=LibStrand,
+                                                                       mc.cores=mc.cores,
+                                                                       summaryOperation=summaryOperation)
                        
                     # quantify expression per gene   
                        ExonExpressionPerGene <- split(ExonExpression,as.character(ExonExpression$gene.id))
@@ -490,13 +514,16 @@ bwToGeneExp <- function(Exons,GeneExpSignals,sampleNames=NULL,LibStrand=NULL,sum
                      
                   
                   # normalization
-                       if (!is.null(normalize)) {GeneExpression.df <-  .NormalizeScores(ScoresDF=GeneExpression.df,NormalizationMet=normalize)}
+                       if (!is.null(normalize)) {GeneExpression.df <-  .NormalizeScores(ScoresDF=GeneExpression.df,
+                                                                                        NormalizationMet=normalize)}
           
        
           # arranging gene coordinates as TSS  
                Genes.object <- as.data.frame(mcols(ExonExpression)[1:5]) # extract gene location
                 # TSS coord of genes
-                   TSS <- promoters(reduce(GRanges(Genes.object$seqnames,IRanges(Genes.object$start,Genes.object$end),strand=Genes.object$strand)),1,1)
+                   TSS <- promoters(reduce(GRanges(Genes.object$seqnames,
+                                                   IRanges(Genes.object$start,Genes.object$end),
+                                                   strand=Genes.object$strand)),1,1)
                   
                       
           # adding meta-data    
