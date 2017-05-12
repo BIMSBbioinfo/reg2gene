@@ -52,6 +52,11 @@
   ForwardLibraries <- str_detect(LibStrand,"\\+") 
   Unstranded.libraries <- str_detect(LibStrand,"\\*")
   
+  if (sum(ForwardLibraries)!=(sum(!(ForwardLibraries|Unstranded.libraries)))){
+    stop("Number of forward and reverse libraries do not match")
+  }
+  
+  
   # separate analysis for unstranded & stranded libraries
   
   if (sum(Unstranded.libraries)!=length(LibStrand)){
@@ -211,7 +216,7 @@
 
 
 
-regActivity <- function(regRegions,activitySignals,sampleID=NULL,isCovNA=FALSE,
+regActivity <- function(regRegions,activitySignals,sampleIDs=NULL,isCovNA=FALSE,
                       summaryOperation="mean",normalize=NULL,mc.cores=1){
   
   
@@ -482,19 +487,23 @@ regActivityAroundTSS <- function(regActivity,TSS,upstream=500000,
 #' load(file="~/Exons.RData")
 #' load(file="~/sampleIDs.RData")
 #' 
-#'    bwToGeneExp(Exons,GeneExpSignals,LibStrand, mc.cores=1,normalize="ratio")
-#'    bwToGeneExp(Exons,GeneExpSignals,LibStrand, mc.cores=1,normalize="quantile")
-#'    bwToGeneExp(Exons,GeneExpSignals,LibStrand, mc.cores=1,normalize=NULL)
-#'    bwToGeneExp(Exons=Exons,GeneExpSignals=GeneExpSignals,LibStrand,sampleIDs, 
-#'                 mc.cores=1,normalize=NULL)
+#'     bwToGeneExp(Exons,GeneExpSignals,LibStrand, sampleIDs=NULL,mc.cores=1,normalize="ratio",summaryOperation="mean")
+#'     bwToGeneExp(Exons,GeneExpSignals,LibStrand, mc.cores=1,normalize="quantile", sampleIDs=NULL,summaryOperation="mean")
+#'     bwToGeneExp(Exons,GeneExpSignals,LibStrand, mc.cores=1,normalize=NULL, sampleIDs=NULL,summaryOperation="mean")
+#'     bwToGeneExp(Exons=Exons,GeneExpSignals=GeneExpSignals,LibStrand=LibStrand,sampleIDs=sampleIDs, 
+#'                   mc.cores=1,normalize="quantile",summaryOperation="mean")
 #' 
-#' 
 
 
 
-bwToGeneExp <- function(Exons,GeneExpSignals,sampleIDs=NULL,LibStrand=NULL,
+
+bwToGeneExp <- function(Exons,
+                        GeneExpSignals,
+                        sampleIDs=NULL,
+                        LibStrand=NULL,
                         summaryOperation="mean",
-                        mc.cores=1,normalize="ratio"){
+                        mc.cores=1,
+                        normalize="ratio"){
   
   # test if there is any info about genes in exon granges object
   if (sum(str_detect(colnames(mcols(Exons)),"gene.id"))==0)  {stop("No info about the gene name")}
