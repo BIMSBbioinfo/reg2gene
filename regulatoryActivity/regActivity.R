@@ -309,31 +309,11 @@ regActivity <- function(regRegions,activitySignals,sampleIDs=NULL,isCovNA=FALSE,
 #'  regActivityAroundTSS(regActivity=regActivity,TSS=TSS,upstream=500000,downstream=500000)
 #' 
 #' 
-#'  local long examples
-#'  load(file="~/LargeExons.RData")
 #'  load(file="~/LargeregRegions.RData")
+#'  RoadmapH3K4me1 <- readRDS("/data/akalin/Projects/AAkalin_reg2gene/Results/regActivity/Roadmap_H3K4me1_meanratio.rds")
+#'  RoadmapRNASeq <- readRDS("/data/akalin/Projects/AAkalin_reg2gene/Results/bwToGeneExp/Roadmap_RNASeq_meanratio.rds")
 #'
-#'  ListBWPerMethod <- readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Results/Index_file_ALL_4_COHORT/17_05_08_list_bw_per_method_per_cohort.rds")
-#'  sampleIDs <- readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Results/Index_file_ALL_4_COHORT/17_05_09_sampleIDs_bw_per_method_per_cohort.rds")
-#'  Strand <- readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Results/Index_file_ALL_4_COHORT/17_05_09_Strand_bw_per_method_per_cohort.rds")
-#'
-#'
-#'    H3K4me1 <- regActivity(regRegions=regRegions,activitySignals=ListBWPerMethod$Roadmap$H3K4me1,
-#'                       sampleIDs=sampleIDs$Roadmap$H3K4me1,isCovNA = F,
-#'                       summaryOperation = "mean")
-#'    RNASEQ <- bwToGeneExp(Exons=Exons,GeneExpSignals=ListBWPerMethod$Roadmap$`RNA-Seq`,
-#'                      sampleIDs=sampleIDs$Roadmap$`RNA-Seq`,
-#'                      LibStrand=Strand$Roadmap$`RNA-Seq`)
-#'    regActivityAroundTSS(regActivity = H3K4me1, TSS = RNASEQ)
-#'
-#'
-#'
-#'   DNAme.bp <- regActivity(regRegions,activitySignals=ListBWPerMethod$Blueprint$`DNA Methylation`,
-#'                       sampleIDs=sampleIDs$Blueprint$`DNA Methylation`)
-#'   RNASEQ.bp <- bwToGeneExp(Exons=Exons,GeneExpSignals=ListBWPerMethod$Blueprint$`RNA-Seq`,
-#'                             sampleIDs=sampleIDs$Blueprint$`RNA-Seq`,
-#'                         LibStrand=Strand$Blueprint$`RNA-Seq`,normalize=NULL)
-#'    regActivityAroundTSS(regActivity = DNAme.bp, TSS = RNASEQ.bp)
+#'    regActivityAroundTSS(regActivity = RoadmapH3K4me1, TSS = RoadmapRNASeq[1:10])
 #' 
 #' 
 #' @details only enhancers located within (+/-)upstream/downstream of TSS 
