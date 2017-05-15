@@ -313,7 +313,19 @@ regActivity <- function(regRegions,activitySignals,sampleIDs=NULL,isCovNA=FALSE,
 #'  RoadmapH3K4me1 <- readRDS("/data/akalin/Projects/AAkalin_reg2gene/Results/regActivity/Roadmap_H3K4me1_meanratio.rds")
 #'  RoadmapRNASeq <- readRDS("/data/akalin/Projects/AAkalin_reg2gene/Results/bwToGeneExp/Roadmap_RNASeq_meanratio.rds")
 #'
-#'    regActivityAroundTSS(regActivity = RoadmapH3K4me1, TSS = RoadmapRNASeq[1:10])
+#'    regActivityAroundTSS(RegRegionActivity = RoadmapH3K4me1, TSS = RoadmapRNASeq[1:10])
+#' 
+#' 
+#' RegRegionActivity <- readRDS(pathRegActivity)
+#' TSS <- readRDS(pathTSS)[1:10]
+#' Method <- basename(pathRegActivity)
+#' mc.cores=25
+#'  regActivityAroundTSS(RegRegionActivity, 
+#'                                   TSS,
+#'                                   downstream=1000000,
+#'                                   upstream=1000000,
+#'                                   mc.cores)
+#'
 #' 
 #' 
 #' @details only enhancers located within (+/-)upstream/downstream of TSS 
@@ -329,35 +341,35 @@ regActivity <- function(regRegions,activitySignals,sampleIDs=NULL,isCovNA=FALSE,
 #' 
 
 
-regActivityAroundTSS <- function(regActivity,TSS,upstream=500000,
-                                 downstream=500000){
+regActivityAroundTSS <- function(RegRegionActivity,TSS,upstream=500000,
+                                 downstream=500000,mc.cores=10){
   
   
   
   # extend TSS for wanted region & split per gene such that analysis goes per gene
   TSS.extended <- promoters(TSS,upstream=upstream,downstream=downstream)
-  TSS.extended <- split(TSS.extended,TSS.extended$name)
+  TSS.extended <- split(TSS.extended,as.character(TSS.extended$name))
   
   # getting EnhRegions which overlap extended TSS
   
-  TSSexprRegActivity <- lapply(TSS.extended,function(x){
+  TSSexprRegRegionActivity <- mclapply(TSS.extended,function(x){
     
     # overlap extended TSS & regRegion
-    TSS.regAct.overlap <- as.data.frame(findOverlaps(x,regActivity))
+    TSS.regAct.overlap <- as.data.frame(findOverlaps(x,RegRegionActivity))
     
     # if there is any overlap - GO!
     if (nrow(TSS.regAct.overlap)!=0) {
       
-      regActivity <- regActivity[TSS.regAct.overlap$subjectHits]
+      RegRegionActivity <- RegRegionActivity[TSS.regAct.overlap$subjectHits]
       
       # adjusting mcols
-      name <- as.character(regActivity)
+      name <- as.character(RegRegionActivity)
       featureType <- rep("regulatory",length(name))
       name2 <- rep(NA,length(name))
       gene.indicator <- TSS.regAct.overlap$queryHits
       
-      mcols(regActivity) <- cbind(gene.indicator,featureType,name,name2,
-                                  data.frame(mcols(regActivity)))
+      mcols(RegRegionActivity) <- cbind(gene.indicator,featureType,name,name2,
+                                        data.frame(mcols(RegRegionActivity)))
       
       # adjusting mcols for gene expression object
       featureType <- "gene"
@@ -366,17 +378,17 @@ regActivityAroundTSS <- function(regActivity,TSS,upstream=500000,
       mcols(x) <- cbind(gene.indicator,featureType,
                         data.frame(mcols(x)))
       
-      TSS.colnames <- colnames(mcols(x))[colnames(mcols(x))%in%colnames(mcols(regActivity))]
+      TSS.colnames <- colnames(mcols(x))[colnames(mcols(x))%in%colnames(mcols(RegRegionActivity))]
       mcols(x) <-  mcols(x)[TSS.colnames]
-      mcols(regActivity) <-  mcols(regActivity)[TSS.colnames]
+      mcols(RegRegionActivity) <-  mcols(RegRegionActivity)[TSS.colnames]
       
-      return(c(x,regActivity))
+      return(c(x,RegRegionActivity))
       
     }
-  })
+  },mc.cores = mc.cores)
   
   
-  return(TSSexprRegActivity)
+  return(TSSexprRegRegionActivity)
   
 }
 
