@@ -533,14 +533,14 @@ bwToGeneExp <- function(Exons,
                             GeneExpression <- lapply(ExonExpressionPerGene,.QuantifyGeneExpression)
                             GeneExpression.df <- do.call("rbind",GeneExpression)
                      
-                  
+                            
                   # normalization
                        if (!is.null(normalize)) {GeneExpression.df <-  .NormalizeScores(ScoresDF=GeneExpression.df,
                                                                                         NormalizationMet=normalize)}
           
-       
+                            
           # arranging gene coordinates as TSS  
-               Genes.object <- as.data.frame(unique(mcols(ExonExpression)[1:7])) # extract gene location
+               Genes.object <- data.frame(unique(mcols(ExonExpression)[1:7]),stringsAsFactors = F) # extract gene location
                 # TSS coord of genes
                    TSS <- promoters(GRanges(Genes.object$seqnames,
                                                    IRanges(Genes.object$start,Genes.object$end),
@@ -548,15 +548,15 @@ bwToGeneExp <- function(Exons,
                   
                      
           # adding meta-data    
-               name <- Genes.object$gene.id
-               name2 <- Genes.object$gene.name
+               name <- as.character(Genes.object$gene.id)
+               name2 <- as.character(Genes.object$gene.name)
                          if (length(name2)==0) { name2 <-  rep(NA,length(name))} # if there is no 2nd name
-               metadata <- cbind(name,name2,GeneExpression.df[match(name,rownames(GeneExpression.df)),])
+               metadata <- data.frame(name,name2,GeneExpression.df[match(name,rownames(GeneExpression.df)),],stringsAsFactors = F)
                
             mcols(TSS) <- metadata
               
               
-                           
+              
                 return(TSS) 
          
           
