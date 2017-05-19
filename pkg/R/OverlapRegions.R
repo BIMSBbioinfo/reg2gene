@@ -81,6 +81,7 @@
 #' Benchmarked.int <- OverlapRegions(Reg1,Reg2)
 
 
+
 OverlapRegions <- function(Reg1,Reg2,byReg1=NULL,byReg2=NULL){
   
   
@@ -139,46 +140,25 @@ OverlapRegions <- function(Reg1,Reg2,byReg1=NULL,byReg2=NULL){
                                                                collapse="|")))==6)) {
     
     # GR
-    Reg1.gr2 <- GRanges(Reg1Reg2[,"Reg1_chr2"],
-                        IRanges(as.integer(Reg1Reg2[,"Reg1_start2"]),
-                                as.integer(Reg1Reg2[,"Reg1_end2"])))
-    Reg2.gr2 <- GRanges(Reg1Reg2[,"Reg2_chr2"],
-                        IRanges(as.integer(Reg1Reg2[,"Reg2_start2"]),
-                                as.integer(Reg1Reg2[,"Reg2_end2"])))
+    # Gr obj
+    Reg1.gr <- GRanges(Reg1[,"Reg1_chr2"],IRanges(as.integer(Reg1[,"Reg1_start2"]),
+                                             as.integer(Reg1[,"Reg1_end2"])))
+    
+    Reg2.gr <- GRanges(Reg2[,"Reg2_chr2"],IRanges(as.integer(Reg2[,"Reg2_start2"]),
+                                             as.integer(Reg2[,"Reg2_end2"])))
+    
+    # Reg1-Reg1 overlap            
+    Reg2.Reg2.Overlap <- data.frame(findOverlaps(Reg1.gr,Reg2.gr))
+    
+    # if overlap is duplicated then reg1 overlaps reg1, and reg2 overlaps reg2 -> confirmed
+    AllOverlapRegions <- rbind(Reg2.Reg2.Overlap,Reg1.Reg1.Overlap)
+    AllOverlapRegions.dpl <- AllOverlapRegions[duplicated(AllOverlapRegions),]
     
     
-    Reg2.Reg2.Overlap2 <- data.frame(findOverlaps(Reg1.gr2,Reg2.gr2))
+    Reg1Reg2 <- cbind(Reg1[AllOverlapRegions.dpl$queryHits,],
+                      Reg2[AllOverlapRegions.dpl$subjectHits,])
     
-    Reg2Reg2 <- Reg1Reg2[Reg2.Reg2.Overlap2$queryHits,]
-    
-    # IMORTANT! removing all Region1 entries BOTH coord1 and coord2 
-    # overlap the EITHER same Reg2 coord1 OR Reg2 coord1  
-    
-    
-    Reg1.gr2 <- GRanges(Reg2Reg2[,"Reg1_chr2"],
-                        IRanges(as.integer(Reg2Reg2[,"Reg1_start2"]),
-                                as.integer(Reg2Reg2[,"Reg1_end2"])))
-    Reg2.gr2 <- GRanges(Reg2Reg2[,"Reg2_chr1"],
-                        IRanges(as.integer(Reg2Reg2[,"Reg2_start1"]),
-                                as.integer(Reg2Reg2[,"Reg2_end1"])))
-    
-    Reg2.Reg1overlap <- data.frame(findOverlaps(Reg1.gr2,Reg2.gr2))
-    
-    if (nrow(Reg2.Reg1overlap)!=0) {Reg2Reg2 <- Reg2Reg2[-Reg2.Reg1overlap$queryHits,]}
-    
-    
-    Reg1.gr2 <- GRanges(Reg2Reg2[,"Reg1_chr1"],
-                        IRanges(as.integer(Reg2Reg2[,"Reg1_start1"]),
-                                as.integer(Reg2Reg2[,"Reg1_end1"])))
-    Reg2.gr2 <- GRanges(Reg2Reg2[,"Reg2_chr2"],
-                        IRanges(as.integer(Reg2Reg2[,"Reg2_start2"]),
-                                as.integer(Reg2Reg2[,"Reg2_end2"])))
-    
-    Reg2.Reg1overlap <- data.frame(findOverlaps(Reg1.gr2,Reg2.gr2))
-    
-    if (nrow(Reg2.Reg1overlap)!=0) {Reg2Reg2 <- Reg2Reg2[-Reg2.Reg1overlap$queryHits,]}
-    
-    Reg1Reg2 <- Reg2Reg2
+
     
   }
   
@@ -187,4 +167,59 @@ OverlapRegions <- function(Reg1,Reg2,byReg1=NULL,byReg2=NULL){
   }
 
 
+#' Complex overlap of interacting regions in the genome 
+#' 
+#' Criss-cross overlap   
+#'       
+#'  @param Reg1 - character matrix. Coordinates of the regions which we want
+#'  to comape should be stored in the three columns with following names:
+#'  "chr1","start1","end1". Additionally "chr2","start2","end2" columns or
+#'  any other column can be a part of the matrix (such as SNP ID, proxy SNP 
+#'  ID,or reported gene.
+#'   
+#'  @param Reg2 - character matrix. Coordinates of the regions with which
+#'  Reg1 coordinates are compared should be stored in the three columns
+#'  with the following names:"chr1","start1","end1". 
+#'  Additionally "chr2","start2","end2" columns or any other column
+#'  can be a part of the matrix (such as gene names)
+#'  @return A dataframe of coordinates of all overlapping regions.
+#'  Each row corresponds to one-SNP-one-regulatory-region overlap 
+#'  with addional metadata. Column names indicate whether coordinates and
+#'  additional info come from Reg1 or Reg2alog.
+#'  
+#'  
+#'  @import GenomicRanges
+#'  @import stringr
+#'  
+#'  @details Function performs simple overlap between 2 
+#'  dataframes of coordinates stored as  "chr1","start1","end1". First,
+#'  it creates GRanges object, and then it runs
+#'  \code{\link[GenomicRanges]{findOverlaps}}
+#'  
+#'  @example
 
+
+
+
+ComplexOverlaps <- function(Reg1,Reg2){
+  
+  # criss-cross overlap when orientation of overlaps is unknown
+      Reg11Reg22 <- OverlapRegions(Reg1,Reg2)
+            # switch names in Reg2 dataframe
+                colnames(Reg1)[1:6] <- c("chr2","start2","end2","chr1","start1","end1")
+      Reg12Reg21 <- OverlapRegions(Reg1,Reg2)
+  
+              colnames(Reg11Reg22) <- colnames(Reg12Reg21)
+     
+     Reg1Reg2 <- rbind(Reg11Reg22,Reg12Reg21)
+     
+     
+     return(Reg1Reg2)
+     
+     
+}
+
+
+
+
+  
