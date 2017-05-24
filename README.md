@@ -1,6 +1,6 @@
 reg2gene
 ================
-Altuna Akalin
+Inga Patarcic, Altuna Akalin
 
 This repo contains the code for predicting the target genes for regulatory elements
 
