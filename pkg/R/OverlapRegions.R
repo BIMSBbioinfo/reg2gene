@@ -9,25 +9,27 @@
 #'  per input dataframes are reported (eg two interacting regions in test
 #'  and benchmark dataset) then both of them are compared,and if both 
 #'  coordinates regions overlap they are reported.
-#'  Additionaly, an overlap of 2 dataframes can be based on coordinates 
-#'  and one column name as well (useful for testing overlaps of eQTL studies). 
+#'  Third, an overlap of 2 dataframes can be identified based on the
+#'  overlap between genomic coordinates of two regions (regions originated from
+#'  two different datasets) and meta-data column (useful for testing overlaps
+#'  with eQTL studies based on the gene name). 
 #'   
 #'       
-#'  @param Reg1 - character matrix. Coordinates of the regions which we want
-#'  to comape should be stored in the three columns with following names:
-#'  "chr1","start1","end1". Additionally "chr2","start2","end2" columns or
-#'  any other column can be a part of the matrix (such as SNP ID, proxy SNP 
-#'  ID,or reported gene.
+#'  @param Reg1 - character matrix with at least three columns named:
+#'  "chr1","start1","end1" which store information about coordinates
+#'  of the regions which we want to comape. Additionally,
+#'  "chr2","start2","end2" columns or any other column in the
+#'  matrix (such as SNP ID, proxy SNP ID,or reported gene).
 #'   
-#'  @param Reg2 - character matrix. Coordinates of the regions with which
-#'  Reg1 coordinates are compared should be stored in the three columns
-#'  with the following names:"chr1","start1","end1". 
-#'  Additionally "chr2","start2","end2" columns or any other column
-#'  can be a part of the matrix (such as gene names)
+#'  @param Reg2 - character matrix with at least three columns named:
+#'  "chr1","start1","end1" which store information about coordinates
+#'  of the regions which we want to comape. Additionally,
+#'  "chr2","start2","end2" columns or any other column in the
+#'  matrix (such as SNP ID, proxy SNP ID,or reported gene).
 #'  
 #'   
 #'  @param byReg1 - character (default NULL),a name of the column which
-#'  will be used for additional filtering of overlapping regions (after
+#'  will be used for additional filtering of the overlapping regions (after
 #'  region1 is overlapped with region2).
 #'   with {name of another argument} to 
 #'  fileter and report only overlapping data 
@@ -41,44 +43,36 @@
 #'   
 #'  
 #'  @return A dataframe of coordinates of all overlapping regions.
-#'  Each row corresponds to one-SNP-one-regulatory-region overlap 
-#'  with addional metadata. Column names indicate whether coordinates and
-#'  additional info come from Reg1 or Reg2alog.
+#'  Each row corresponds to the combination of overlapped rows from 2 input
+#'  dataframes based on either: a) simple coordinates overlap, b) coordinates overlap + 
+#'  additionaly filtered based on byReg1 and byReg2 defined columns overlap, c) dual 
+#'  coordinates overlap between interacting regions. Column names indicate whether 
+#'  coordinates and additional info originates from Reg1 or Reg2alog.
 #'  
 #'  
 #'  @import GenomicRanges
 #'  @import stringr
 #'  
-#'  @details Function performs simple overlap between 2 
-#'  dataframes of coordinates stored as  "chr1","start1","end1". First,
-#'  it creates GRanges object, and then it runs
-#'  \code{\link[GenomicRanges]{findOverlaps}}
-#'  
-#'  @example 
-#'    load("~/Reg1.RData"))
-#'    load("~/Reg2.RData"))
-#'    OverlapGWASC(Reg1,Reg2)
-#'  
+#'  @details Function that performs:a) simple overlap between 2 
+#'  dataframes of coordinates stored as  "chr1","start1","end1". It creates
+#'  GRanges object, and then it runs \code{\link[GenomicRanges]{findOverlaps}}.
+#'  If input dataframe contains 2 locations of interacting regions:
+#'  "chr1","start1","end1","chr2","start2","end2" then it compares:
+#'  (Reg1coord1 with Reg2coord1)&(Reg1coord2 with Reg2coord2), and returns rows
+#'  where both combinations of overlaps are TRUE. If byReg1 and byReg1 different 
+#'  than NULL then overlapped regions are additionally filtered based on the
+#'  overlap between byReg1 and byReg1 defined columns
+#' 
+#'  @example  
 #' load("~/GWASCat.RData")
 #' load("~/RegCat.RData")
-#' Benchmark <- readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Data/Benchmark1/Benchmark1_Dataset_PooledANDProcessed_5sources_Overlapping_EnhPromoterR_SHORT_2kb_17_01_26.rds")
 #'
 #' OverlapRegions(GWASCat,RegCat)
 #' OverlapRegions(GWASCat,RegCat,byReg1="GeneName",byReg2="gene.name")
 #  error function
 #' OverlapRegions(GWASCat,RegCat,byReg1="gene.name",byReg2="GeneName")
-#' OverlapRegions(Benchmark,RegCat)
-#' OverlapRegions(RegCat,Benchmark)
-#' OverlapRegions(GWASCat,Benchmark)
 #'
-#' RegCatFull <- readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Results/Pooled_Analysis_Results_Rdmp_23022017/Pooled_MA_LM_EnhGene_DF_FULL_ADJUSTED_2017-02-28Benchmarking12017-03-02short.rds")
-#' BenchmarkFull <- readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Data/Benchmark1/Benchmark1_Dataset_PooledANDProcessed_5sources_17_01_18.rds")
-#'
-#' Benchmarked.int <- OverlapRegions(,
-#'                                  apply(BenchmarkFull[1:1000,],2,as.character))
-#' RegCat=apply(RegCatFull[1:100000,],2,as.character)
-#' Bench=apply(BenchmarkFull[1:100000,],2,as.character)
-#' Benchmarked.int <- OverlapRegions(Reg1,Reg2)
+
 
 
 
@@ -167,36 +161,48 @@ OverlapRegions <- function(Reg1,Reg2,byReg1=NULL,byReg2=NULL){
   }
 
 
-#' Complex overlap of interacting regions in the genome 
+#' Criss-cross overlap of interacting regions in the genome 
 #' 
-#' Criss-cross overlap   
+#'  A function that compares four input regions,eg two interacting regions
+#'  from one dataset with two interacting regions from the other dataset
+#'  in the criss-cross manner. Thus, the input orientation of the 
+#'  interacting regions is not strict: the first pair of the region1
+#'  from one dataset will be compared to both; the first pair and the
+#'  second pair of region2(and its pair is compared in the opposite 
+#'  direction). Two coordinate sets ("chr1","start1","end1",
+#'  "chr2","start2","end2") per input dataframe are MUST.  
 #'       
-#'  @param Reg1 - character matrix. Coordinates of the regions which we want
-#'  to comape should be stored in the three columns with following names:
-#'  "chr1","start1","end1". Additionally "chr2","start2","end2" columns or
-#'  any other column can be a part of the matrix (such as SNP ID, proxy SNP 
-#'  ID,or reported gene.
+#'  @param Reg1 - character matrix with at least six columns named
+#'  "chr1","start1","end1","chr2","start2","end2" which store 
+#'  information about coordinates of two interaction regions in the
+#'  genome which we want to comape to two other interacting regions.
 #'   
-#'  @param Reg2 - character matrix. Coordinates of the regions with which
-#'  Reg1 coordinates are compared should be stored in the three columns
-#'  with the following names:"chr1","start1","end1". 
-#'  Additionally "chr2","start2","end2" columns or any other column
-#'  can be a part of the matrix (such as gene names)
-#'  @return A dataframe of coordinates of all overlapping regions.
-#'  Each row corresponds to one-SNP-one-regulatory-region overlap 
-#'  with addional metadata. Column names indicate whether coordinates and
-#'  additional info come from Reg1 or Reg2alog.
-#'  
+#'  @param Reg2 - character matrix with at least six columns named
+#'  "chr1","start1","end1","chr2","start2","end2" which store 
+#'  information about coordinates of two interaction regions in the
+#'  genome which we want to comape to two other interacting regions.
+#'
+#'  @return A dataframe of coordinates of all overlapping regions and
+#'  metadata that was stored in the input matrices. Each row corresponds
+#'  to one combination of Region1-Region2 overlaps. Column names indicate
+#'  whether coordinates and additional info come from Reg1 or Reg2alog.
 #'  
 #'  @import GenomicRanges
 #'  @import stringr
 #'  
-#'  @details Function performs simple overlap between 2 
-#'  dataframes of coordinates stored as  "chr1","start1","end1". First,
-#'  it creates GRanges object, and then it runs
-#'  \code{\link[GenomicRanges]{findOverlaps}}
-#'  
+#'  @details Function performs criss-cross overlap between 2 dataframes 
+#'  with coordinates from two interacting regions: "chr1","start1","end1",
+#'  "chr2","start2","end2". It creates GRanges objects, and performs
+#'  \code{\link[reg2gene]{OverlapRegions}} overlaps between 
+#'  Reg1Coord1-Reg2Coord1&Reg1Coord2-Reg2Coord2 and vice-versa
+#'  Reg1Coord1-Reg2Coord2&Reg1Coord2-Reg2Coord1.
+#' 
 #'  @example
+#'  load(file="~/RegCat.RData")
+#'  load(file="~/ComplexReg2.RData")
+#'
+#'  ComplexOverlaps(RegCat,ComplexReg2)
+
 
 
 
