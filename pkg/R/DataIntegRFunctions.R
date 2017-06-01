@@ -205,6 +205,11 @@
 #' @examples 
 #'      library(genomation)
 #'      library(GenomicRanges)
+#'      library(BSgenome.Hsapiens.UCSC.hg19)
+#'      library(preprocessCore)
+#'      library(DESeq2)
+#'      library(parallel)
+#'      library(stringr)
 #'      load("pkg/inst/extdata/regRegions.RData")
 #'      activitySignals <- c("pkg/inst/extdata/E085-H3K27ac.chr10.fc.signal.bigwig",
 #'                           "pkg/inst/extdata/E066-H3K27ac.chr10.fc.signal.bigwig")
@@ -304,6 +309,7 @@ regActivity <- function(regRegions,activitySignals,sampleIDs=NULL,isCovNA=FALSE,
 #'    Column names represent sample names/ids.
 #' 
 #' @examples 
+#'  library(GenomicRanges)
 #'  load("~/TSS.RData")
 #'  load("~/regActivity.RData")
 #'  regActivityAroundTSS(regActivity=regActivity,TSS=TSS,upstream=500000,downstream=500000)
@@ -473,6 +479,15 @@ regActivityAroundTSS <- function(RegRegionActivity,TSS,upstream=500000,
 #' 
 #' 
 #' @examples
+#' 
+#' 
+#'      library(genomation)
+#'      library(GenomicRanges)
+#'      library(BSgenome.Hsapiens.UCSC.hg19)
+#'      library(preprocessCore)
+#'      library(DESeq2)
+#'      library(parallel)
+#'      library(stringr)
 #' 
 #' load(file="~/GeneExpSignals.RData")
 #' load(file="~/LibStrand.RData")
