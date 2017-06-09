@@ -1,5 +1,6 @@
-.ScoresAsMcols <- function(scores.per.cell.type,activitySignals,sampleNames){
+.ScoresAsMcols <- function(scores.per.cell.type,activitySignals,sampleIDs){
   
+  require(stringr)
   # function that rearranges list of scores calculated per cell type
   
         mcols.per.cell.type <- rbind.data.frame(scores.per.cell.type,stringsAsFactors=F,
@@ -7,14 +8,8 @@
         
         # adjust column names - remove bw extension
         
-        if (is.null(sampleNames)) {
         
-              bw.exts = c(".bw",".bigWig",".bigwig",".BigWig", ".BIGWIG", ".BW")
-              colnames(mcols.per.cell.type) <- str_replace(basename(activitySignals),
-                                                     paste(bw.exts,collapse="|"),"")
-        }
-        
-        if (!is.null(sampleNames)) { colnames(mcols.per.cell.type) <- sampleNames}
+        colnames(mcols.per.cell.type) <- sampleIDs
        
         
         return(mcols.per.cell.type)
@@ -45,17 +40,22 @@
   }
   
 
-.ExonExpressionStrandAdjusted <- function(Exons,GeneExpSignals,sampleNames,LibStrand,
+.ExonExpressionStrandAdjusted <- function(Exons,GeneExpSignals,sampleIDs,LibStrand,
                                           mc.cores=1,summaryOperation="mean") {
   
   # function that separates stranded and unstranded libraries and quantifies 
   # exon expression separately for stranded libraries
   # eg expression of exons located on the + strand is quantified using forward libraries 
   # if libraries are unstranded then exon orientations is not taken into account
-  
+        require(stringr)
   # detect stranded tracks and unstranded tracks    
   ForwardLibraries <- str_detect(LibStrand,"\\+") 
   Unstranded.libraries <- str_detect(LibStrand,"\\*")
+  
+  if (sum(ForwardLibraries)!=(sum(!(ForwardLibraries|Unstranded.libraries)))){
+    stop("Number of forward and reverse libraries do not match")
+  }
+  
   
   # separate analysis for unstranded & stranded libraries
   
@@ -80,7 +80,7 @@
     
     ExonScoresForwardStrand.df <- .ScoresAsMcols(ExonScoresForwardStrand,
                                                  GeneExpSignals[ForwardLibraries],
-                                                 sampleNames[ForwardLibraries])
+                                                 sampleIDs[ForwardLibraries])
     
     # reverse strand               
     ExonScoresReverseStrand <- mclapply(GeneExpSignals[!(ForwardLibraries|Unstranded.libraries)], 
@@ -98,7 +98,7 @@
     
     ExonScoresReverseStrand.df <- abs(.ScoresAsMcols(ExonScoresReverseStrand,
                                                      GeneExpSignals[ForwardLibraries],
-                                                     sampleNames[ForwardLibraries]))
+                                                     sampleIDs[ForwardLibraries]))
     # pool reverse and forward strand together        
     Exons <- unlist(Exons)
     values(Exons) <- (cbind(mcols(Exons),rbind(ExonScoresForwardStrand.df,ExonScoresReverseStrand.df)))
@@ -107,7 +107,7 @@
   
   if (sum(Unstranded.libraries)!=0){
     
-    Exons <- unlist(Exons)
+    
     # Unstranded
     ExonScoresUnstranded <- mclapply(GeneExpSignals[Unstranded.libraries], 
                                      function(x) { try(ScoreMatrixBin(x,windows = Exons,bin.num = 1,type = "bigWig",
@@ -122,7 +122,7 @@
             
     ExonScoresUnstranded.df <- .ScoresAsMcols(ExonScoresUnstranded,
                                               GeneExpSignals[Unstranded.libraries],
-                                              sampleNames[Unstranded.libraries])                  
+                                              sampleIDs[Unstranded.libraries])                  
     
     values(Exons) <- (cbind(mcols(Exons),rbind(ExonScoresUnstranded.df)))
     
@@ -163,7 +163,7 @@
 #' over which the regulatory activity will be calculated.
 #' @param activitySignals a named list of BigWig files. Names correspond to 
 #'        unique sample ids/names.
-#' @param sampleNames NULL (default). A vector of unique sample
+#' @param sampleIDs NULL (default). A vector of unique sample
 #' ids/names(.bw files), ordered as the bigwig files are ordered. When NULL
 #' basenames of .bw files is used as a unique sample ids/names.
 #' @param isCovNA (def:FALSE), if this is set to TRUE, uncovered
@@ -194,6 +194,7 @@
 #' @import preprocessCore
 #' @import DESeq2
 #' @import parallel
+#' @import stringr
 #' 
 #' @details regulatory activity is measured by averaging logFC for
 #' histone modification ChIP-seq profiles, or DNAse signal, or methylation
@@ -208,14 +209,14 @@
 #'      activitySignals <- c("pkg/inst/extdata/E085-H3K27ac.chr10.fc.signal.bigwig",
 #'                           "pkg/inst/extdata/E066-H3K27ac.chr10.fc.signal.bigwig")
 #'      regActivity(regRegions,activitySignals)
-#'      sampleNames <- c("E085","E066")
-#'      regActivity(regRegions,activitySignals,sampleNames)
+#'      sampleIDs <- c("E085","E066")
+#'      regActivity(regRegions,activitySignals,sampleIDs)
 #'      
 #' 
 
 
 
-regActivity <- function(regRegions,activitySignals,sampleNames=NULL,isCovNA=FALSE,
+regActivity <- function(regRegions,activitySignals,sampleIDs=NULL,isCovNA=FALSE,
                       summaryOperation="mean",normalize=NULL,mc.cores=1){
   
   
@@ -224,6 +225,16 @@ regActivity <- function(regRegions,activitySignals,sampleNames=NULL,isCovNA=FALS
           # test input - bigwig files
           if (!min(sapply(activitySignals,file.exists))) {stop("activitySignals object missing") }
           
+          if (is.null(sampleIDs)) {
+            
+            bw.exts = c(".bw",".bigWig",".bigwig",".BigWig", ".BIGWIG", ".BW")
+            sampleIDs <- str_replace(basename(activitySignals),
+                                                         paste(bw.exts,collapse="|"),"")
+          }
+  
+  
+  
+  
   # adjust chromosome sizes 
   seqlengths(regRegions) <- seqlengths(Hsapiens)[names(seqlengths(regRegions))]        
   
@@ -238,13 +249,18 @@ regActivity <- function(regRegions,activitySignals,sampleNames=NULL,isCovNA=FALS
                                            bin.op=summaryOperation,
                                            mc.cores = mc.cores)
           
-  # add normalization
-          if (!is.null(normalize)) {scores.per.cell.type <-  .NormalizeScores(ScoresDF=scores.per.cell.type,
+         
+           # adding scores as mcols  
+          scores.per.cell.type.df <- .ScoresAsMcols(scores.per.cell.type,activitySignals,sampleIDs)
+        
+          
+          # add normalization
+          if (!is.null(normalize)) {scores.per.cell.type.df <-  .NormalizeScores(ScoresDF=scores.per.cell.type.df,
                                                                               NormalizationMet=normalize)}
           
-           # adding scores as mcols  
-          mcols(regRegions) <- .ScoresAsMcols(scores.per.cell.type,activitySignals,sampleNames)
-         
+          
+          mcols(regRegions) <- scores.per.cell.type.df
+           
           return(regRegions)
           
   
@@ -293,31 +309,23 @@ regActivity <- function(regRegions,activitySignals,sampleNames=NULL,isCovNA=FALS
 #'  regActivityAroundTSS(regActivity=regActivity,TSS=TSS,upstream=500000,downstream=500000)
 #' 
 #' 
-#'  local long examples
-#'  load(file="~/LargeExons.RData")
 #'  load(file="~/LargeregRegions.RData")
+#'  RoadmapH3K4me1 <- readRDS("/data/akalin/Projects/AAkalin_reg2gene/Results/regActivity/Roadmap_H3K4me1_meanratio.rds")
+#'  RoadmapRNASeq <- readRDS("/data/akalin/Projects/AAkalin_reg2gene/Results/bwToGeneExp/Roadmap_RNASeq_meanratio.rds")
 #'
-#'  ListBWPerMethod <- readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Results/Index_file_ALL_4_COHORT/17_05_08_list_bw_per_method_per_cohort.rds")
-#'  SampleNames <- readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Results/Index_file_ALL_4_COHORT/17_05_09_samplenames_bw_per_method_per_cohort.rds")
-#'  Strand <- readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Results/Index_file_ALL_4_COHORT/17_05_09_Strand_bw_per_method_per_cohort.rds")
+#'    regActivityAroundTSS(RegRegionActivity = RoadmapH3K4me1, TSS = RoadmapRNASeq[1:10])
+#' 
+#' 
+#' RegRegionActivity <- readRDS(pathRegActivity)
+#' TSS <- readRDS(pathTSS)[1:10]
+#' Method <- basename(pathRegActivity)
+#' mc.cores=25
+#'  regActivityAroundTSS(RegRegionActivity, 
+#'                                   TSS,
+#'                                   downstream=1000000,
+#'                                   upstream=1000000,
+#'                                   mc.cores)
 #'
-#'
-#'    H3K4me1 <- regActivity(regRegions=regRegions,activitySignals=ListBWPerMethod$Roadmap$H3K4me1,
-#'                       sampleNames=SampleNames$Roadmap$H3K4me1,isCovNA = F,
-#'                       summaryOperation = "mean")
-#'    RNASEQ <- bwToGeneExp(Exons=Exons,GeneExpSignals=ListBWPerMethod$Roadmap$`RNA-Seq`,
-#'                      sampleNames=SampleNames$Roadmap$`RNA-Seq`,
-#'                      LibStrand=Strand$Roadmap$`RNA-Seq`)
-#'    regActivityAroundTSS(regActivity = H3K4me1, TSS = RNASEQ)
-#'
-#'
-#'
-#'   DNAme.bp <- regActivity(regRegions,activitySignals=ListBWPerMethod$Blueprint$`DNA Methylation`,
-#'                       sampleNames=SampleNames$Blueprint$`DNA Methylation`)
-#'   RNASEQ.bp <- bwToGeneExp(Exons=Exons,GeneExpSignals=ListBWPerMethod$Blueprint$`RNA-Seq`,
-#'                             sampleNames=SampleNames$Blueprint$`RNA-Seq`,
-#'                         LibStrand=Strand$Blueprint$`RNA-Seq`,normalize=NULL)
-#'    regActivityAroundTSS(regActivity = DNAme.bp, TSS = RNASEQ.bp)
 #' 
 #' 
 #' @details only enhancers located within (+/-)upstream/downstream of TSS 
@@ -333,35 +341,35 @@ regActivity <- function(regRegions,activitySignals,sampleNames=NULL,isCovNA=FALS
 #' 
 
 
-regActivityAroundTSS <- function(regActivity,TSS,upstream=500000,
-                                 downstream=500000){
+regActivityAroundTSS <- function(RegRegionActivity,TSS,upstream=500000,
+                                 downstream=500000,mc.cores=10){
   
   
   
   # extend TSS for wanted region & split per gene such that analysis goes per gene
   TSS.extended <- promoters(TSS,upstream=upstream,downstream=downstream)
-  TSS.extended <- split(TSS.extended,TSS.extended$name)
+  TSS.extended <- split(TSS.extended,as.character(TSS.extended$name))
   
   # getting EnhRegions which overlap extended TSS
   
-  TSSexprRegActivity <- lapply(TSS.extended,function(x){
+  TSSexprRegRegionActivity <- mclapply(TSS.extended,function(x){
     
     # overlap extended TSS & regRegion
-    TSS.regAct.overlap <- as.data.frame(findOverlaps(x,regActivity))
+    TSS.regAct.overlap <- as.data.frame(findOverlaps(x,RegRegionActivity))
     
     # if there is any overlap - GO!
     if (nrow(TSS.regAct.overlap)!=0) {
       
-      regActivity <- regActivity[TSS.regAct.overlap$subjectHits]
+      RegRegionActivity <- RegRegionActivity[TSS.regAct.overlap$subjectHits]
       
       # adjusting mcols
-      name <- as.character(regActivity)
+      name <- as.character(RegRegionActivity)
       featureType <- rep("regulatory",length(name))
       name2 <- rep(NA,length(name))
       gene.indicator <- TSS.regAct.overlap$queryHits
       
-      mcols(regActivity) <- cbind(gene.indicator,featureType,name,name2,
-                                  data.frame(mcols(regActivity)))
+      mcols(RegRegionActivity) <- cbind(gene.indicator,featureType,name,name2,
+                                        data.frame(mcols(RegRegionActivity)))
       
       # adjusting mcols for gene expression object
       featureType <- "gene"
@@ -370,17 +378,17 @@ regActivityAroundTSS <- function(regActivity,TSS,upstream=500000,
       mcols(x) <- cbind(gene.indicator,featureType,
                         data.frame(mcols(x)))
       
-      TSS.colnames <- colnames(mcols(x))[colnames(mcols(x))%in%colnames(mcols(regActivity))]
+      TSS.colnames <- colnames(mcols(x))[colnames(mcols(x))%in%colnames(mcols(RegRegionActivity))]
       mcols(x) <-  mcols(x)[TSS.colnames]
-      mcols(regActivity) <-  mcols(regActivity)[TSS.colnames]
+      mcols(RegRegionActivity) <-  mcols(RegRegionActivity)[TSS.colnames]
       
-      return(c(x,regActivity))
+      return(c(x,RegRegionActivity))
       
     }
-  })
+  },mc.cores = mc.cores)
   
   
-  return(TSSexprRegActivity)
+  return(TSSexprRegRegionActivity)
   
 }
 
@@ -406,7 +414,7 @@ regActivityAroundTSS <- function(regActivity,TSS,upstream=500000,
 #'       the unique sample ids/names. Stranded and unstranded libraries allowed.
 #'       BUT!!! It is crucial that forward and reverse RNA-Seq libraries are listed
 #'       in a row (eg one on top of each other)
-#'  @param sampleNames NULL (default). A vector of unique sample
+#'  @param sampleIDs NULL (default). A vector of unique sample
 #'  ids/names(.bw files), ordered as the bigwig files are ordered. When NULL
 #'  basenames of .bw files is used as a unique sample ids/names.
 #'  @param LibStrand a vector of "*","+,"-" (default NULL) which needs to be entered
@@ -461,7 +469,7 @@ regActivityAroundTSS <- function(regActivity,TSS,upstream=500000,
 #' @import DESeq2
 #' @import stringr
 #' @import preprocessCore
-#' 
+#' @import BSgenome.Hsapiens.UCSC.hg19
 #' 
 #' 
 #' @examples
@@ -469,24 +477,37 @@ regActivityAroundTSS <- function(regActivity,TSS,upstream=500000,
 #' load(file="~/GeneExpSignals.RData")
 #' load(file="~/LibStrand.RData")
 #' load(file="~/Exons.RData")
-#' load(file="~/sampleNames.RData")
+#' load(file="~/sampleIDs.RData")
 #' 
-#'    bwToGeneExp(Exons=Exons,GeneExpSignals=GeneExpSignals,LibStrand=LibStrand, mc.cores=1,normalize="ratio")
-#'    bwToGeneExp(Exons=Exons,GeneExpSignals=GeneExpSignals,LibStrand=LibStrand, mc.cores=1,normalize="quantile")
-#'    bwToGeneExp(Exons=Exons,GeneExpSignals=GeneExpSignals,LibStrand=LibStrand, mc.cores=1,normalize=NULL)
-#'    bwToGeneExp(Exons=Exons,GeneExpSignals=GeneExpSignals,LibStrand=LibStrand,sampleNames=sampleNames, 
-#'                 mc.cores=1,normalize=NULL)
-#' 
+#'     bwToGeneExp(Exons,GeneExpSignals,LibStrand, sampleIDs=NULL,mc.cores=1,normalize="ratio",summaryOperation="mean")
+#'     bwToGeneExp(Exons,GeneExpSignals,LibStrand, mc.cores=1,normalize="quantile", sampleIDs=NULL,summaryOperation="mean")
+#'     bwToGeneExp(Exons,GeneExpSignals,LibStrand, mc.cores=1,normalize=NULL, sampleIDs=NULL,summaryOperation="mean")
+#'     bwToGeneExp(Exons=Exons,GeneExpSignals=GeneExpSignals,LibStrand=LibStrand,sampleIDs=sampleIDs, 
+#'                   mc.cores=1,normalize="quantile",summaryOperation="mean")
 #' 
 
 
 
-bwToGeneExp <- function(Exons,GeneExpSignals,sampleNames=NULL,LibStrand=NULL,
+
+bwToGeneExp <- function(Exons,
+                        GeneExpSignals,
+                        sampleIDs=NULL,
+                        LibStrand=NULL,
                         summaryOperation="mean",
-                        mc.cores=1,normalize="ratio"){
+                        mc.cores=1,
+                        normalize="ratio"){
   
   # test if there is any info about genes in exon granges object
   if (sum(str_detect(colnames(mcols(Exons)),"gene.id"))==0)  {stop("No info about the gene name")}
+  
+  
+  if (is.null(sampleIDs)) {
+    
+        bw.exts = c(".bw",".bigWig",".bigwig",".BigWig", ".BIGWIG", ".BW")
+        sampleIDs <- str_replace(basename(GeneExpSignals),
+                                 paste(bw.exts,collapse="|"),"")
+  }
+      
   
   # adjust chromosome sizes 
   seqlengths(Exons) <- seqlengths(Hsapiens)[names(seqlengths(Exons))]
@@ -502,7 +523,7 @@ bwToGeneExp <- function(Exons,GeneExpSignals,sampleNames=NULL,LibStrand=NULL,
                     # quantify expression per exon with adjustment to strandness of RNA-Seq libraries
                        ExonExpression <- .ExonExpressionStrandAdjusted(Exons=Exons.splitted,
                                                                        GeneExpSignals=GeneExpSignals,
-                                                                       sampleNames=sampleNames, 
+                                                                       sampleIDs=sampleIDs, 
                                                                        LibStrand=LibStrand,
                                                                        mc.cores=mc.cores,
                                                                        summaryOperation=summaryOperation)
@@ -512,27 +533,30 @@ bwToGeneExp <- function(Exons,GeneExpSignals,sampleNames=NULL,LibStrand=NULL,
                             GeneExpression <- lapply(ExonExpressionPerGene,.QuantifyGeneExpression)
                             GeneExpression.df <- do.call("rbind",GeneExpression)
                      
-                  
+                            
                   # normalization
                        if (!is.null(normalize)) {GeneExpression.df <-  .NormalizeScores(ScoresDF=GeneExpression.df,
                                                                                         NormalizationMet=normalize)}
           
-       
+                            
           # arranging gene coordinates as TSS  
-               Genes.object <- as.data.frame(mcols(ExonExpression)[1:5]) # extract gene location
+               Genes.object <- data.frame(unique(mcols(ExonExpression)[1:7]),stringsAsFactors = F) # extract gene location
                 # TSS coord of genes
-                   TSS <- promoters(reduce(GRanges(Genes.object$seqnames,
+                   TSS <- promoters(GRanges(Genes.object$seqnames,
                                                    IRanges(Genes.object$start,Genes.object$end),
-                                                   strand=Genes.object$strand)),1,1)
+                                                   strand=Genes.object$strand),1,1)
                   
-                      
+                     
           # adding meta-data    
-               name <- unique(as.character(ExonExpression$gene.id))
-               name2 <- unique(as.character(ExonExpression$gene.name))
+               name <- as.character(Genes.object$gene.id)
+               name2 <- as.character(Genes.object$gene.name)
                          if (length(name2)==0) { name2 <-  rep(NA,length(name))} # if there is no 2nd name
-                    
-            mcols(TSS) <- cbind(name,name2,GeneExpression.df[match(name,rownames(GeneExpression.df)),])
-                           
+               metadata <- data.frame(name,name2,GeneExpression.df[match(name,rownames(GeneExpression.df)),],stringsAsFactors = F)
+               
+            mcols(TSS) <- metadata
+              
+              
+              
                 return(TSS) 
          
           
