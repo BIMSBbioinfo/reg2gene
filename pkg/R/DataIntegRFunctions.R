@@ -1,6 +1,5 @@
 .ScoresAsMcols <- function(scores.per.cell.type,activitySignals,sampleIDs){
   
-  require(stringr)
   # function that rearranges list of scores calculated per cell type
   
         mcols.per.cell.type <- rbind.data.frame(scores.per.cell.type,stringsAsFactors=F,
@@ -19,9 +18,7 @@
 .NormalizeScores <- function(ScoresDF,NormalizationMet=normalize){
   # f() that runs normalization
   
-    require(DESeq2)
-    require(preprocessCore)
-  
+    
           if (NormalizationMet=="ratio") {   
                 # estimate size factors and multiply gene expression using these factors
                       sizeFactors <- estimateSizeFactorsForMatrix(as.matrix(ScoresDF))
@@ -47,7 +44,7 @@
   # exon expression separately for stranded libraries
   # eg expression of exons located on the + strand is quantified using forward libraries 
   # if libraries are unstranded then exon orientations is not taken into account
-        require(stringr)
+        
   # detect stranded tracks and unstranded tracks    
   ForwardLibraries <- str_detect(LibStrand,"\\+") 
   Unstranded.libraries <- str_detect(LibStrand,"\\*")
@@ -217,12 +214,14 @@
 #'      sampleIDs <- c("E085","E066")
 #'      regActivity(regRegions,activitySignals,sampleIDs)
 #'      
-#' 
-
-
-
-regActivity <- function(regRegions,activitySignals,sampleIDs=NULL,isCovNA=FALSE,
-                      summaryOperation="mean",normalize=NULL,mc.cores=1){
+#' @export
+regActivity <- function(regRegions,
+                        activitySignals,
+                        sampleIDs=NULL,
+                        isCovNA=FALSE,
+                      summaryOperation="mean",
+                      normalize=NULL,
+                      mc.cores=1){
   
   
           # test input - ranges
@@ -344,9 +343,7 @@ regActivity <- function(regRegions,activitySignals,sampleIDs=NULL,isCovNA=FALSE,
 #' 
 #' @import GenomicRanges
 #' 
-#' 
-
-
+#' @export
 regActivityAroundTSS <- function(RegRegionActivity,TSS,upstream=500000,
                                  downstream=500000,mc.cores=10){
   
@@ -499,11 +496,7 @@ regActivityAroundTSS <- function(RegRegionActivity,TSS,upstream=500000,
 #'     bwToGeneExp(Exons,GeneExpSignals,LibStrand, mc.cores=1,normalize=NULL, sampleIDs=NULL,summaryOperation="mean")
 #'     bwToGeneExp(Exons=Exons,GeneExpSignals=GeneExpSignals,LibStrand=LibStrand,sampleIDs=sampleIDs, 
 #'                   mc.cores=1,normalize="quantile",summaryOperation="mean")
-#' 
-
-
-
-
+#' @export
 bwToGeneExp <- function(Exons,
                         GeneExpSignals,
                         sampleIDs=NULL,
