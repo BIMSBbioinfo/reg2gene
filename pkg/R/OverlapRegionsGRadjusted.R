@@ -72,9 +72,7 @@
 #' @export
 OverlapRegions <- function(Reg1,Reg2){
 
-#  Reg1 <- GRReg2Extended_toy[1:5]
-#  Reg2 <- GRReg1Extended_toy.3
-  
+
    # Reg1-Reg1 overlap            
   Reg1.Reg1.Overlap <- data.frame(findOverlaps(Reg1,Reg2))
   
@@ -85,12 +83,9 @@ OverlapRegions <- function(Reg1,Reg2){
   # adding Overlapped regions and mcols on top of those we want to test       
     Reg1Reg2 <- Reg1[Reg1.Reg1.Overlap$queryHits,]
     Reg1Reg2$Reg2coord1 <- (Reg2[Reg1.Reg1.Overlap$subjectHits,])
-   
          mcols(Reg1Reg2) <- cbind(mcols(Reg1Reg2),mcols(Reg2[Reg1.Reg1.Overlap$subjectHits,]))
-     
-  if (max(str_detect(colnames(mcols(Reg1Reg2)),"Reg2_reg"))){
-    # if 2 coordinates in benchmark2 exists as well
-
+    
+    ########## 
     # Reg1-Reg1 overlap            
     Reg2.Reg2.Overlap <- data.frame(findOverlaps(Reg1Reg2$Reg1_reg,Reg1Reg2$Reg2_reg))
     
@@ -100,8 +95,6 @@ OverlapRegions <- function(Reg1,Reg2){
     Reg1Reg2 <- Reg1Reg2[InputRows.Overlapped,]
     Reg1Reg2$Coor1Coord2PAIR <- Reg1.Reg1.Overlap$queryHits[InputRows.Overlapped]
     
-
-  }
   
   return(Reg1Reg2)
   
