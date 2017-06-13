@@ -1,3 +1,72 @@
+.Exp_filtering = function(INPUT){
+  
+  if (any(INPUT!=0) &
+      
+      (sum(INPUT==0,na.rm=T)/length(INPUT) < 0.9) &
+      
+      (var(as.numeric(INPUT),na.rm=T)!=0))
+    
+    #&(as.logical(min(complete.cases(INPUT)))))
+    
+  {return(TRUE)}else{
+    return(FALSE)
+  }
+  
+}
+
+
+#' Filters genes and enhancer regions prior modelling
+#' 
+#' The function that takes as an input individual GRanges object stored in GRangesList from
+#' \code{regActivityAroundTSS} and returns a vector of TRUE,FALSE entries corresponding to
+#' members of GRange object and whether they pass filtering or not.  
+#' 
+#' @param TSSmodel a GRanges object, member of the GRangesList from \code{regActivityAroundTSS}
+#'   
+#' @return a vector of TRUE,FALSE entries which indicates whether ranges in the input
+#' GRanges object passed filtering or not.
+#'  
+#' @import GenomicRanges
+#'  
+#' @details It checks whether genes and enhancer region have:a) an expression 
+#' or enhancer activity eqaul to 0 across all samples(cell types) or 90% of expression values or
+#' enhancer activity is equal to 0; b) variance across samples is different from 0.
+#' FALSE value indicates that these ranges should filtered prior the modelling procedure; 
+#' TRUE indicates that it is ok to proceed with this ranges. 
+#' !IMPORTANT NOTE! If the first entry is FALSE, than that gene should be removed from the analysis
+#' 
+#' 
+#' @example FilterPerGeneModel(GR_exp_toy)
+#' 
+#' 
+#' @export
+FilterPerGeneModel <- function(TSSmodel){
+  
+  MetaData <- data.frame(mcols(TSSmodel),stringsAsFactors = F)
+  
+  MetaData <- MetaData[,!colnames(MetaData)%in%c("gene.indicator","featureType","name","name2")]
+  
+  return(apply(MetaData,1,.Exp_filtering))
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #' #' Selects Reg2gene entries which could be benchmarked with Benchmark dataset
 #' #'
 #' # #' The function that takes as an input results of \code{linkReg2Gene} or
@@ -67,7 +136,6 @@
 #' 
 #' 
 #' 
-#' #Filter_PreModelling <- function()
 #' 
 #' 
 #' 
