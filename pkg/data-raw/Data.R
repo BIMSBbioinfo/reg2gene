@@ -33,10 +33,7 @@ BenchMarkedReg2Gene_toy$BenchmarkO <- c(TRUE,TRUE,TRUE,FALSE,TRUE,FALSE)
 BenchMarkedReg2Gene_toy$PValue <- c(0.05,0.06,0.01,0.5,0,1)
 
 
-Reg2Gene=BenchMarkedReg2Gene_toy
-colnames(GenomicRanges::mcols(Reg2Gene))
-
-
+save(BenchMarkedReg2Gene_toy,file="data/BenchMarkedReg2Gene_toy.RData")
 
 ################################################################
 # Create examples to test Filter_PreModelling()
