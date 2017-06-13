@@ -36,9 +36,9 @@
 #' benchmarked or not,and how many times (if binary=F) 
 #' 
 #' 
-#' @examples BenchMarkReg2Gene(GRReg1Extended_toy.3,GRReg2Extended_toy)
-#' BenchMarkReg2Gene(GRReg2Extended_toy[1:5],GRReg1Extended_toy.3)
-#' BenchMarkReg2Gene(GRReg2Extended_toy,GRReg1Extended_toy.3)
+#' @examples BenchMarkReg2Gene(GRReg1_toy ,GRReg2_toy )
+#' BenchMarkReg2Gene(GRReg2_toy,GRReg1_toy )
+#' 
 #'  
 #'@export
 BenchMarkReg2Gene <- function(Reg2Gene,
