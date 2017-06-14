@@ -25,27 +25,19 @@
 #'  additional info come from GWASCat or RegCatalog.
 #'  
 #'  
-#'  @import GenomicRanges
 #'  
 #'  
 #'  @details Function performs simple overlap between 2 
 #'  dataframes of coordinates stored as  "chr1","start1","end1". First,
 #'  it creates GRanges object, and then it runs
-#'  \code{\link[GenomicRanges]{findOverlaps}}
 #'  
-#'  @example 
-#'    load("~/GWASCat.RData"))
-#'    load("~/RegCat.RData"))
-#'    OverlapGWASC(GWASCat,RegCat)
+#'  @examples
+#'    #load("~/GWASCat.RData"))
+#'    #load("~/RegCat.RData"))
+#'    #OverlapGWASC(GWASCat,RegCat)
 #'  
-
-
-
 #GWASCat <- readRDS("D:/Projects_Helping/PhD/GWASCat_example_17_05_10.rds")
 #RegCat <- readRDS("D:/Projects_Helping/PhD/RegCat_17_05_10.rds")
-
-
-
 OverlapGWASC <- function(GWASCat,RegCat){
   
   
