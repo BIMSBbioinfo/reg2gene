@@ -26,7 +26,6 @@
 #' @return a vector of TRUE,FALSE entries which indicates whether ranges in the input
 #' GRanges object passed filtering or not.
 #'  
-#' @import GenomicRanges
 #'  
 #' @details It checks whether genes and enhancer region have:a) an expression 
 #' or enhancer activity eqaul to 0 across all samples(cell types) or 90% of expression values or
@@ -104,10 +103,6 @@ FilterPerGeneModel <- function(TSSmodel){
 #' #' in Benchmark object. Optional and useful if filtering should be performed based on the overlap
 #' #' between regions and gene names.
 #' 
-#' #library(plyr)
-#' #library(stringr)
-#' #library(GenomicRanges)
-#' #library(reg2gene)
 #' 
 #' 
 #' Filter_PreBench <- function(Reg2GenePreFilter,
