@@ -11,7 +11,6 @@
 #' 
 #' 
 #' @param Reg2Gene a GRanges object output from \code{linkReg2Gene} or \code{MetaReg2Gene}
-
 #' @param Benchmark a GRanges object
 #'   
 #' 
@@ -24,10 +23,6 @@
 #' but with column added which reports how many times interaction was overlapped
 #' or whether reported interaction was overlapped
 #' 
-#' @import GenomicRanges
-#' @import stringr
-#' @import plyr
-#' @importFrom plyr rename
 #' 
 #' 
 #' @details GRanges object or dataframe as an output of linkReg2Gene or Reg2GeneMA 
@@ -95,10 +90,6 @@ BenchMarkReg2Gene <- function(Reg2Gene,
 #' @return Reports either positive predictive value or statictics based on 
 #' confusion matrix \code{\link[caret]{confusionMatrix}}
 #' 
-#' @import GenomicRanges
-#' @import stringr
-#' @importFrom caret confusionMatrix
-#' @importFrom caret posPredValue
 #' 
 #' @details Reports statistics based on the confusion matrix. There are four different categories
 #' in the confusion matrix: 

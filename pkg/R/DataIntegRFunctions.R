@@ -185,13 +185,6 @@
 #'         to calculated acvitity measures and column names 
 #'         correspond to provided sample ids or names.
 #' 
-#' @import genomation
-#' @import GenomicRanges
-#' @import BSgenome.Hsapiens.UCSC.hg19
-#' @import preprocessCore
-#' @import DESeq2
-#' @import parallel
-#' @import stringr
 #' 
 #' @details regulatory activity is measured by averaging logFC for
 #' histone modification ChIP-seq profiles, or DNAse signal, or methylation
@@ -200,14 +193,7 @@
 #' in the future. 
 #' 
 #' @examples 
-#'      library(genomation)
-#'      library(GenomicRanges)
-#'      library(BSgenome.Hsapiens.UCSC.hg19)
-#'      library(preprocessCore)
-#'      library(DESeq2)
-#'      library(parallel)
-#'      library(stringr)
-#'      load("pkg/inst/extdata/regRegions.RData")
+#'      load("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/pkg/inst/extdata/regRegions.RData")
 #'      activitySignals <- c("pkg/inst/extdata/E085-H3K27ac.chr10.fc.signal.bigwig",
 #'                           "pkg/inst/extdata/E066-H3K27ac.chr10.fc.signal.bigwig")
 #'      regActivity(regRegions,activitySignals)
@@ -308,10 +294,9 @@ regActivity <- function(regRegions,
 #'    Column names represent sample names/ids.
 #' 
 #' @examples 
-#'  library(GenomicRanges)
 #'  load("~/TSS.RData")
 #'  load("~/regActivity.RData")
-#'  regActivityAroundTSS(regActivity=regActivity,TSS=TSS,upstream=500000,downstream=500000)
+#'  regActivityAroundTSS(regActivity,TSS,upstream=500000,downstream=500000)
 #' 
 #' 
 #'  load(file="~/LargeregRegions.RData")
@@ -341,7 +326,6 @@ regActivity <- function(regRegions,
 #' regActivity objects. Non-overlapping cell types are excluded.
 #'  
 #' 
-#' @import GenomicRanges
 #' 
 #' @export
 regActivityAroundTSS <- function(RegRegionActivity,TSS,upstream=500000,
@@ -402,42 +386,41 @@ regActivityAroundTSS <- function(RegRegionActivity,TSS,upstream=500000,
 #' Quantifies gene expression measured by RNA-Seq  
 #' 
 #' 
-#'  The function quantifies gene expression as a sum of exon 
-#'  expressions quantified over pre-defined exon regions using 
-#'  signal from RNA-Seq tracks (bigwig files) and returns a
-#'  GRanges object with TSS location and corresponding gene
-#'  expression levels quantified over a set of samples. 
+#' The function quantifies gene expression as a sum of exon 
+#' expressions quantified over pre-defined exon regions using 
+#' signal from RNA-Seq tracks (bigwig files) and returns a
+#' GRanges object with TSS location and corresponding gene
+#' expression levels quantified over a set of samples. 
 #'  
 #' 
 #' 
-#'  @param Exons A GRanges object that contains exon regions over which 
-#'  the expression will be calculated. A meta-columns with following info are
-#'  necessary: need to adjust these
-#'  @param GeneExpSignals a named list of RNA-Seq BigWig files. Names correspond to 
-#'       the unique sample ids/names. Stranded and unstranded libraries allowed.
-#'       BUT!!! It is crucial that forward and reverse RNA-Seq libraries are listed
-#'       in a row (eg one on top of each other)
-#'  @param sampleIDs NULL (default). A vector of unique sample
-#'  ids/names(.bw files), ordered as the bigwig files are ordered. When NULL
-#'  basenames of .bw files is used as a unique sample ids/names.
-#'  @param LibStrand a vector of "*","+,"-" (default NULL) which needs to be entered
-#'  as an argument.This vector provides info about the order of RNA-Seq libraries
-#'   based on their strandness:
-#'  "+" corresponds to forward/positive RNA-Seq bigwig files, whereas 
-#'  "-" corresponds to reverse/negative RNA-Seq bigwig files and "*" is unstranded
-#'  library. When all libraries are unstranded then the vector should contain a list
-#'  of "*" with the lenght equal to the number of analyzed RNA-Seq libraries
-#'  (eg bigwig files). If LibStrand=NULL than function will do it automatically, eg
-#'  create a vector of "*".It is crucial that stranded RNA-Seq libraries are
-#'   listed in a row (eg one on top of each other)
-#'   @param summaryOperation "mean"(default).
-#'  This designates which summary operation should be used over the regions.
-#'  Currently, only mean is available, but "median" or "sum" will be implemented
-#'  in the future.
-#'  @param mc.cores (def:1) Define the number of cores to use;
-#'  at most how many child processes will be run simultaneously 
-#'  using mclapply from parallel package. Parallelization requires at 
-#'  least two cores.
+#' @param Exons A GRanges object that contains exon regions over which 
+#' the expression will be calculated. A meta-columns with following info are
+#' necessary: need to adjust these
+#' @param GeneExpSignals a named list of RNA-Seq BigWig files. Names correspond to 
+#' the unique sample ids/names. Stranded and unstranded libraries allowed.
+#'  BUT!!! It is crucial that forward and reverse RNA-Seq libraries are listed
+#' in a row (eg one on top of each other)
+#' @param sampleIDs NULL (default). A vector of unique sample
+#' ids/names(.bw files), ordered as the bigwig files are ordered. When NULL
+#' basenames of .bw files is used as a unique sample ids/names.
+#' @param LibStrand a vector of "*","+,"-" (default NULL) which needs to be entered
+#' as an argument.This vector provides info about the order of RNA-Seq libraries
+#' based on their strandness: "+" corresponds to forward/positive RNA-Seq bigwig files; 
+#' "-" corresponds to reverse/negative RNA-Seq bigwig files and "*" is unstranded
+#' library. When all libraries are unstranded then the vector should contain a list
+#' of "*" with the lenght equal to the number of analyzed RNA-Seq libraries
+#' (eg bigwig files). If LibStrand=NULL than function will do it automatically, eg
+#' create a vector of "*".It is crucial that stranded RNA-Seq libraries are
+#' listed in a row (eg one on top of each other)
+#' @param summaryOperation "mean"(default).
+#' This designates which summary operation should be used over the regions.
+#' Currently, only mean is available, but "median" or "sum" will be implemented
+#' in the future.
+#' @param mc.cores (def:1) Define the number of cores to use;
+#' at most how many child processes will be run simultaneously 
+#' using mclapply from parallel package. Parallelization requires at 
+#' least two cores.
 #' @param normalize NULL(default). Optional "quantile" and "ration"
 #' If set to "quantile" activity measures are quantile normalized as 
 #' implemented in \code{\link[preprocessCore]{normalize.quantiles}} and
@@ -466,27 +449,9 @@ regActivityAroundTSS <- function(RegRegionActivity,TSS,upstream=500000,
 #' RNA-Seq .bw files can come from stranded,unstranded or mixed 
 #' libraries.
 #' 
-#' @import GenomicRanges
-#' @import genomation
-#' @import parallel
-#' @import DESeq2
-#' @import stringr
-#' @import preprocessCore
-#' @import BSgenome.Hsapiens.UCSC.hg19
 #' 
 #' 
-#' @examples
-#' 
-#' 
-#'      library(genomation)
-#'      library(GenomicRanges)
-#'      library(BSgenome.Hsapiens.UCSC.hg19)
-#'      library(preprocessCore)
-#'      library(DESeq2)
-#'      library(parallel)
-#'      library(stringr)
-#' 
-#' load(file="~/GeneExpSignals.RData")
+#' @examples load(file="~/GeneExpSignals.RData")
 #' load(file="~/LibStrand.RData")
 #' load(file="~/Exons.RData")
 #' load(file="~/sampleIDs.RData")

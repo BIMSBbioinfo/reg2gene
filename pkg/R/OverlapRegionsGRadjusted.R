@@ -50,9 +50,6 @@
 #' coordinates and additional info originates from Reg1 or Reg2alog.
 #'  
 #'  
-#' @import GenomicRanges
-#' @import stringr
-#'  
 #' @details Function that performs:a) simple overlap between 2 
 #' dataframes of coordinates stored as  "chr1","start1","end1". It creates
 #' GRanges object, and then it runs \code{findOverlaps}.
@@ -128,8 +125,6 @@ OverlapRegions <- function(Reg1,Reg2){
 #' to one combination of Region1-Region2 overlaps. Column names indicate
 #' whether coordinates and additional info come from Reg1 or Reg2alog.
 #'  
-#' @import GenomicRanges
-#' @import stringr
 #'  
 #' @details Function performs criss-cross overlap between 2 dataframes 
 #' with coordinates from two interacting regions: "chr1","start1","end1",
