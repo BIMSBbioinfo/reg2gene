@@ -192,14 +192,14 @@
 #' activity. This function might be extended to work with BAM files
 #' in the future. 
 #' 
-#' @examples 
-#'      load("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/pkg/inst/extdata/regRegions.RData")
-#'      activitySignals <- c("pkg/inst/extdata/E085-H3K27ac.chr10.fc.signal.bigwig",
-#'                           "pkg/inst/extdata/E066-H3K27ac.chr10.fc.signal.bigwig")
-#'      regActivity(regRegions,activitySignals)
-#'      sampleIDs <- c("E085","E066")
-#'      regActivity(regRegions,activitySignals,sampleIDs)
-#'      
+#' #@examples
+#'#      load("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/pkg/inst/extdata/regRegions.RData")
+#'#      activitySignals <- c("pkg/inst/extdata/E085-H3K27ac.chr10.fc.signal.bigwig",
+#'#                           "pkg/inst/extdata/E066-H3K27ac.chr10.fc.signal.bigwig")
+#'#      regActivity(regRegions,activitySignals)
+#'#      sampleIDs <- c("E085","E066")
+#'#      regActivity(regRegions,activitySignals,sampleIDs)
+
 #' @export
 regActivity <- function(regRegions,
                         activitySignals,
@@ -293,28 +293,30 @@ regActivity <- function(regRegions,
 #'  4. other columns: numeric values for gene expression or regulatory actvity.
 #'    Column names represent sample names/ids.
 #' 
-#' @examples 
-#'  load("~/TSS.RData")
-#'  load("~/regActivity.RData")
-#'  regActivityAroundTSS(regActivity,TSS,upstream=500000,downstream=500000)
+#' #@examples 
+#' # load("~/TSS.RData")
+#' # load("~/regActivity.RData")
+#' # regActivityAroundTSS(regActivity,TSS,upstream=500000,downstream=500000)
 #' 
 #' 
-#'  load(file="~/LargeregRegions.RData")
-#'  RoadmapH3K4me1 <- readRDS("/data/akalin/Projects/AAkalin_reg2gene/Results/regActivity/Roadmap_H3K4me1_meanratio.rds")
-#'  RoadmapRNASeq <- readRDS("/data/akalin/Projects/AAkalin_reg2gene/Results/bwToGeneExp/Roadmap_RNASeq_meanratio.rds")
+#'  #load(file="~/LargeregRegions.RData")
+#'  #RoadmapH3K4me1 <- readRDS(
+#'  #"/data/akalin/Projects/AAkalin_reg2gene/Results/regActivity/Roadmap_H3K4me1_meanratio.rds")
+#'  #RoadmapRNASeq <- readRDS(
+#'  #"/data/akalin/Projects/AAkalin_reg2gene/Results/bwToGeneExp/Roadmap_RNASeq_meanratio.rds")
 #'
-#'    regActivityAroundTSS(RegRegionActivity = RoadmapH3K4me1, TSS = RoadmapRNASeq[1:10])
+#'    #regActivityAroundTSS(RegRegionActivity = RoadmapH3K4me1, TSS = RoadmapRNASeq[1:10])
 #' 
 #' 
-#' RegRegionActivity <- readRDS(pathRegActivity)
-#' TSS <- readRDS(pathTSS)[1:10]
-#' Method <- basename(pathRegActivity)
-#' mc.cores=25
-#'  regActivityAroundTSS(RegRegionActivity, 
-#'                                   TSS,
-#'                                   downstream=1000000,
-#'                                   upstream=1000000,
-#'                                   mc.cores)
+#' #RegRegionActivity <- readRDS(pathRegActivity)
+#' #TSS <- readRDS(pathTSS)[1:10]
+#' #Method <- basename(pathRegActivity)
+#' #mc.cores=25
+#' # regActivityAroundTSS(RegRegionActivity, 
+#'  #                                 TSS,
+#'  #                                downstream=1000000,
+#'  #                                 upstream=1000000,
+#'  #                                 mc.cores)
 #'
 #' 
 #' 
@@ -451,15 +453,19 @@ regActivityAroundTSS <- function(RegRegionActivity,TSS,upstream=500000,
 #' 
 #' 
 #' 
-#' @examples load(file="~/GeneExpSignals.RData")
-#' load(file="~/LibStrand.RData")
-#' load(file="~/Exons.RData")
-#' load(file="~/sampleIDs.RData")
+#' #@examples load(file="~/GeneExpSignals.RData")
+#' #load(file="~/LibStrand.RData")
+#' #load(file="~/Exons.RData")
+#' #load(file="~/sampleIDs.RData")
 #' 
-#'     bwToGeneExp(Exons,GeneExpSignals,LibStrand, sampleIDs=NULL,mc.cores=1,normalize="ratio",summaryOperation="mean")
-#'     bwToGeneExp(Exons,GeneExpSignals,LibStrand, mc.cores=1,normalize="quantile", sampleIDs=NULL,summaryOperation="mean")
-#'     bwToGeneExp(Exons,GeneExpSignals,LibStrand, mc.cores=1,normalize=NULL, sampleIDs=NULL,summaryOperation="mean")
-#'     bwToGeneExp(Exons=Exons,GeneExpSignals=GeneExpSignals,LibStrand=LibStrand,sampleIDs=sampleIDs, 
+#'  #   bwToGeneExp(Exons,GeneExpSignals,LibStrand,
+#'  #    sampleIDs=NULL,mc.cores=1,normalize="ratio",summaryOperation="mean")
+#'  #   bwToGeneExp(Exons,GeneExpSignals,LibStrand, mc.cores=1,normalize="quantile",
+#'  #    sampleIDs=NULL,summaryOperation="mean")
+#'  #   bwToGeneExp(Exons,GeneExpSignals,LibStrand, mc.cores=1,normalize=NULL,
+#'  #    sampleIDs=NULL,summaryOperation="mean")
+#'  #   bwToGeneExp(Exons=Exons,GeneExpSignals=GeneExpSignals,
+#'  #   LibStrand=LibStrand,sampleIDs=sampleIDs, 
 #'                   mc.cores=1,normalize="quantile",summaryOperation="mean")
 #' @export
 bwToGeneExp <- function(Exons,

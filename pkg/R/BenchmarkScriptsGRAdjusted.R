@@ -31,9 +31,6 @@
 #' benchmarked or not,and how many times (if binary=F) 
 #' 
 #' 
-#' @examples BenchMarkReg2Gene(GRReg1_toy ,GRReg2_toy )
-#' BenchMarkReg2Gene(GRReg2_toy,GRReg1_toy )
-#' 
 #'  
 #'@export
 BenchMarkReg2Gene <- function(Reg2Gene,
@@ -46,7 +43,7 @@ BenchMarkReg2Gene <- function(Reg2Gene,
   # Benchmarking           
 
         # ComplexBenchmarking   
-      Reg2GeneBenchOverlap <- ComplexOverlaps(Reg2Gene,Benchmark)
+      Reg2GeneBenchOverlap <- ComplexOverlaps(Reg1=Reg2Gene,Reg2=Benchmark)
  
           # counts or binary reported   
             OverlapVector <- rep(0,length(Reg2Gene))
@@ -102,9 +99,11 @@ BenchMarkReg2Gene <- function(Reg2Gene,
 #' 4) FN (false negative): reg2gene entry that was NOT reported to be associated (reported gene-enhancer
 #' statistics NOT lower than a predefined threshold) BUT is benchmarked.
 #' 
-#' @examples ConfusionMatrixReg2Gene(BenchMarkedReg2Gene=BenchmarkedReg2Gene_toy,thresholdID = "PValues",thresholdValue = 0.05)
+#' # @examples ConfusionMatrixReg2Gene(BenchMarkedReg2Gene=BenchmarkedReg2Gene_toy,
+#' # thresholdID = "PValues",thresholdValue = 0.05)
 #' 
-#' ConfusionMatrixReg2Gene(BenchmarkedReg2Gene_toy,thresholdID = "PValues",thresholdValue = 0.3, statistics = "ConfusionMatrix")
+#' #ConfusionMatrixReg2Gene(BenchmarkedReg2Gene_toy,thresholdID = "PValues",
+#' # thresholdValue = 0.3, statistics = "ConfusionMatrix")
 #' 
 #' 
 #'      

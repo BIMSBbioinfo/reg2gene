@@ -35,14 +35,13 @@
 #' !IMPORTANT NOTE! If the first entry is FALSE, than that gene should be removed from the analysis
 #' 
 #' 
-#' @example 
 #' 
-#' GR_exp_toy <- GRanges(rep("chr1",4),IRanges(1:4,2:5))
-#' mcols(GR_exp_toy) <-  matrix(rep("test",16),nrow=4,
-#'                              dimnames = list(1:4,c("gene.indicator","featureType","name","name2")))
-#' mcols(GR_exp_toy) <- cbind(mcols(GR_exp_toy),data.frame(matrix(c(rep(0,10),c(rep(0,9),1),
-#' c(rep(0,3),rep(1,7)),c(rep(1,9),NA)),byrow = T,nrow=4),stringsAsFactors = F))
-#' FilterPerGeneModel(GR_exp_toy)
+# GR_exp_toy <- GRanges(rep("chr1",4),IRanges(1:4,2:5))
+# mcols(GR_exp_toy) <-  matrix(rep("test",16),nrow=4,
+#                              dimnames = list(1:4,c("gene.indicator","featureType","name","name2")))
+# mcols(GR_exp_toy) <- cbind(mcols(GR_exp_toy),data.frame(matrix(c(rep(0,10),c(rep(0,9),1),
+# c(rep(0,3),rep(1,7)),c(rep(1,9),NA)),byrow = T,nrow=4),stringsAsFactors = F))
+# FilterPerGeneModel(GR_exp_toy)
 #' 
 #' 
 #' @export

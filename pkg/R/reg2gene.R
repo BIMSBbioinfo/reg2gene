@@ -8,6 +8,7 @@
 #' 
 #' @import genomation
 #' @import GenomicRanges
+#' @importFrom GenomicRanges findOverlaps
 #' @import BSgenome.Hsapiens.UCSC.hg19
 #' @importFrom parallel mclapply
 #' @importFrom DESeq2 estimateSizeFactorsForMatrix

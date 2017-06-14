@@ -41,7 +41,7 @@
 # kind of overlap is expected to observe.
 #'
 #' @return data.frame object
-#' @formatGRanges object with 6 ranges and 5 metadata columns
+#' @format GRanges object with 6 ranges and 5 metadata columns
 "BenchMarkedReg2Gene_toy"
 
 

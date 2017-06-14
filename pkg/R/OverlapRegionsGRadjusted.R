@@ -60,8 +60,8 @@
 #' than NULL then overlapped regions are additionally filtered based on the
 #' overlap between byReg1 and byReg1 defined columns
 #' 
-#' @examples  OverlapRegions(Reg1_toy, Reg2_toy)
-#' OverlapRegions(Reg1_toy[2,], Reg2_toy)
+##### #' @examples  OverlapRegions(GRReg1_toy, GRReg2_toy)
+#' 
 #' 
 #'
 #'
@@ -133,17 +133,17 @@ OverlapRegions <- function(Reg1,Reg2){
 #' Reg1Coord1-Reg2Coord1&Reg1Coord2-Reg2Coord2 and vice-versa
 #' Reg1Coord1-Reg2Coord2&Reg1Coord2-Reg2Coord1.
 #' 
-#' @examples ComplexOverlaps(GRReg1_toy, GRReg2_toy) 
-#' ComplexOverlaps(GRReg1Extended_toy,GRReg2Extended_toy)
-#'ComplexOverlaps(Reg1=GRReg1Extended_toy.2,Reg2=GRReg2Extended_toy) 
+# #' @examples ComplexOverlaps(GRReg1_toy, GRReg2_toy) 
+#' 
+#' 
 #' @export
 ComplexOverlaps <- function(Reg1,Reg2){
   
   # criss-cross overlap when orientation of overlaps is unknown
-      Reg11Reg22 <- OverlapRegions(Reg1,Reg2)
+      Reg11Reg22 <- OverlapRegions(Reg1=Reg1,Reg2=Reg2)
             # switch names in Reg1 dataframe
 
-      Reg12Reg21 <- OverlapRegions(Reg1,.switchReg(Reg2))
+      Reg12Reg21 <- OverlapRegions(Reg1=Reg1,Reg2=.switchReg(Reg2))
      
   
     return(c(Reg11Reg22,Reg12Reg21))
