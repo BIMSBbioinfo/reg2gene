@@ -6,7 +6,7 @@ Author: person("Inga", "Patarcic", email = "inga.patarcic@mdc-berlin.de",
     role = c("aut", "cre"),
     person("Altuna", "Akalin", email = "altuna.akalin@mdc-berlin.de",
     role=c("aut", "cre"))))
-Maintainer: The package maintainer <inga.patarcic@mdc-berlin.de>
+Maintainer: Inga Patarcic <inga.patarcic@mdc-berlin.de>
 Description: Predicting the target genes for regulatory elements
   -   regulatory activity quantification per pre-defined region (regulatoryActivity)
     -   the code base that is used to quantify enhancer activties across different markers and studies

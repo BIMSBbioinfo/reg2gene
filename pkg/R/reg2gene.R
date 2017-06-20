@@ -4,15 +4,15 @@
 #'
 #' @docType package
 #' @name reg2gene
-#' 
-#' 
+#'
+#'
 #' @import genomation
 #' @import GenomicRanges
 #' @importFrom GenomicRanges findOverlaps
-#' @import BSgenome.Hsapiens.UCSC.hg19
 #' @importFrom parallel mclapply
 #' @importFrom DESeq2 estimateSizeFactorsForMatrix
 #' @import stringr
 #' @importFrom preprocessCore normalize.quantiles
 #' @importFrom caret confusionMatrix
 #' @importFrom caret posPredValue
+NULL
