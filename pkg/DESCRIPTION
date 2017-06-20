@@ -1,11 +1,26 @@
 Package: reg2gene
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Predicting the target genes for regulatory elements
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: person("Inga", "Patarcic", email = "inga.patarcic@mdc-berlin.de",
+    role = c("aut", "cre"),
+    person("Altuna", "Akalin", email = "altuna.akalin@mdc-berlin.de",
+    role=c("aut", "cre"))))
+Maintainer: The package maintainer <inga.patarcic@mdc-berlin.de>
+Description: Predicting the target genes for regulatory elements
+  -   regulatory activity quantification per pre-defined region (regulatoryActivity)
+    -   the code base that is used to quantify enhancer activties across different markers and studies
+    -   The scripts to match enhancers to potential target genes within pre-defined window around gene TSSes
+ -   enhancer target prediction (targetPrediction)
+    -   This should contain the code for target prediction methods
+ -   performance metrics (performance):
+    -   should contain the code for performance metrics.
+License: Artistic-2.0
 Encoding: UTF-8
 LazyData: true
+Imports: 
+RoxygenNote: 6.0.1
+Suggests: knitr,
+    rmarkdown,
+    testthat
+VignetteBuilder: knitr
