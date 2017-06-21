@@ -92,6 +92,11 @@ associateReg2Gene<-function(input,method="pearson",tag=NULL,scale=TRUE,
                                                               "gene.indicator"))]
                   )
           )
+
+    # only work with complete cases, hope there won't be
+    # any columns with only NAs
+    mat=mat[complete.cases(mat),]
+
     # scale if necessary
     if(scale){
       mat=scale(mat)
