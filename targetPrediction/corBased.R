@@ -48,6 +48,14 @@ dcorMat<-function(y,mat){
 #'
 corResample<-function(mat,method="pearson",col=1,B=1000){
   
+  # decide if the matrix needs to be dropped and NA returned due
+  # to low or zero variation in gene expression
+  if( zeroVar(mat) | manyZeros(mat) ){
+    return(matrix(NA,ncol=ncol(mat)-1,nrow=3,
+                  dimnames=list(c("coefs","pval","p2"),1:(ncol(mat)-1) ))
+    )
+  }
+  
   # resample response variables Ys
   Ys=lapply(1:B,function(x) sample(mat[,col],nrow(mat)))
   
@@ -60,7 +68,7 @@ corResample<-function(mat,method="pearson",col=1,B=1000){
   
   # calculate coeff for resampled Ys
   for(i in 1:B){
-    
+    #cat(i,"\n")
     coefs[i,] = corMat(Ys[[i]],mat=mat[,-col],method)
   }
   
@@ -88,6 +96,14 @@ corResample<-function(mat,method="pearson",col=1,B=1000){
 #' dcorResample(m,col=1,B=1000) 
 dcorResample<-function(mat,col=1,B=1000){
   
+  # decide if the matrix needs to be dropped and NA returned due
+  # to low or zero variation in gene expression
+  if( zeroVar(mat) | manyZeros(mat) ){
+    return(matrix(NA,ncol=ncol(mat)-1,nrow=3,
+                  dimnames=list(c("coefs","pval","p2"),1:(ncol(mat)-1) ))
+    )
+  }
+  
   # resample response variables Ys
   Ys=lapply(1:B,function(x) sample(mat[,col],nrow(mat)))
   
@@ -100,7 +116,7 @@ dcorResample<-function(mat,col=1,B=1000){
   
   # calculate coeff for resampled Ys
   for(i in 1:B){
-    
+    #cat(i,"\n")
     coefs[i,] = dcorMat(Ys[[i]],mat=mat[,-col])
   }
   

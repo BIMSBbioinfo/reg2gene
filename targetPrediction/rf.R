@@ -25,27 +25,47 @@
 #' rfResample(scale(m),col=1,B=1000) 
 #' 
 rfResample<-function(mat,col=1,B=1000,...){
-  require(randomForest)
+  #require(randomForest)
+  require(ranger)
+  
+  # decide if the matrix needs to be dropped and NA returned due
+  # to low or zero variation in gene expression
+  if( zeroVar(mat) | manyZeros(mat) ){
+    return(matrix(NA,ncol=ncol(mat)-1,nrow=3,
+                  dimnames=list(c("coefs","pval","p2"),1:(ncol(mat)-1) ))
+    )
+  }
+  
   
   # resample response variables Ys
   Ys=lapply(1:B,function(x) sample(mat[,col],nrow(mat)))
   
   # original coefs in this case importance values as %incMSE
-  mod<- randomForest(x = mat[,-col], y = mat[,col],
-                     importance=TRUE,na.action=na.omit)
-  
-  orig=importance(mod)[,2] # gini index
-  
+  #mod<- randomForest(x = mat[,-col], y = mat[,col],
+  #                   importance=TRUE,na.action=na.omit)
+  #  orig=importance(mod)[,2] # gini index
+
+  f=paste0(colnames(mat)[1]," ~ .")
+  mod <-ranger( f, data = data.frame(mat), importance="impurity",
+                num.trees = 500,write.forest = FALSE,
+                num.threads=1)
+  orig=mod$variable.importance # gini index
   #coefs from resampling
   coefs=matrix(0.0,ncol=ncol(mat[,-col]),nrow=(B))
   
   
   # calculate coeff/importance for resampled Ys
   for(i in 1:B){
-    mod<- randomForest(x = mat[,-col], y = Ys[[i]],
-                       importance=TRUE,na.action=na.omit)
+    #mod<- randomForest(x = mat[,-col], y = Ys[[i]],
+    #                   importance=TRUE,na.action=na.omit)
     
-    coefs[i,]=importance(mod)[,2]
+    #coefs[i,]=importance(mod)[,2]
+    
+    mod <-ranger( y ~ ., data = data.frame(y=Ys[[i]],mat[,-col]), 
+                  importance="impurity",
+                  num.trees = 500,write.forest = FALSE)
+    coefs[i,]=mod$variable.importance # gini index
+    
   }
   
   # calculate p-vals 

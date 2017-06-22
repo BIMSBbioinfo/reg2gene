@@ -22,6 +22,14 @@
 glmnetResample<-function(mat,col=1,B=1000,...){
   require(glmnet)
   
+  # decide if the matrix needs to be dropped and NA returned due
+  # to low or zero variation in gene expression
+  if( zeroVar(mat) | manyZeros(mat) ){
+    return(matrix(NA,ncol=ncol(mat)-1,nrow=3,
+                 dimnames=list(c("coefs","pval","p2"),1:(ncol(mat)-1) ))
+    )
+  }
+  
   # resample response variables Ys
   Ys=lapply(1:B,function(x) sample(mat[,col],nrow(mat)))
   
