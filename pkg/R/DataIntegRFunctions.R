@@ -1,146 +1,216 @@
-.ScoresAsMcols <- function(scores.per.cell.type,activitySignals,sampleIDs){
+#' Function that rearranges list of scores calculated per cell type
+#' 
+#' @param scores.per.cell.type list of result score matrices for each biwgig
+#'  file
+#' @param sampleIDs  A vector of unique sample ids/names of bigwig files 
+#' @return a dataframe of quatified scores per genome window and bigwig files.
+#' Each row corresponds to ranges in the genome, and columns correspond to the 
+#' bigwig files. 
+#' @keywords internal
+#' @author Inga Patarcic
+scoresAsMcols <- function(scores.per.cell.type,sampleIDs){
   
-  # function that rearranges list of scores calculated per cell type
-  
-        mcols.per.cell.type <- rbind.data.frame(scores.per.cell.type,stringsAsFactors=F,
+        mcols.per.cell.type <- rbind.data.frame(scores.per.cell.type,
+                                                stringsAsFactors=F,
                                                 make.row.names=T)
-        
         # adjust column names - remove bw extension
-        
-        
         colnames(mcols.per.cell.type) <- sampleIDs
        
-        
-        return(mcols.per.cell.type)
+     return(mcols.per.cell.type)
 }
 
 
-.NormalizeScores <- function(ScoresDF,NormalizationMet=normalize){
-  # f() that runs normalization
-  
-    
-          if (NormalizationMet=="ratio") {   
-                # estimate size factors and multiply gene expression using these factors
-                      sizeFactors <- estimateSizeFactorsForMatrix(as.matrix(ScoresDF))
-                      ScoresDF.normalized <- as.matrix(ScoresDF)*rep(sizeFactors,
-                                                                     each=nrow(ScoresDF))}
+
+#' Function that runs normalization for the quantified activity/expression level
+#' 
+#' @param scoresDF a dataframe of quatified scores per genome window and bigwig 
+#'  file
+#' @param normalizationMet  charater. which normalization procedure is wanted.
+#' @return a normalized dataframe of quatified scores per genome window and 
+#' bigwig files. 
+#' @keywords internal
+#' @author Inga Patarcic
+normalizeScores <- function(scoresDF,normalizationMet){
+
+    if (normalizationMet=="ratio") {   
+            # estimate size factors and multiply gene expression using these 
+            # factors
+    sizeFactors <- DESeq2::estimateSizeFactorsForMatrix(as.matrix(scoresDF))
+    scoresDF.normalized <- as.matrix(scoresDF)*rep(sizeFactors,each=
+                                                            nrow(scoresDF))}
                 
-          if (NormalizationMet=="quantile") {  
-            ScoresDF.normalized <- normalize.quantiles(as.matrix(ScoresDF))
-                    rownames(ScoresDF.normalized) <- rownames(ScoresDF)
-                    colnames(ScoresDF.normalized) <- colnames(ScoresDF)}
+    if (normalizationMet=="quantile") {  
+ scoresDF.normalized <- preprocessCore::normalize.quantiles(as.matrix(scoresDF))
+          rownames(scoresDF.normalized) <- rownames(scoresDF)
+          colnames(scoresDF.normalized) <- colnames(scoresDF)}
            
  
-  return(ScoresDF.normalized)
+  return(scoresDF.normalized)
 
   
   }
   
 
-.ExonExpressionStrandAdjusted <- function(Exons,GeneExpSignals,sampleIDs,LibStrand,
-                                          mc.cores=1,summaryOperation="mean") {
+
+
+#' Function that quantifies exon expression based on strand specificity
+#' 
+#'  Function that separates stranded and unstranded libraries and quantifies 
+#'  exon expression separately for stranded libraries eg expression of exons 
+#'  located on the + strand is quantified using forward libraries if libraries
+#'  are unstranded then exon orientations is not taken into account
+#'  
+#' @param exons GRanges object with exon coordinates and metadata about genes
+#' @param exons.splitted GRanges object with exon coordinates splitted based on
+#' the strand.
+#' @param geneActSignals character, paths to bigwig files
+#' @param libStrand character, library strandness ("+","-","*")
+#' @param sampleIDs character, name of samples/bigwig files
+#' @param summaryOperation argument for ScoreMatrixBin() how to quantify scores
+#' @param mc.cores integer, number of cores for mclapply
+#' @return Granges object with metadata which corresponds to quantified scores 
+#' per input exon regions and bigwig files
+#' @keywords internal
+#' @author Inga Patarcic
+exonExpressionStrandAdjusted <- function(exonsForQuant,
+                                          exonsSplitted,
+                                          geneActSignals,
+                                          sampleIDs,
+                                          libStrand,
+                                          mc.cores,
+                                          summaryOperation) {
   
-  # function that separates stranded and unstranded libraries and quantifies 
-  # exon expression separately for stranded libraries
-  # eg expression of exons located on the + strand is quantified using forward libraries 
-  # if libraries are unstranded then exon orientations is not taken into account
+  
+  if (length(exonsSplitted$`*`)!=0){stop("Strand of exons can be only + or -")}
+  
+        # detect stranded tracks and unstranded tracks    
+        ForwardLibraries <- stringr::str_detect(libStrand,"\\+") 
+        Unstranded.libraries <- stringr::str_detect(libStrand,"\\*")
         
-  # detect stranded tracks and unstranded tracks    
-  ForwardLibraries <- str_detect(LibStrand,"\\+") 
-  Unstranded.libraries <- str_detect(LibStrand,"\\*")
-  
   if (sum(ForwardLibraries)!=(sum(!(ForwardLibraries|Unstranded.libraries)))){
-    stop("Number of forward and reverse libraries do not match")
-  }
+    stop("Number of forward and reverse libraries do not match")}
   
   
   # separate analysis for unstranded & stranded libraries
   
-  if (sum(Unstranded.libraries)!=length(LibStrand)){
+  if (sum(Unstranded.libraries)!=length(libStrand)){
     # test strandness - "mixed"&"stranded"
     # Stranded libraries - positive/forward strand
     
     # forward strand
-    ExonScoresForwardStrand <- mclapply(GeneExpSignals[ForwardLibraries], 
-                                        function(x) {try(ScoreMatrixBin(x,
-                                                                        windows =  Exons$`+`,
-                                                                        bin.num = 1,
-                                                                        type = "bigWig",
-                                                                        bin.op=summaryOperation, 
-                                                                        is.noCovNA=T),
-                                                         silent = T)},mc.cores=mc.cores)
+    exonscoresForwardStrand <- mclapply(geneActSignals[ForwardLibraries], 
+                                        function(x) {try(
+                                        genomation::ScoreMatrixBin(x,
+                                              windows =  exonsSplitted$`+`,
+                                              bin.num = 1,
+                                              type = "bigWig",
+                                              bin.op=summaryOperation, 
+                                              is.noCovNA=F),
+                                              silent = T)},
+                                        mc.cores=mc.cores)
     
-          if (max(sapply(ExonScoresForwardStrand,class)=="try-error")){
-                stop(paste("This bigwig files do not overlap exon regions",
-                            GeneExpSignals[ForwardLibraries][sapply(ExonScoresForwardStrand,
-                            class)=="try-error"]))}                                      
+    if (max(sapply(exonscoresForwardStrand,class)=="try-error")){
+      stop(paste("Error with ScoreMatrixBin and following bigwig files",
+                 geneActSignals[ForwardLibraries][sapply(
+                   exonscoresForwardStrand,class)=="try-error"]))}                                      
     
-    ExonScoresForwardStrand.df <- .ScoresAsMcols(ExonScoresForwardStrand,
-                                                 GeneExpSignals[ForwardLibraries],
-                                                 sampleIDs[ForwardLibraries])
+    exonscoresForwardStrand.df <- scoresAsMcols(scores.per.cell.type=
+                                                  exonscoresForwardStrand,
+                                        sampleIDs=sampleIDs[ForwardLibraries])
     
     # reverse strand               
-    ExonScoresReverseStrand <- mclapply(GeneExpSignals[!(ForwardLibraries|Unstranded.libraries)], 
-                                        function(x) {try(ScoreMatrixBin(x,windows =  Exons$`-`,
-                                                                        bin.num = 1,
-                                                                        type = "bigWig", 
-                                                                        bin.op=summaryOperation,
-                                                                        is.noCovNA=T),
-                                                         silent = T)},mc.cores=mc.cores)
+    exonscoresReverseStrand <- mclapply(geneActSignals[!(ForwardLibraries|
+                                                        Unstranded.libraries)], 
+                                        function(x) {try(
+                                          genomation::ScoreMatrixBin(x,
+                                               windows =  exonsSplitted$`-`,
+                                               bin.num = 1,
+                                               type = "bigWig", 
+                                               bin.op=summaryOperation,
+                                               is.noCovNA=F),
+                                               silent = T)},
+                                        mc.cores=mc.cores)
     
-          if (max(sapply(ExonScoresReverseStrand,class)=="try-error")){
-            stop(paste("This bigwig files do not overlap exon regions",
-                          GeneExpSignals[!(ForwardLibraries|Unstranded.libraries)][sapply(ExonScoresReverseStrand,
-                          class)=="try-error"]))}
+    if (max(sapply(exonscoresReverseStrand,class)=="try-error")){
+      stop(paste("This bigwig files do not overlap exon regions",
+                 geneActSignals[!(ForwardLibraries|Unstranded.libraries)]
+                 [sapply(exonscoresReverseStrand,class)=="try-error"]))}
     
-    ExonScoresReverseStrand.df <- abs(.ScoresAsMcols(ExonScoresReverseStrand,
-                                                     GeneExpSignals[ForwardLibraries],
-                                                     sampleIDs[ForwardLibraries]))
+    exonscoresReverseStrand.df <- abs(scoresAsMcols(scores.per.cell.type=
+                                                      exonscoresReverseStrand,
+                                        sampleIDs=sampleIDs[ForwardLibraries]))
+    
+    
+    # test if exon length is equal to the length of splitted exons
+    if (length(exonsForQuant)!=sum(c(nrow(exonscoresForwardStrand.df),
+                             nrow(exonscoresReverseStrand.df)))) {stop("Exons
+                                    and splitted exon object are not equal")}
+    
+    
     # pool reverse and forward strand together        
-    Exons <- unlist(Exons)
-    values(Exons) <- (cbind(mcols(Exons),rbind(ExonScoresForwardStrand.df,ExonScoresReverseStrand.df)))
+    values(exonsForQuant) <- (cbind(mcols(exonsForQuant),
+                                    rbind(exonscoresForwardStrand.df,
+                                    exonscoresReverseStrand.df)))
     
-  }
+    }
   
   if (sum(Unstranded.libraries)!=0){
     
     
     # Unstranded
-    ExonScoresUnstranded <- mclapply(GeneExpSignals[Unstranded.libraries], 
-                                     function(x) { try(ScoreMatrixBin(x,windows = Exons,bin.num = 1,type = "bigWig",
-                                                                      bin.op=summaryOperation,is.noCovNA=T),
-                                                       silent = T)},mc.cores=mc.cores)
+    exonscoresUnstranded <- mclapply(geneActSignals[Unstranded.libraries], 
+                                     function(x){try(
+                                       genomation::ScoreMatrixBin(x,
+                                                      windows = exonsForQuant,
+                                                      bin.num = 1,
+                                                      type = "bigWig",
+                                                      bin.op=summaryOperation,
+                                                      is.noCovNA=F),
+                                                    silent = T)},
+                                     mc.cores=mc.cores)
     
-            if (max(sapply(ExonScoresUnstranded,class)=="try-error")){
-              stop(paste("This bigwig files do not overlap exon regions",
-                      GeneExpSignals[Unstranded.libraries][sapply(ExonScoresUnstranded,
-                      class)=="try-error"]))}                                      
-            
-            
-    ExonScoresUnstranded.df <- .ScoresAsMcols(ExonScoresUnstranded,
-                                              GeneExpSignals[Unstranded.libraries],
-                                              sampleIDs[Unstranded.libraries])                  
+    if (max(sapply(exonscoresUnstranded,class)=="try-error")){
+      stop(paste("This bigwig files do not overlap exon regions",
+                 geneActSignals[Unstranded.libraries]
+                 [sapply(exonscoresUnstranded,class)=="try-error"]))}                                      
     
-    values(Exons) <- (cbind(mcols(Exons),rbind(ExonScoresUnstranded.df)))
+    
+    exonscoresUnstranded.df <- scoresAsMcols(scores.per.cell.type=
+                                               exonscoresUnstranded,
+                                    sampleIDs=sampleIDs[Unstranded.libraries])                  
+    
+    values(exonsForQuant) <- (cbind(mcols(exonsForQuant),
+                                    rbind(exonscoresUnstranded.df)))
     
     
   }
   
-  return(Exons)                
+  return(exonsForQuant)                
 }
 
 
-.QuantifyGeneExpression <- function(ExonExpressionPerGene){
+
+
+#' Function that quantifies gene expression based on prequantified exon exp
+#' 
+#' Function that calculates per gene expression based on exon expression results
+#' sum across exons (mean value across exon*exon width)/
+#' gene_length(sum_of_all_exon_lengths)
+#'  
+#' @param expressionPerGene GRanges object with exon coordinates and 
+#' metadata info about corresponding genes and quantifed exon expression
+#' @return Granges object of genes with metadata which corresponds to quantified
+#' gene expression
+#' @keywords internal
+#' @author Inga Patarcic
+quantifyGeneExpression <- function(expressionPerGene,exonsForGene){
   
-  # f() that calculates per gene expression based on exon expression results
-  # sum across exons (mean value across exon*exon width)/ 
-  # gene_length(sum_of_all_exon_lengths)
-  
-        ExonLength <- width(ExonExpressionPerGene)
-        GeneLength <- sum(ExonLength,na.rm=T)
-        ExpressionPerSample=as.data.frame(mcols(ExonExpressionPerGene)[-(1:7)])
+  ExonLength <- width(expressionPerGene)
+  GeneLength <- sum(ExonLength,na.rm=T)
+  ExpressionPerSample=as.data.frame(mcols(expressionPerGene)[-(1:exonsForGene)])
         
-        GeneExpression <- apply(ExpressionPerSample*ExonLength,2,sum,na.rm=T)/GeneLength
+    GeneExpression <- apply(ExpressionPerSample*ExonLength,
+                            2,sum,na.rm=T)/GeneLength
   
       return(GeneExpression)
 }
@@ -157,7 +227,10 @@
 #' 
 #' 
 #' @param regRegions a GRanges object that contains regulatory regions
-#' over which the regulatory activity will be calculated.
+#' over which the regulatory activity will be calculated. 
+#' It is strongly suggested to adjust 
+#' seqlengths of this object to be equal to the seqlenghts Hsapiens from the 
+#' appropriate package (BSgenome.Hsapiens.UCSC.hg19 or whatever needed version).
 #' @param activitySignals a named list of BigWig files. Names correspond to 
 #'        unique sample ids/names.
 #' @param sampleIDs NULL (default). A vector of unique sample
@@ -166,10 +239,13 @@
 #' @param isCovNA (def:FALSE), if this is set to TRUE, uncovered
 #' bases are set to NA, this is important when dealing with methylation
 #' data, where uncovered bases on a bigWig file do not mean zero methylation.
-#' @param normalize NULL(default). Optional "quantile" and "ration"
+#' @param weightCol a numeric column in meta data part used as weights. Useful
+#' when genomic regions have scores other than their coverage values, 
+#' such as percent methylation, conservation scores, GC content, etc.
+#' @param normalize NULL(default). Optional "quantile" and "ratio"
 #' If set to "quantile" activity measures are quantile normalized as 
 #' implemented in \code{\link[preprocessCore]{normalize.quantiles}} and
-#' returned ; if set to "ration" then "median ration method" implemented
+#' returned ; if set to "ratio" then "median ratio method" implemented
 #' as \code{\link[DESeq2]{estimateSizeFactorsForMatrix}} is used to normalize 
 #' activity measures.
 #' @param summaryOperation "mean"(default).
@@ -193,62 +269,62 @@
 #' in the future. 
 #' 
 #' #@examples
-#'#      load("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/pkg/inst/extdata/regRegions.RData")
-#'#      activitySignals <- c("pkg/inst/extdata/E085-H3K27ac.chr10.fc.signal.bigwig",
-#'#                           "pkg/inst/extdata/E066-H3K27ac.chr10.fc.signal.bigwig")
-#'#      regActivity(regRegions,activitySignals)
-#'#      sampleIDs <- c("E085","E066")
-#'#      regActivity(regRegions,activitySignals,sampleIDs)
-
+#' test.bw <- system.file("extdata", "test.bw",package = "reg2gene")
+#' test2.bw <- system.file("extdata", "test2.bw",package = "reg2gene")
+#' regTSS_toy <- GRanges(c(rep("chr1",4),rep("chr2",2)),
+#'                       IRanges(c(1,7,9,15,1,15),c(4,8,14,20,4,20)),
+#'                                             c(rep("+",3),rep("-",3)))
+#' regTSS_toy$reg <-  regTSS_toy[c(1,1,3:6)]
+#' regTSS_toy$name2 <- regTSS_toy$name <- paste0("TEST_Reg",
+#'                                         c(1,1,3:length(regTSS_toy)))
+#' regActivity(regTSS_toy,c(test.bw,test2.bw))   
+#' 
 #' @export
 regActivity <- function(regRegions,
                         activitySignals,
                         sampleIDs=NULL,
                         isCovNA=FALSE,
-                      summaryOperation="mean",
-                      normalize=NULL,
-                      mc.cores=1){
+                        weightCol=NULL,
+                        summaryOperation="mean",
+                        normalize=NULL,
+                        mc.cores=1){
   
   
-          # test input - ranges
-          if (!exists("regRegions")) {stop("regRegions object missing")}
-          # test input - bigwig files
-          if (!min(sapply(activitySignals,file.exists))) {stop("activitySignals object missing") }
-          
-          if (is.null(sampleIDs)) {
-            
-            bw.exts = c(".bw",".bigWig",".bigwig",".BigWig", ".BIGWIG", ".BW")
-            sampleIDs <- str_replace(basename(activitySignals),
-                                                         paste(bw.exts,collapse="|"),"")
-          }
-  
-  
-  
-  
-  # adjust chromosome sizes 
-  seqlengths(regRegions) <- seqlengths(Hsapiens)[names(seqlengths(regRegions))]        
-  
+       # test input - ranges
+  if (!exists("regRegions")) {stop("regRegions object missing")}
+      # test input - bigwig files
+  if (!min(sapply(activitySignals,file.exists))) 
+          {stop("activitySignals object missing")}
+  if (is.null(sampleIDs)) {
+      bw.exts = c(".bw",".bigWig",".bigwig",".BigWig", ".BIGWIG", ".BW")
+      sampleIDs <- stringr::str_replace(basename(activitySignals),
+                               paste(bw.exts,collapse="|"),"")}
           
           
   # calculating coverage
          
-          scores.per.cell.type <- mclapply(activitySignals,ScoreMatrixBin,
+          scores.per.cell.type <- parallel::mclapply(activitySignals,
+                                    genomation::ScoreMatrixBin,
                                            windows = regRegions,
-                                           bin.num = 1,type = "bigWig", 
+                                           bin.num = 1,
+                                           type = "bigWig", 
                                            is.noCovNA=isCovNA,
+                                           weight.col=weightCol,
                                            bin.op=summaryOperation,
                                            mc.cores = mc.cores)
           
          
            # adding scores as mcols  
-          scores.per.cell.type.df <- .ScoresAsMcols(scores.per.cell.type,activitySignals,sampleIDs)
+        scores.per.cell.type.df <- scoresAsMcols(scores.per.cell.type=
+                            scores.per.cell.type,sampleIDs=sampleIDs)
+                                                   
         
           
           # add normalization
-          if (!is.null(normalize)) {scores.per.cell.type.df <-  .NormalizeScores(ScoresDF=scores.per.cell.type.df,
-                                                                              NormalizationMet=normalize)}
-          
-          
+      if (!is.null(normalize)){
+        scores.per.cell.type.df <- normalizeScores(scores.per.cell.type.df,
+                                                   normalize)}
+
           mcols(regRegions) <- scores.per.cell.type.df
            
           return(regRegions)
@@ -266,7 +342,7 @@ regActivity <- function(regRegions,
 #' 
 #' @param regActivity a GRanges object output from \code{regActivity}
 #'        function
-#' @param TSS a GRanges object output from \code{bwToGeneExp} that
+#' @param tss a GRanges object output from \code{bwToGeneExp} that
 #' contains the TSS location and associated gene expression values 
 #' per cell type or condition as meta data. Each row should have a
 #' "name" and "name2" columns for unique id or name/symbol for the
@@ -278,6 +354,10 @@ regActivity <- function(regRegions,
 #' regulatory regions. default 500kb
 #' @param downstream number of basepairs downstream from TSS to look for 
 #' regulatory regions. default 500kb
+#'@param mc.cores (def:1) Define the number of cores to use;
+#' at most how many child processes will be run simultaneously 
+#' using mclapply from parallel package. Parallelization requires at 
+#' least two cores.
 #' 
 #' @return a GRangesList object per gene that contain location of TSS
 #' and regulatory regions around that gene. Names for the GRangesList
@@ -286,38 +366,25 @@ regActivity <- function(regRegions,
 #' activity and gene expression accross the same samples. 
 #' The GRanges objects have the following metadata columns:
 #'  1. featureType: either "gene" or "regulatory"
-#'  2. name: name/id for gene and enhancers. Gene name could be id from a database
-#'          enhancer name should be in the format as follows "chr:start-end"
-#'  3. name2: a secondary name for the feature, such as gene symbol "PAX6" etc. not
-#'    necessary for enhancers could be NA
+#'  2. name: name/id for gene and enhancers. Gene name could be id from a 
+#'  database enhancer name should be in the format as follows "chr:start-end"
+#'  3. name2: a secondary name for the feature, such as gene symbol "PAX6" etc. 
+#'  not necessary for enhancers could be NA
 #'  4. other columns: numeric values for gene expression or regulatory actvity.
 #'    Column names represent sample names/ids.
 #' 
-#' #@examples 
-#' # load("~/TSS.RData")
-#' # load("~/regActivity.RData")
-#' # regActivityAroundTSS(regActivity,TSS,upstream=500000,downstream=500000)
+#' @examples 
 #' 
+#' regTSS_toy <- GRReg1_toy
+#'   regTSS_toy$bw1 <- rep(1,length(GRReg1_toy))
+#'   regTSS_toy$bw2 <- rep(2,length(GRReg1_toy))
+#'   regTSS_toy$bw3 <- rep(3,length(GRReg1_toy))
+#' regReg_toy <- GRReg2_toy
+#'    regReg_toy$bw1 <- rep(3,length(regReg_toy))
+#'    regReg_toy$bw2 <- rep(4,length(regReg_toy))
 #' 
-#'  #load(file="~/LargeregRegions.RData")
-#'  #RoadmapH3K4me1 <- readRDS(
-#'  #"/data/akalin/Projects/AAkalin_reg2gene/Results/regActivity/Roadmap_H3K4me1_meanratio.rds")
-#'  #RoadmapRNASeq <- readRDS(
-#'  #"/data/akalin/Projects/AAkalin_reg2gene/Results/bwToGeneExp/Roadmap_RNASeq_meanratio.rds")
-#'
-#'    #regActivityAroundTSS(RegRegionActivity = RoadmapH3K4me1, TSS = RoadmapRNASeq[1:10])
+#' regActivityAroundTSS(regReg_toy,regTSS_toy,upstream=1,downstream=1)
 #' 
-#' 
-#' #RegRegionActivity <- readRDS(pathRegActivity)
-#' #TSS <- readRDS(pathTSS)[1:10]
-#' #Method <- basename(pathRegActivity)
-#' #mc.cores=25
-#' # regActivityAroundTSS(RegRegionActivity, 
-#'  #                                 TSS,
-#'  #                                downstream=1000000,
-#'  #                                 upstream=1000000,
-#'  #                                 mc.cores)
-#'
 #' 
 #' 
 #' @details only enhancers located within (+/-)upstream/downstream of TSS 
@@ -330,54 +397,72 @@ regActivity <- function(regRegions,
 #' 
 #' 
 #' @export
-regActivityAroundTSS <- function(RegRegionActivity,TSS,upstream=500000,
-                                 downstream=500000,mc.cores=10){
+regActivityAroundTSS <- function(regActivity,
+                                 tss,
+                                 upstream=500000,
+                                 downstream=500000,
+                                 mc.cores=1){
   
   
+  if (is.null(tss$name)) {stop("TSS object does not contain info about gene 
+                               name. TSS GRanges object should be 2nd arg")}
   
-  # extend TSS for wanted region & split per gene such that analysis goes per gene
-  TSS.extended <- promoters(TSS,upstream=upstream,downstream=downstream)
-  TSS.extended <- split(TSS.extended,as.character(TSS.extended$name))
+  # extend TSS for wanted region 
+  tss.prom <- promoters(tss,
+                        upstream,
+                        downstream)
+  # split per gene 
+  tss.extended <- split(tss.prom,
+                        as.character(tss.prom$name))
   
   # getting EnhRegions which overlap extended TSS
   
-  TSSexprRegRegionActivity <- mclapply(TSS.extended,function(x){
+  tssActivity <- parallel::mclapply(tss.extended,function(x){
     
     # overlap extended TSS & regRegion
-    TSS.regAct.overlap <- as.data.frame(findOverlaps(x,RegRegionActivity))
+    tss.regAct.overlap <- as.data.frame(findOverlaps(x,regActivity))
     
     # if there is any overlap - GO!
-    if (nrow(TSS.regAct.overlap)!=0) {
+    if (nrow(tss.regAct.overlap)!=0) {
+      regActivity <- regActivity[tss.regAct.overlap$subjectHits]
       
-      RegRegionActivity <- RegRegionActivity[TSS.regAct.overlap$subjectHits]
-      
-      # adjusting mcols
-      name <- as.character(RegRegionActivity)
-      featureType <- rep("regulatory",length(name))
-      name2 <- rep(NA,length(name))
-      gene.indicator <- TSS.regAct.overlap$queryHits
-      
-      mcols(RegRegionActivity) <- cbind(gene.indicator,featureType,name,name2,
-                                        data.frame(mcols(RegRegionActivity)))
-      
+      # adjusting mcols for reg region
+            name <- as.character(regActivity)
+            featureType <- rep("regulatory",length(name))
+            name2 <- rep(NA,length(name))
+            
+            mcols(regActivity) <- cbind(featureType,
+                                        name,
+                                        name2,
+                                        data.frame(mcols(regActivity)))
+            
       # adjusting mcols for gene expression object
-      featureType <- "gene"
-      gene.indicator <- unique(TSS.regAct.overlap$queryHits)
-      
-      mcols(x) <- cbind(gene.indicator,featureType,
-                        data.frame(mcols(x)))
-      
-      TSS.colnames <- colnames(mcols(x))[colnames(mcols(x))%in%colnames(mcols(RegRegionActivity))]
-      mcols(x) <-  mcols(x)[TSS.colnames]
-      mcols(RegRegionActivity) <-  mcols(RegRegionActivity)[TSS.colnames]
-      
-      return(c(x,RegRegionActivity))
+            featureType <- "gene"
+            mcols(x) <- cbind(featureType,
+                              data.frame(mcols(x)))
+            
+            tss.colnames <- colnames(mcols(x))[colnames(mcols(x))%in%
+                                               colnames(mcols(regActivity))]
+            mcols(x) <-  mcols(x)[tss.colnames]
+            mcols(regActivity) <-  mcols(regActivity)[tss.colnames]
+            
+            geneReg <- c(x,regActivity)
+            geneReg$featureType  <- as.character(geneReg$featureType)
+            geneReg$name   <- as.character(geneReg$name)
+            geneReg$name2   <- as.character(geneReg$name2)
+            
+      return(geneReg)
       
     }
-  },mc.cores = mc.cores)
+  },
+  mc.cores = mc.cores)
   
+  # removing NULL entries
+  tssActivity <- tssActivity[!sapply(tssActivity,is.null)]
+  # returning GRangesList
+  tssActivity <- GRangesList(tssActivity)
   
-  return(TSSexprRegRegionActivity)
+  return(tssActivity)
   
 }
 
@@ -396,23 +481,28 @@ regActivityAroundTSS <- function(RegRegionActivity,TSS,upstream=500000,
 #'  
 #' 
 #' 
-#' @param Exons A GRanges object that contains exon regions over which 
-#' the expression will be calculated. A meta-columns with following info are
-#' necessary: need to adjust these
-#' @param GeneExpSignals a named list of RNA-Seq BigWig files. Names correspond to 
-#' the unique sample ids/names. Stranded and unstranded libraries allowed.
+#' @param exons A GRanges object that contains exon regions over which 
+#' the expression will be calculated. It is strongly suggested to adjust 
+#' seqlengths of this object to be equal to the seqlenghts Hsapiens from the 
+#' appropriate package (BSgenome.Hsapiens.UCSC.hg19 or whatever needed version).
+#' A meta-columns with following info are necessary: 1) name (character)- ENSEMBL 
+#' or other gene identifier; 2) name2(character,optional) - 2nd gene identifier,
+#' 3) reg - GRanges object - gene location, or TSS location. 
+#' @param geneActSignals a named list of RNA-Seq BigWig files. Names correspond 
+#' to the unique sample ids/names. Stranded and unstranded libraries allowed.
 #'  BUT!!! It is crucial that forward and reverse RNA-Seq libraries are listed
 #' in a row (eg one on top of each other)
 #' @param sampleIDs NULL (default). A vector of unique sample
 #' ids/names(.bw files), ordered as the bigwig files are ordered. When NULL
 #' basenames of .bw files is used as a unique sample ids/names.
-#' @param LibStrand a vector of "*","+,"-" (default NULL) which needs to be entered
-#' as an argument.This vector provides info about the order of RNA-Seq libraries
-#' based on their strandness: "+" corresponds to forward/positive RNA-Seq bigwig files; 
-#' "-" corresponds to reverse/negative RNA-Seq bigwig files and "*" is unstranded
-#' library. When all libraries are unstranded then the vector should contain a list
-#' of "*" with the lenght equal to the number of analyzed RNA-Seq libraries
-#' (eg bigwig files). If LibStrand=NULL than function will do it automatically, eg
+#' @param libStrand a vector of "*","+,"-" (default NULL) which needs to be 
+#' entered as an argument.This vector provides info about the order of RNA-Seq 
+#' libraries based on their strandness: "+" corresponds to forward/positive 
+#' RNA-Seq bigwig files; "-" corresponds to reverse/negative RNA-Seq bigwig
+#' files and "*" is unstranded library. When all libraries are unstranded then
+#' the vector should contain a list of "*" with the lenght equal to the number
+#' of analyzed RNA-Seq libraries (eg bigwig files). 
+#' If libStrand=NULL than function will do it automatically, eg
 #' create a vector of "*".It is crucial that stranded RNA-Seq libraries are
 #' listed in a row (eg one on top of each other)
 #' @param summaryOperation "mean"(default).
@@ -423,10 +513,10 @@ regActivityAroundTSS <- function(RegRegionActivity,TSS,upstream=500000,
 #' at most how many child processes will be run simultaneously 
 #' using mclapply from parallel package. Parallelization requires at 
 #' least two cores.
-#' @param normalize NULL(default). Optional "quantile" and "ration"
+#' @param normalize NULL(default). Optional "quantile" and "ratio"
 #' If set to "quantile" activity measures are quantile normalized as 
 #' implemented in \code{\link[preprocessCore]{normalize.quantiles}} and
-#' returned ; if set to "ration" then "median ration method" implemented
+#' returned ; if set to "ratio" then "median ratio method" implemented
 #' as \code{\link[DESeq2]{estimateSizeFactorsForMatrix}} is used to normalize 
 #' activity measures.
 #' 
@@ -443,104 +533,121 @@ regActivityAroundTSS <- function(RegRegionActivity,TSS,upstream=500000,
 #' @details For a gene of interest and across all samples (.bw files)
 #' individaully,the expression is firstly calculated for all exon 
 #' regions which correspond to the gene of interest. Then, per gene
-#' exon expression scores are summed together 
-#' and divided by a total exon length. Normalization is runned
-#' on the level of gene expression. Currently, the relevant bigWig 
-#' files are required to calculate activity. This function might 
-#' be extended to work with BAM files in the future. 
-#' RNA-Seq .bw files can come from stranded,unstranded or mixed 
-#' libraries.
+#' exon expression scores are summed together and divided by a total exon length
+#' as followed:
+# #'  \deqn{Gene Expression=\sum{n=1}^{Exons{n}}
+# #'  (MeanExonExpression{n}*ExonLength{n})/(GeneLength)}
+#' Normalization is runned on the level of gene expression. Currently, the 
+#' relevant bigWig files are required to calculate activity. This function might 
+#' be extended to work with BAM files in the future. RNA-Seq .bw files can 
+#' originate from stranded,unstranded or mixed libraries.
 #' 
 #' 
 #' 
-#' #@examples load(file="~/GeneExpSignals.RData")
-#' #load(file="~/LibStrand.RData")
-#' #load(file="~/Exons.RData")
-#' #load(file="~/sampleIDs.RData")
-#' 
-#'  #   bwToGeneExp(Exons,GeneExpSignals,LibStrand,
-#'  #    sampleIDs=NULL,mc.cores=1,normalize="ratio",summaryOperation="mean")
-#'  #   bwToGeneExp(Exons,GeneExpSignals,LibStrand, mc.cores=1,normalize="quantile",
-#'  #    sampleIDs=NULL,summaryOperation="mean")
-#'  #   bwToGeneExp(Exons,GeneExpSignals,LibStrand, mc.cores=1,normalize=NULL,
-#'  #    sampleIDs=NULL,summaryOperation="mean")
-#'  #   bwToGeneExp(Exons=Exons,GeneExpSignals=GeneExpSignals,
-#'  #   LibStrand=LibStrand,sampleIDs=sampleIDs, 
-#'                   mc.cores=1,normalize="quantile",summaryOperation="mean")
+#' @examples test.bw <- system.file("extdata", "test.bw",package = "reg2gene")
+#' test2.bw <- system.file("extdata", "test2.bw",package = "reg2gene")
+#' regTSS_toy <- GRanges(c(rep("chr1",4),rep("chr2",2)),
+#'                       IRanges(c(1,7,9,15,1,15),c(4,8,14,20,4,20)),
+#'                                             c(rep("+",3),rep("-",3)))
+#' regTSS_toy$reg <-  regTSS_toy[c(1,1,3:6)]
+#' regTSS_toy$name2 <- regTSS_toy$name <- paste0("TEST_Reg",
+#'                                         c(1,1,3:length(regTSS_toy)))
+#'                                         
+#'                                         
+#' bwToGeneExp(exons = regTSS_toy,geneActSignals = c(test.bw,test2.bw))
 #' @export
-bwToGeneExp <- function(Exons,
-                        GeneExpSignals,
+bwToGeneExp <- function(exons,
+                        geneActSignals,
                         sampleIDs=NULL,
-                        LibStrand=NULL,
+                        libStrand=NULL,
                         summaryOperation="mean",
                         mc.cores=1,
-                        normalize="ratio"){
+                        normalize=NULL){
+  
+  
   
   # test if there is any info about genes in exon granges object
-  if (sum(str_detect(colnames(mcols(Exons)),"gene.id"))==0)  {stop("No info about the gene name")}
+  if (sum(stringr::str_detect(colnames(mcols(exons)),"name"))==0){
+    stop("No info about the gene name")}
   
   
   if (is.null(sampleIDs)) {
-    
-        bw.exts = c(".bw",".bigWig",".bigwig",".BigWig", ".BIGWIG", ".BW")
-        sampleIDs <- str_replace(basename(GeneExpSignals),
-                                 paste(bw.exts,collapse="|"),"")
+    bw.exts = c(".bw",".bigWig",".bigwig",".BigWig", ".BIGWIG", ".BW")
+    sampleIDs <- stringr::str_replace(basename(geneActSignals),
+                                      paste(bw.exts,collapse="|"),"")
   }
-      
   
-  # adjust chromosome sizes 
-  seqlengths(Exons) <- seqlengths(Hsapiens)[names(seqlengths(Exons))]
+  
   
   # separate genes form forward and reverse strand
-   Exons.splitted <- split(Exons,strand(Exons))
+  exons.splitted <- split(exons,strand(exons))
+  gene.metadata <- length(mcols(exons)) # metadata info about corresponding gene
+  
+  # arranging a problem of strandness of RNA-Seq libraryies
+  # 1. if object libStrand is empty then strands are assumed to be "*"
+  if (is.null(libStrand)) {libStrand <- rep("*",length(geneActSignals))}
+  
+  # quantify expression per exon with adjustment to strandness of RNA-Seq 
+  # libraries
+  ExonExpression <- exonExpressionStrandAdjusted(exons,
+                                              exons.splitted,
+                                              geneActSignals,
+                                              sampleIDs, 
+                                              libStrand,
+                                              mc.cores,
+                                              summaryOperation)         
+  # quantify expression per gene   
+  exonExpressionPerGene <- split(ExonExpression,
+                                 as.character(ExonExpression$name))
+  
+  GeneExpression <- list()
+     for (i in 1:length(exonExpressionPerGene)){
+           gene.id <- names(exonExpressionPerGene)[[i]]
+          GeneExpression[[gene.id]] <- quantifyGeneExpression(
+                                              exonExpressionPerGene[[gene.id]],
+                                              gene.metadata)}
+  
+  
+    GeneExpression.df <- do.call("rbind",GeneExpression)
+
+   #############            
+   # normalization
+   if (!is.null(normalize)){
+     GeneExpression.df <-  normalizeScores(GeneExpression.df,
+                                           normalize)}
 
 
-        # arranging a problem of strandness of RNA-Seq libraryies
-        # 1. if object LibStrand is empty then strands are assumed to be "*"
-             if (is.null(LibStrand)) {LibStrand <- rep("*",length(GeneExpSignals))}
-        
-                    # quantify expression per exon with adjustment to strandness of RNA-Seq libraries
-                       ExonExpression <- .ExonExpressionStrandAdjusted(Exons=Exons.splitted,
-                                                                       GeneExpSignals=GeneExpSignals,
-                                                                       sampleIDs=sampleIDs, 
-                                                                       LibStrand=LibStrand,
-                                                                       mc.cores=mc.cores,
-                                                                       summaryOperation=summaryOperation)
-                       
-                    # quantify expression per gene   
-                       ExonExpressionPerGene <- split(ExonExpression,as.character(ExonExpression$gene.id))
-                            GeneExpression <- lapply(ExonExpressionPerGene,.QuantifyGeneExpression)
-                            GeneExpression.df <- do.call("rbind",GeneExpression)
-                     
-                            
-                  # normalization
-                       if (!is.null(normalize)) {GeneExpression.df <-  .NormalizeScores(ScoresDF=GeneExpression.df,
-                                                                                        NormalizationMet=normalize)}
-          
-                            
-          # arranging gene coordinates as TSS  
-               Genes.object <- data.frame(unique(mcols(ExonExpression)[1:7]),stringsAsFactors = F) # extract gene location
-                # TSS coord of genes
-                   TSS <- promoters(GRanges(Genes.object$seqnames,
-                                                   IRanges(Genes.object$start,Genes.object$end),
-                                                   strand=Genes.object$strand),1,1)
-                  
-                     
-          # adding meta-data    
-               name <- as.character(Genes.object$gene.id)
-               name2 <- as.character(Genes.object$gene.name)
-                         if (length(name2)==0) { name2 <-  rep(NA,length(name))} # if there is no 2nd name
-               metadata <- data.frame(name,name2,GeneExpression.df[match(name,rownames(GeneExpression.df)),],stringsAsFactors = F)
-               
-            mcols(TSS) <- metadata
-              
-              
-              
-                return(TSS) 
-         
-          
+        # arranging gene coordinates as TSS
+    Genes.object <- data.frame(unique(mcols(ExonExpression)[1:gene.metadata]),
+                               stringsAsFactors = F)
+    
+    
+        #extract gene location
+              # TSS coord of genes
+    
+                 tss <- promoters(GRanges(Genes.object$reg.seqnames,
+                                IRanges(Genes.object$reg.start,
+                                        Genes.object$reg.end),
+                                strand=Genes.object$reg.strand),
+                                1,1)
+
+
+        # adding meta-data
+             name <- Genes.object$name
+             name2 <- Genes.object$name2
+                       if (length(name2)==0){
+                         name2 <-  rep(NA,length(name))}# if no 2nd name
+             metadata <- data.frame(name,
+                                    name2,
+                  GeneExpression.df[match(name,rownames(GeneExpression.df)),],
+                            stringsAsFactors = F)
+
+          mcols(tss) <- metadata
+
+  return(tss)
+  
 } 
-     
+
 
 
 

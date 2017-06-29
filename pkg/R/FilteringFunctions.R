@@ -17,39 +17,46 @@
 
 #' Filters genes and enhancer regions prior modelling
 #' 
-#' The function that takes as an input individual GRanges object stored in GRangesList from
-#' \code{regActivityAroundTSS} and returns a vector of TRUE,FALSE entries corresponding to
-#' members of GRange object and whether they pass filtering or not.  
+#' The function that takes as an input individual GRanges object stored in 
+#' GRangesList from \code{regActivityAroundTSS} and returns a vector of TRUE,
+#' FALSE entries corresponding to members of GRange object and whether they 
+#' pass filtering or not.  
 #' 
-#' @param TSSmodel a GRanges object, member of the GRangesList from \code{regActivityAroundTSS}
+#' @param tssModel a GRanges object, member of the GRangesList from 
+#' \code{regActivityAroundTSS}
 #'   
-#' @return a vector of TRUE,FALSE entries which indicates whether ranges in the input
-#' GRanges object passed filtering or not.
+#' @return a vector of TRUE,FALSE entries which indicates whether ranges in 
+#' the input GRanges object passed filtering or not.
 #'  
 #'  
 #' @details It checks whether genes and enhancer region have:a) an expression 
-#' or enhancer activity eqaul to 0 across all samples(cell types) or 90% of expression values or
-#' enhancer activity is equal to 0; b) variance across samples is different from 0.
-#' FALSE value indicates that these ranges should filtered prior the modelling procedure; 
-#' TRUE indicates that it is ok to proceed with this ranges. 
-#' !IMPORTANT NOTE! If the first entry is FALSE, than that gene should be removed from the analysis
+#' or enhancer activity eqaul to 0 across all samples(cell types) or 90% of 
+#' expression values or enhancer activity is equal to 0; b) variance across 
+#' samples is different from 0. FALSE value indicates that these ranges should 
+#' filtered prior the modelling procedure; TRUE indicates that it is ok to 
+#' proceed with this ranges. 
+#' !IMPORTANT NOTE! If the first entry is FALSE, than that gene should be
+#' removed from the analysis
 #' 
 #' 
 #' 
 # GR_exp_toy <- GRanges(rep("chr1",4),IRanges(1:4,2:5))
-# mcols(GR_exp_toy) <-  matrix(rep("test",16),nrow=4,
-#                              dimnames = list(1:4,c("gene.indicator","featureType","name","name2")))
-# mcols(GR_exp_toy) <- cbind(mcols(GR_exp_toy),data.frame(matrix(c(rep(0,10),c(rep(0,9),1),
+# mcols(GR_exp_toy) <-  matrix(rep("test",12),nrow=4,
+#                         dimnames = list(1:4,c("featureType","name","name2")))
+# mcols(GR_exp_toy) <- cbind(mcols(GR_exp_toy),data.frame(matrix(c(rep(0,10),
+# c(rep(0,9),1),
 # c(rep(0,3),rep(1,7)),c(rep(1,9),NA)),byrow = T,nrow=4),stringsAsFactors = F))
 # FilterPerGeneModel(GR_exp_toy)
 #' 
 #' 
 #' @export
-FilterPerGeneModel <- function(TSSmodel){
+filterPerGeneModel <- function(tssModel){
   
-  MetaData <- data.frame(mcols(TSSmodel),stringsAsFactors = F)
+  MetaData <- data.frame(mcols(tssModel),stringsAsFactors = F)
   
-  MetaData <- MetaData[,!colnames(MetaData)%in%c("gene.indicator","featureType","name","name2")]
+  MetaData <- MetaData[,!colnames(MetaData)%in%c("featureType",
+                                                 "name",
+                                                 "name2")]
   
   return(apply(MetaData,1,.Exp_filtering))
   
