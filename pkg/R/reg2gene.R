@@ -8,11 +8,10 @@
 #'
 #' @import genomation
 #' @import GenomicRanges
-#' @importFrom GenomicRanges findOverlaps
+#' @import IRanges
+#' @import S4Vectors
 #' @importFrom parallel mclapply
 #' @importFrom DESeq2 estimateSizeFactorsForMatrix
 #' @import stringr
 #' @importFrom preprocessCore normalize.quantiles
-#' @importFrom caret confusionMatrix
-#' @importFrom caret posPredValue
 NULL

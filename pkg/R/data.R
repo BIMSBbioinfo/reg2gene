@@ -43,7 +43,7 @@
 #'
 #' @format GRanges object with 6 ranges and 5 metadata columns
 #' @docType data
-"BenchmarkedReg2Gene_toy"
+"BenchMarkedReg2Gene_toy"
 
 NULL
 

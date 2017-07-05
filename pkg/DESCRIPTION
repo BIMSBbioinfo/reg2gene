@@ -8,9 +8,12 @@ Author: person("Inga", "Patarcic", email = "inga.patarcic@mdc-berlin.de",
     role=c("aut", "cre"))))
 Maintainer: Inga Patarcic <inga.patarcic@mdc-berlin.de>
 Description: Predicting the target genes for regulatory elements
-  -   regulatory activity quantification per pre-defined region (regulatoryActivity)
-    -   the code base that is used to quantify enhancer activties across different markers and studies
-    -   The scripts to match enhancers to potential target genes within pre-defined window around gene TSSes
+  -   regulatory activity quantification per pre-defined region 
+  (regulatoryActivity)
+    -   the code base that is used to quantify enhancer activties across 
+    different markers and studies
+    -   The scripts to match enhancers to potential target genes within 
+    pre-defined window around gene TSSes
  -   enhancer target prediction (targetPrediction)
     -   This should contain the code for target prediction methods
  -   performance metrics (performance):
@@ -18,9 +21,19 @@ Description: Predicting the target genes for regulatory elements
 License: Artistic-2.0
 Encoding: UTF-8
 LazyData: true
-Imports: 
+Depends: R (>= 3.4.0),
+    GenomicRanges (>= 1.28.3)
+Imports: IRanges, 
+         parallel,
+         S4Vectors (>= 0.14.3),
+         genomation (>= 1.8.0),
+         preprocessCore (>= 1.38.1),
+         DESeq2 (>= 1.14.1),
+         stringr
 RoxygenNote: 6.0.1
 Suggests: knitr,
     rmarkdown,
     testthat
 VignetteBuilder: knitr
+
+
