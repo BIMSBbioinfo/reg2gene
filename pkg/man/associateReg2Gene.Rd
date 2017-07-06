@@ -58,12 +58,10 @@ forests.
 }
 \examples{
 \dontrun{
-input=readRDS("data/sampleRegActivityAroundTSS.rds")
-i2=readRDS("data/Roadmap_H3K27ac.trial.rds")
-lapply(i2,function(x) x[,])
-i3=i2[1:5]
-i3=i2[567:569]
-b=associateReg2Gene(i3)
+regAcFile=system.file("extdata", "sampleRegActivityAroundTSS.rds",
+                      package = "reg2gene")
+input=readRDS(regAcFile)
+b=associateReg2Gene(input)
 
 }
 

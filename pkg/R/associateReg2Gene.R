@@ -317,8 +317,9 @@ corMat<-function(y,mat,method="pearson"){
 #' vector (y) with all the other columns of a matrix (mat)
 #'
 #' @keywords internal
+#' @importFrom energy dcor
 dcorMat<-function(y,mat){
-  require(energy)
+  #require(energy)
   apply(mat,2,function(x,y){dcor(x,y)},
         y=y)
 }
@@ -442,7 +443,7 @@ dcorResample<-function(mat,col=1,B=1000){
 #' m=apply(m, 2,as.numeric) # change to numeric matrix
 #' glmnetResample(scale(m),col=1,B=1000)
 glmnetResample<-function(mat,col=1,B=1000,...){
-  require(glmnet)
+  #require(glmnet)
 
   # decide if the matrix needs to be dropped and NA returned due
   # to low or zero variation in gene expression
@@ -507,7 +508,7 @@ glmnetResample<-function(mat,col=1,B=1000,...){
 #'
 rfResample<-function(mat,col=1,B=1000,...){
   #require(randomForest)
-  require(ranger)
+  #require(ranger)
 
   # decide if the matrix needs to be dropped and NA returned due
   # to low or zero variation in gene expression

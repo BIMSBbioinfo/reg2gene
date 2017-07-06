@@ -18,6 +18,7 @@
 #' the output of \code{\link{associateReg2Gene}} function, it
 #' will have the same meta-data columns in the same order.
 #'
+#' @examples
 #' \dontrun{
 #' #
 #' assoc=system.file("extdata", "sampleAssociationsGrlist.rds",
@@ -26,7 +27,7 @@
 #' meta=metaAssociations(assoc)
 #' }
 #'
-#' @importFrom  data.table data.table merge
+#' @importFrom  data.table data.table
 #'
 #' @export
 #'

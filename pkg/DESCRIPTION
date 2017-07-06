@@ -22,18 +22,27 @@ License: Artistic-2.0
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.4.0),
-    GenomicRanges (>= 1.28.3)
+         GenomicRanges (>= 1.28.3)
 Imports: IRanges, 
          parallel,
          S4Vectors (>= 0.14.3),
          genomation (>= 1.8.0),
          preprocessCore (>= 1.38.1),
          DESeq2 (>= 1.14.1),
-         stringr
+         stringr,
+         data.table, 
+         doMC, 
+         energy, 
+         fitdistrplus, 
+         foreach, 
+         glmnet, 
+         preprocessCore, 
+         qvalue, 
+         ranger 
 RoxygenNote: 6.0.1
 Suggests: knitr,
-    rmarkdown,
-    testthat
+          rmarkdown,
+          testthat
 VignetteBuilder: knitr
 
 

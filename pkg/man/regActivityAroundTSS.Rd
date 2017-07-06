@@ -4,11 +4,14 @@
 \alias{regActivityAroundTSS}
 \title{Identify regulatory regions around provided TSSes}
 \usage{
-regActivityAroundTSS(RegRegionActivity, TSS, upstream = 5e+05,
-  downstream = 5e+05, mc.cores = 10)
+regActivityAroundTSS(regActivity, tss, upstream = 5e+05, downstream = 5e+05,
+  mc.cores = 1)
 }
 \arguments{
-\item{TSS}{a GRanges object output from \code{bwToGeneExp} that
+\item{regActivity}{a GRanges object output from \code{regActivity}
+function}
+
+\item{tss}{a GRanges object output from \code{bwToGeneExp} that
 contains the TSS location and associated gene expression values 
 per cell type or condition as meta data. Each row should have a
 "name" and "name2" columns for unique id or name/symbol for the
@@ -23,8 +26,10 @@ regulatory regions. default 500kb}
 \item{downstream}{number of basepairs downstream from TSS to look for 
 regulatory regions. default 500kb}
 
-\item{regActivity}{a GRanges object output from \code{regActivity}
-function}
+\item{mc.cores}{(def:1) Define the number of cores to use;
+at most how many child processes will be run simultaneously 
+using mclapply from parallel package. Parallelization requires at 
+least two cores.}
 }
 \value{
 a GRangesList object per gene that contain location of TSS
@@ -34,37 +39,12 @@ Metadata for a GRanges object in the list represents regulatory
 activity and gene expression accross the same samples. 
 The GRanges objects have the following metadata columns:
  1. featureType: either "gene" or "regulatory"
- 2. name: name/id for gene and enhancers. Gene name could be id from a database
-         enhancer name should be in the format as follows "chr:start-end"
- 3. name2: a secondary name for the feature, such as gene symbol "PAX6" etc. not
-   necessary for enhancers could be NA
+ 2. name: name/id for gene and enhancers. Gene name could be id from a 
+ database enhancer name should be in the format as follows "chr:start-end"
+ 3. name2: a secondary name for the feature, such as gene symbol "PAX6" etc. 
+ not necessary for enhancers could be NA
  4. other columns: numeric values for gene expression or regulatory actvity.
    Column names represent sample names/ids.
-
-#@examples 
-# load("~/TSS.RData")
-# load("~/regActivity.RData")
-# regActivityAroundTSS(regActivity,TSS,upstream=500000,downstream=500000)
-
-
- #load(file="~/LargeregRegions.RData")
- #RoadmapH3K4me1 <- readRDS(
- #"/data/akalin/Projects/AAkalin_reg2gene/Results/regActivity/Roadmap_H3K4me1_meanratio.rds")
- #RoadmapRNASeq <- readRDS(
- #"/data/akalin/Projects/AAkalin_reg2gene/Results/bwToGeneExp/Roadmap_RNASeq_meanratio.rds")
-
-   #regActivityAroundTSS(RegRegionActivity = RoadmapH3K4me1, TSS = RoadmapRNASeq[1:10])
-
-
-#RegRegionActivity <- readRDS(pathRegActivity)
-#TSS <- readRDS(pathTSS)[1:10]
-#Method <- basename(pathRegActivity)
-#mc.cores=25
-# regActivityAroundTSS(RegRegionActivity, 
- #                                 TSS,
- #                                downstream=1000000,
- #                                 upstream=1000000,
- #                                 mc.cores)
 }
 \description{
 The function identifies the regulatory regions around provided
@@ -79,4 +59,19 @@ about gene expression). Sample id's (corresponding to the cell types
 or conditions) are included only if both, 1) gene expression values and
 2) quantified regulatory activity are available in TSS and 
 regActivity objects. Non-overlapping cell types are excluded.
+}
+\examples{
+
+regTSS_toy <- GRReg1_toy
+  regTSS_toy$bw1 <- rep(1,length(GRReg1_toy))
+  regTSS_toy$bw2 <- rep(2,length(GRReg1_toy))
+  regTSS_toy$bw3 <- rep(3,length(GRReg1_toy))
+regReg_toy <- GRReg2_toy
+   regReg_toy$bw1 <- rep(3,length(regReg_toy))
+   regReg_toy$bw2 <- rep(4,length(regReg_toy))
+
+regActivityAroundTSS(regReg_toy,regTSS_toy,upstream=1,downstream=1)
+
+
+
 }

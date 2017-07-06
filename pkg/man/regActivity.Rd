@@ -5,11 +5,15 @@
 \title{Calculates regulatory activity over pre-defined regions}
 \usage{
 regActivity(regRegions, activitySignals, sampleIDs = NULL, isCovNA = FALSE,
-  summaryOperation = "mean", normalize = NULL, mc.cores = 1)
+  weightCol = NULL, summaryOperation = "mean", normalize = NULL,
+  mc.cores = 1)
 }
 \arguments{
 \item{regRegions}{a GRanges object that contains regulatory regions
-over which the regulatory activity will be calculated.}
+over which the regulatory activity will be calculated. 
+It is strongly suggested to adjust 
+seqlengths of this object to be equal to the seqlenghts Hsapiens from the 
+appropriate package (BSgenome.Hsapiens.UCSC.hg19 or whatever needed version).}
 
 \item{activitySignals}{a named list of BigWig files. Names correspond to 
 unique sample ids/names.}
@@ -22,15 +26,19 @@ basenames of .bw files is used as a unique sample ids/names.}
 bases are set to NA, this is important when dealing with methylation
 data, where uncovered bases on a bigWig file do not mean zero methylation.}
 
+\item{weightCol}{a numeric column in meta data part used as weights. Useful
+when genomic regions have scores other than their coverage values, 
+such as percent methylation, conservation scores, GC content, etc.}
+
 \item{summaryOperation}{"mean"(default).
 This designates which summary operation should be used over the regions.
 Currently, only mean is available, but "median" or "sum" will be implemented
 in the future.}
 
-\item{normalize}{NULL(default). Optional "quantile" and "ration"
+\item{normalize}{NULL(default). Optional "quantile" and "ratio"
 If set to "quantile" activity measures are quantile normalized as 
 implemented in \code{\link[preprocessCore]{normalize.quantiles}} and
-returned ; if set to "ration" then "median ration method" implemented
+returned ; if set to "ratio" then "median ratio method" implemented
 as \code{\link[DESeq2]{estimateSizeFactorsForMatrix}} is used to normalize 
 activity measures.}
 
@@ -58,10 +66,13 @@ activity. This function might be extended to work with BAM files
 in the future. 
 
 #@examples
-#      load("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/pkg/inst/extdata/regRegions.RData")
-#      activitySignals <- c("pkg/inst/extdata/E085-H3K27ac.chr10.fc.signal.bigwig",
-#                           "pkg/inst/extdata/E066-H3K27ac.chr10.fc.signal.bigwig")
-#      regActivity(regRegions,activitySignals)
-#      sampleIDs <- c("E085","E066")
-#      regActivity(regRegions,activitySignals,sampleIDs)
+test.bw <- system.file("extdata", "test.bw",package = "reg2gene")
+test2.bw <- system.file("extdata", "test2.bw",package = "reg2gene")
+regTSS_toy <- GRanges(c(rep("chr1",4),rep("chr2",2)),
+                      IRanges(c(1,7,9,15,1,15),c(4,8,14,20,4,20)),
+                                            c(rep("+",3),rep("-",3)))
+regTSS_toy$reg <-  regTSS_toy[c(1,1,3:6)]
+regTSS_toy$name2 <- regTSS_toy$name <- paste0("TEST_Reg",
+                                        c(1,1,3:length(regTSS_toy)))
+regActivity(regTSS_toy,c(test.bw,test2.bw))
 }

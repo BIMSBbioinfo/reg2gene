@@ -4,16 +4,20 @@
 \alias{bwToGeneExp}
 \title{Quantifies gene expression measured by RNA-Seq}
 \usage{
-bwToGeneExp(Exons, GeneExpSignals, sampleIDs = NULL, LibStrand = NULL,
-  summaryOperation = "mean", mc.cores = 1, normalize = "ratio")
+bwToGeneExp(exons, geneActSignals, sampleIDs = NULL, libStrand = NULL,
+  summaryOperation = "mean", mc.cores = 1, normalize = NULL)
 }
 \arguments{
-\item{Exons}{A GRanges object that contains exon regions over which 
-the expression will be calculated. A meta-columns with following info are
-necessary: need to adjust these}
+\item{exons}{A GRanges object that contains exon regions over which 
+the expression will be calculated. It is strongly suggested to adjust 
+seqlengths of this object to be equal to the seqlenghts Hsapiens from the 
+appropriate package (BSgenome.Hsapiens.UCSC.hg19 or whatever needed version).
+A meta-columns with following info are necessary: 1) name (character)- ENSEMBL 
+or other gene identifier; 2) name2(character,optional) - 2nd gene identifier,
+3) reg - GRanges object - gene location, or TSS location.}
 
-\item{GeneExpSignals}{a named list of RNA-Seq BigWig files. Names correspond to 
-the unique sample ids/names. Stranded and unstranded libraries allowed.
+\item{geneActSignals}{a named list of RNA-Seq BigWig files. Names correspond 
+to the unique sample ids/names. Stranded and unstranded libraries allowed.
  BUT!!! It is crucial that forward and reverse RNA-Seq libraries are listed
 in a row (eg one on top of each other)}
 
@@ -21,13 +25,14 @@ in a row (eg one on top of each other)}
 ids/names(.bw files), ordered as the bigwig files are ordered. When NULL
 basenames of .bw files is used as a unique sample ids/names.}
 
-\item{LibStrand}{a vector of "*","+,"-" (default NULL) which needs to be entered
-as an argument.This vector provides info about the order of RNA-Seq libraries
-based on their strandness: "+" corresponds to forward/positive RNA-Seq bigwig files; 
-"-" corresponds to reverse/negative RNA-Seq bigwig files and "*" is unstranded
-library. When all libraries are unstranded then the vector should contain a list
-of "*" with the lenght equal to the number of analyzed RNA-Seq libraries
-(eg bigwig files). If LibStrand=NULL than function will do it automatically, eg
+\item{libStrand}{a vector of "*","+,"-" (default NULL) which needs to be 
+entered as an argument.This vector provides info about the order of RNA-Seq 
+libraries based on their strandness: "+" corresponds to forward/positive 
+RNA-Seq bigwig files; "-" corresponds to reverse/negative RNA-Seq bigwig
+files and "*" is unstranded library. When all libraries are unstranded then
+the vector should contain a list of "*" with the lenght equal to the number
+of analyzed RNA-Seq libraries (eg bigwig files). 
+If libStrand=NULL than function will do it automatically, eg
 create a vector of "*".It is crucial that stranded RNA-Seq libraries are
 listed in a row (eg one on top of each other)}
 
@@ -41,10 +46,10 @@ at most how many child processes will be run simultaneously
 using mclapply from parallel package. Parallelization requires at 
 least two cores.}
 
-\item{normalize}{NULL(default). Optional "quantile" and "ration"
+\item{normalize}{NULL(default). Optional "quantile" and "ratio"
 If set to "quantile" activity measures are quantile normalized as 
 implemented in \code{\link[preprocessCore]{normalize.quantiles}} and
-returned ; if set to "ration" then "median ration method" implemented
+returned ; if set to "ratio" then "median ratio method" implemented
 as \code{\link[DESeq2]{estimateSizeFactorsForMatrix}} is used to normalize 
 activity measures.}
 }
@@ -69,28 +74,23 @@ expression levels quantified over a set of samples.
 For a gene of interest and across all samples (.bw files)
 individaully,the expression is firstly calculated for all exon 
 regions which correspond to the gene of interest. Then, per gene
-exon expression scores are summed together 
-and divided by a total exon length. Normalization is runned
-on the level of gene expression. Currently, the relevant bigWig 
-files are required to calculate activity. This function might 
-be extended to work with BAM files in the future. 
-RNA-Seq .bw files can come from stranded,unstranded or mixed 
-libraries.
-
-
-
-#@examples load(file="~/GeneExpSignals.RData")
-#load(file="~/LibStrand.RData")
-#load(file="~/Exons.RData")
-#load(file="~/sampleIDs.RData")
-
- #   bwToGeneExp(Exons,GeneExpSignals,LibStrand,
- #    sampleIDs=NULL,mc.cores=1,normalize="ratio",summaryOperation="mean")
- #   bwToGeneExp(Exons,GeneExpSignals,LibStrand, mc.cores=1,normalize="quantile",
- #    sampleIDs=NULL,summaryOperation="mean")
- #   bwToGeneExp(Exons,GeneExpSignals,LibStrand, mc.cores=1,normalize=NULL,
- #    sampleIDs=NULL,summaryOperation="mean")
- #   bwToGeneExp(Exons=Exons,GeneExpSignals=GeneExpSignals,
- #   LibStrand=LibStrand,sampleIDs=sampleIDs, 
-                  mc.cores=1,normalize="quantile",summaryOperation="mean")
+exon expression scores are summed together and divided by a total exon length
+as followed:
+Normalization is runned on the level of gene expression. Currently, the 
+relevant bigWig files are required to calculate activity. This function might 
+be extended to work with BAM files in the future. RNA-Seq .bw files can 
+originate from stranded,unstranded or mixed libraries.
+}
+\examples{
+test.bw <- system.file("extdata", "test.bw",package = "reg2gene")
+test2.bw <- system.file("extdata", "test2.bw",package = "reg2gene")
+regTSS_toy <- GRanges(c(rep("chr1",4),rep("chr2",2)),
+                      IRanges(c(1,7,9,15,1,15),c(4,8,14,20,4,20)),
+                                            c(rep("+",3),rep("-",3)))
+regTSS_toy$reg <-  regTSS_toy[c(1,1,3:6)]
+regTSS_toy$name2 <- regTSS_toy$name <- paste0("TEST_Reg",
+                                        c(1,1,3:length(regTSS_toy)))
+                                        
+                                        
+bwToGeneExp(exons = regTSS_toy,geneActSignals = c(test.bw,test2.bw))
 }
