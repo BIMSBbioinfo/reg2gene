@@ -26,7 +26,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' regAcFile=system.file("extdata", "sampleRegActivityAroundTSS",
+#' regAcFile=system.file("extdata", "sampleRegActivityAroundTSS.rds",
 #'                       package = "reg2gene")
 #' input=readRDS(regAcFile)
 #' b=associateReg2Gene(input)
