@@ -19,7 +19,6 @@
 #' is used to estimate
 #' P-values for coeficients returned by different methods.
 #' @param ... further arguments to methods, not implemented yet
-
 #' @return a GRanges object containing every potential association and
 #' between a regulatory region and TSS, and the estimated association statistic
 #' , its P-value and Q-value.
@@ -53,9 +52,9 @@
 #' @author Altuna Akalin
 #'
 #' @importFrom doMC registerDoMC
-#' @importFrom foreach foreach
+#' @import foreach 
 #' @importFrom qvalue qvalue
-#'
+#' @export
 associateReg2Gene<-function(input,method="pearson",tag=NULL,scale=TRUE,
                             cores=1,B=1000,...){
 
@@ -307,8 +306,12 @@ manyZeros<-function(mat,col=1){
 #' @keywords internal
 corMat<-function(y,mat,method="pearson"){
 
-  apply(mat,2,function(x,y,method){cor(x,y,method=method)},
-        y=y,method=method)
+  if (!is.vector(mat)){
+  return(apply(mat,2,function(x,y,method){cor(x,y,method=method)},
+        y=y,method=method))}
+  
+  if (is.vector(mat)){return(cor(mat,y,method=method))}
+  
 }
 
 #' Distance correlation between a col matrix and a vector
@@ -320,8 +323,9 @@ corMat<-function(y,mat,method="pearson"){
 #' @importFrom energy dcor
 dcorMat<-function(y,mat){
   #require(energy)
-  apply(mat,2,function(x,y){dcor(x,y)},
-        y=y)
+  if (!is.vector(mat)){apply(mat,2,function(x,y){dcor(x,y)},y=y)}
+  
+  if (is.vector(mat)){dcor(mat,y)}
 }
 
 #' Correlation with resampling p-values
@@ -356,11 +360,14 @@ corResample<-function(mat,method="pearson",col=1,B=1000){
   Ys=lapply(1:B,function(x) sample(mat[,col],nrow(mat)))
 
   # original coefs
+  # if only 1 enhancer available
+  # if more than one enhancer available
   orig=corMat(y=mat[,col],mat=mat[,-col],method)
 
-  #coefs from resampling
-  coefs=matrix(0.0,ncol=ncol(mat[,-col]),nrow=(B))
-
+  #coefs from resampling (adjusted for 1 or more enhancers)
+  Nenh <- ncol(mat[,-col])
+    if (is.null(Nenh)){coefs=matrix(0.0,ncol=1,nrow=(B))}
+    if (!is.null(Nenh)){coefs=matrix(0.0,ncol=Nenh,nrow=(B))}
 
   # calculate coeff for resampled Ys
   for(i in 1:B){
@@ -406,8 +413,11 @@ dcorResample<-function(mat,col=1,B=1000){
   # original coeff
   orig=dcorMat(y=mat[,col],mat=mat[,-col])
 
-  #coefs
-  coefs=matrix(0.0,ncol=ncol(mat[,-col]),nrow=(B))
+  #coefs (adjusted for 1 or more enhancers)
+  Nenh <- ncol(mat[,-col])
+  if (is.null(Nenh)){coefs=matrix(0.0,ncol=1,nrow=(B))}
+  if (!is.null(Nenh)){coefs=matrix(0.0,ncol=Nenh,nrow=(B))}
+  
 
 
   # calculate coeff for resampled Ys
