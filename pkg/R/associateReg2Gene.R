@@ -71,49 +71,44 @@ associateReg2Gene<-function(input,method="pearson",tag=NULL,scale=TRUE,
 
   # decide which prediction/association method you want to use
   if(method=="pearson"){
-    model.func=quote(corResample(mat,method="pearson",col=1,B=B) )
+    model.func=quote(corResample(mat,scale,method="pearson",col=1,B=B) )
   }else if(method == "spearman"){
-    model.func=quote( corResample(mat,method="pearson",col=1,B=B) )
+    model.func=quote( corResample(mat,scale,method="pearson",col=1,B=B) )
   }else if(method == "dcor"){
-    model.func=quote( dcorResample(mat,col=1,B=B) )
+    model.func=quote( dcorResample(mat,scale,col=1,B=B) )
   }else if(method == "elasticnet"){
-    model.func=quote( glmnetResample(mat,col=1,B=B) )
+    model.func=quote( glmnetResample(mat,scale,col=1,B=B) )
   }else if(method == "randomForest"){
-    model.func=quote( rfResample(mat,col=1,B=B) )
+    model.func=quote( rfResample(mat,scale,col=1,B=B) )
   }
 
   # call the function in a foreach loop
   res=foreach(gr=input) %dopar%
   {
-       # get matrix of activity and expressions
+           # get matrix of activity and expressions
     mat=t(as.matrix(mcols(gr)[,-which(names(mcols(gr)) %in% c("name","name2",
-                                                              "featureType",
-                                                              "gene.indicator"))]
-                  )
-          )
+                                                              "featureType"))]))
 
     # only work with complete cases, hope there won't be
     # any columns with only NAs
     mat=mat[complete.cases(mat),]
 
-    # scale if necessary
-    if(scale){
-      mat=scale(mat)
-      mat[is.nan(mat)]=0 # when scaled all 0 columns will be NaN, conv. to 0
-    }
+
 
     # get coef and pvalues, add number of samples to the result
-    cbind(n=nrow(mat),t(eval(model.func)) )
+    cbind(n=nrow(mat),t(eval(model.func)))
   }
 
-
+  
 
   # combine stats with Granges
   comb.res=do.call("rbind",res)[,1:3]
   rownames(comb.res)=NULL # needed for GRanges DataFrame
 
-  # add qvalues as well
-  comb.res=cbind(comb.res,qval=qvalue(comb.res[,3])$qvalues)
+  # add qvalues - adjusted for filtered results
+  if (all(is.na(comb.res[,3]))) {comb.res=cbind(comb.res,qval=NA)}
+  if (!all(is.na(comb.res[,3]))) {comb.res=cbind(comb.res,
+                                           qval=qvalue(comb.res[,3])$qvalues)}
 
   # if a tag for column names given, add it
   if(!is.null(tag)){
@@ -291,6 +286,7 @@ manyZeros<-function(mat,col=1){
   FALSE
 }
 
+
 #### END OF utility functions for association prediction ####
 #########------------------------------------------------############
 
@@ -323,9 +319,10 @@ corMat<-function(y,mat,method="pearson"){
 #' @importFrom energy dcor
 dcorMat<-function(y,mat){
   #require(energy)
-  if (!is.vector(mat)){apply(mat,2,function(x,y){dcor(x,y)},y=y)}
+  if (!is.vector(mat)){return(apply(mat,2,
+                                    function(x,y){energy::dcor(x,y)},y=y))}
   
-  if (is.vector(mat)){dcor(mat,y)}
+  if (is.vector(mat)){return(dcor(mat,y))}
 }
 
 #' Correlation with resampling p-values
@@ -346,7 +343,7 @@ dcorMat<-function(y,mat){
 #' m=apply(m, 2,as.numeric) # change to numeric matrix
 #' corResample(m,method="pearson",col=1,B=1000)
 #'
-corResample<-function(mat,method="pearson",col=1,B=1000){
+corResample<-function(mat,scale,method="pearson",col=1,B=1000){
 
   # decide if the matrix needs to be dropped and NA returned due
   # to low or zero variation in gene expression
@@ -354,6 +351,12 @@ corResample<-function(mat,method="pearson",col=1,B=1000){
     return(matrix(NA,ncol=ncol(mat)-1,nrow=3,
                   dimnames=list(c("coefs","pval","p2"),1:(ncol(mat)-1) ))
     )
+  }
+  
+  # scale if necessary
+  if(scale){
+    mat=scale(mat)
+    mat[is.nan(mat)]=0 # when scaled all 0 columns will be NaN, conv. to 0
   }
 
   # resample response variables Ys
@@ -397,7 +400,7 @@ corResample<-function(mat,method="pearson",col=1,B=1000){
 #'
 #' m=apply(m, 2,as.numeric) # change to numeric matrix
 #' dcorResample(m,col=1,B=1000)
-dcorResample<-function(mat,col=1,B=1000){
+dcorResample<-function(mat,scale,col=1,B=1000){
 
   # decide if the matrix needs to be dropped and NA returned due
   # to low or zero variation in gene expression
@@ -407,6 +410,11 @@ dcorResample<-function(mat,col=1,B=1000){
     )
   }
 
+  if(scale){
+    mat=scale(mat)
+    mat[is.nan(mat)]=0 # when scaled all 0 columns will be NaN, conv. to 0
+  }
+  
   # resample response variables Ys
   Ys=lapply(1:B,function(x) sample(mat[,col],nrow(mat)))
 
@@ -452,7 +460,7 @@ dcorResample<-function(mat,col=1,B=1000){
 #'
 #' m=apply(m, 2,as.numeric) # change to numeric matrix
 #' glmnetResample(scale(m),col=1,B=1000)
-glmnetResample<-function(mat,col=1,B=1000,...){
+glmnetResample<-function(mat,scale,col=1,B=1000,...){
   #require(glmnet)
 
   # decide if the matrix needs to be dropped and NA returned due
@@ -461,6 +469,12 @@ glmnetResample<-function(mat,col=1,B=1000,...){
     return(matrix(NA,ncol=ncol(mat)-1,nrow=3,
                   dimnames=list(c("coefs","pval","p2"),1:(ncol(mat)-1) ))
     )
+  }
+  
+  
+  if(scale){
+    mat=scale(mat)
+    mat[is.nan(mat)]=0 # when scaled all 0 columns will be NaN, conv. to 0
   }
 
   # resample response variables Ys
@@ -516,7 +530,7 @@ glmnetResample<-function(mat,col=1,B=1000,...){
 #' m=apply(m, 2,as.numeric) # change to numeric matrix
 #' rfResample(scale(m),col=1,B=1000)
 #'
-rfResample<-function(mat,col=1,B=1000,...){
+rfResample<-function(mat,scale,col=1,B=1000,...){
   #require(randomForest)
   #require(ranger)
 
@@ -528,6 +542,10 @@ rfResample<-function(mat,col=1,B=1000,...){
     )
   }
 
+  if(scale){
+    mat=scale(mat)
+    mat[is.nan(mat)]=0 # when scaled all 0 columns will be NaN, conv. to 0
+  }
 
   # resample response variables Ys
   Ys=lapply(1:B,function(x) sample(mat[,col],nrow(mat)))
