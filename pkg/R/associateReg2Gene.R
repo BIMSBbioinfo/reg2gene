@@ -554,9 +554,10 @@ rfResample<-function(mat,scale,col=1,B=1000,...){
   #mod<- randomForest(x = mat[,-col], y = mat[,col],
   #                   importance=TRUE,na.action=na.omit)
   #  orig=importance(mod)[,2] # gini index
-
-  f=paste0(colnames(mat)[1]," ~ .")
-  mod <-ranger( f, data = data.frame(mat), importance="impurity",
+  
+  colnames(mat) <- c("gene",rep("enh",ncol(mat)-1))
+  
+  mod <- ranger( "gene ~ .", data = data.frame(mat), importance="impurity",
                 num.trees = 500,write.forest = FALSE,
                 num.threads=1)
   orig=mod$variable.importance # gini index
