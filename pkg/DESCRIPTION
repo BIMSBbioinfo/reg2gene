@@ -22,10 +22,10 @@ License: Artistic-2.0
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.4.0),
-         GenomicRanges (>= 1.28.3)
+         GenomicRanges (>= 1.28.0)
 Imports: IRanges, 
          parallel,
-         S4Vectors (>= 0.14.3),
+         S4Vectors (>= 0.14.0),
          genomation (>= 1.8.0),
          preprocessCore (>= 1.38.1),
          DESeq2 (>= 1.14.1),
@@ -36,7 +36,6 @@ Imports: IRanges,
          fitdistrplus, 
          foreach, 
          glmnet, 
-         preprocessCore, 
          qvalue, 
          ranger 
 RoxygenNote: 6.0.1
