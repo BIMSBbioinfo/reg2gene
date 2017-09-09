@@ -1,3 +1,131 @@
+#' Associate regulatory regions to genes in CHUNKS
+#'
+#' The function runs \code{\link{associateReg2Gene}} function for chunks of 
+#' genes to avoid reaching a memory quota in R
+#'
+#' @param input a GRangesList that contains regulatory activity and
+#' gene expression results. It has to have specific columns, see the
+#' output of \code{\link{associateReg2Gene}} function.
+#' @param out.dir (character) Path to the directory where intermediate results
+#' will be stored.
+#' @param method one of "pearson","spearman","dcor","elasticnet",
+#' "randomForest". Default: "pearson". 
+#' @param tag a string to be used to append to results from methods. This string
+#'  will be attached to "n","coefs","pval" columns. Default NULL.
+#' @param scale if TRUE (default) the the values for gene expression and
+#' regulatory activity will be scaled to have 0 mean and unit variance using
+#' \code{\link[base]{scale}} function.
+#' @param cores number of cores to be used
+#' @param B number of randomizations, default 1000. This procedure
+#' is used to estimate
+#' P-values for coeficients returned by different methods.
+#' @param chunks Default: 1 - everything is analyzed together. If >1 then
+#' regulatory regions are divided into N chunks (useful for >>N of genes/
+#' regulatory regions to avoid reaching R memory quota)
+#' @param saveTag (character, defult: "ChunkAnalysis") Unique naming for created
+#' .rds files which correspond to different gene chunks. This character is used 
+#' to pull together all .rds files from one round of analysis.
+#' @param ... further arguments to methods, not implemented yet
+#' @param remove.chunks (default T). To remove all chunks of .rds data created
+#' while running a function
+#' @return a GRanges object containing every potential association and
+#' between a regulatory region and TSS, and the estimated association statistic
+#' , its P-value and Q-value.
+#' @examples
+#' \dontrun{
+#' regAcFile=system.file("extdata", "sampleRegActivityAroundTSS.rds",
+#'                       package = "reg2gene")
+#' input=readRDS(regAcFile)
+#' b=associateReg2Gene(input)
+#'
+#' }
+#'
+#' @details
+#' The function implements \code{\link{associateReg2Gene}} function, but 
+#' regulatory regions are dividied into predefined number of chunks; 
+#' anaysis is performed separately for each chunk; and results are saved in 
+#' predefined output directory. After analysis, all results are pulled
+#' together, Q-value is calculated, and all intermediate files are removed.
+#'
+#' @author Inga Patarcic
+#'
+#' @importFrom doMC registerDoMC
+#' @import foreach
+#' @import stringr 
+#' @importFrom qvalue qvalue
+#' @export
+associateReg2GeneChunks <- function(input,
+                                    out.dir,
+                                    method="pearson",
+                                    tag=NULL,
+                                    saveTag="ChunkAnalysis",
+                                    scale=TRUE,
+                                    cores=1,
+                                    B=1000,
+                                    chunks=1,
+                                    remove.chunks=T,
+                                    ...){
+  
+  # save warnings, output,etc. 
+  sink(paste0(out.dir,"log.txt"), append=TRUE, split=TRUE)
+  
+  # splitting in gene chunks
+  Split.factor <- split(1:length(input), sort(1:length(input)%%chunks))
+  
+  
+  # run associateReg2Gene for gene chunks and save them separately
+  lapply(Split.factor,function(x){
+    print(x[1])
+    
+    # adjusting for the fact that code breakes from time to time
+    
+    counter=1
+      while(counter<=10){
+        Res_associateReg2Gene <- try(associateReg2Gene(input[x],
+                                                       method=method,
+                                                       B=B,
+                                                       tag=tag,
+                                                       scale=scale,
+                                                       cores=cores),silent=TRUE)
+        if(!is(Res_associateReg2Gene, 'try-error')) break
+        if(is(Res_associateReg2Gene, 'try-error')) {counter=counter+1}
+      }
+    
+    # report error even after 10 iterations of trying
+    if (is(Res_associateReg2Gene, 'try-error')&counter>10){print(paste0(out.dir,
+                                                          saveTag,x[1],
+                                                    ".rds was not successful"))}
+    
+    saveRDS(Res_associateReg2Gene,paste0(out.dir,saveTag,x[1],".rds"))})
+  
+  
+  # input all associateReg2Gene gene chunks in correct order
+  GeneChunks <- sort(list.files(out.dir,pattern = saveTag,full.names = T,
+                                recursive=T))
+  GeneOrder <- order(as.numeric(str_replace(str_extract(GeneChunks,
+                                                  "[0-9]*.rds"),".rds",""))) 
+  
+  GeneEnhancerResults <- do.call(c,lapply(GeneChunks[GeneOrder], 
+                                          function(x) readRDS(x)))
+  
+  if (typeof(GeneEnhancerResults)=="list"){
+    GeneEnhancerResults <- do.call(c,GeneEnhancerResults)}
+  
+  # calculating appropriate Qvalue for all reported Pvalues
+  # assumption Pvalue is always stored in the 6th column
+  
+  QValue <- qvalue(mcols(GeneEnhancerResults)[,6])$qvalues
+  mcols(GeneEnhancerResults)[,7] <- QValue
+  
+  # remove all input files
+  if (remove.chunks==T){lapply(GeneChunks,function(x){system(paste0("rm ",x))})}
+  
+  return(GeneEnhancerResults)
+  
+  sink()
+  
+  
+} 
 
 #' Associate regulatory regions to genes
 #'
@@ -18,6 +146,8 @@
 #' @param B number of randomizations, default 1000. This procedure
 #' is used to estimate
 #' P-values for coeficients returned by different methods.
+#' @param chunks. Default: 1 - everything is analyzed together. Useful for >>N 
+#' of  genes/regulatory regions R memory 
 #' @param ... further arguments to methods, not implemented yet
 #' @return a GRanges object containing every potential association and
 #' between a regulatory region and TSS, and the estimated association statistic
@@ -85,20 +215,51 @@ associateReg2Gene<-function(input,method="pearson",tag=NULL,scale=TRUE,
   # call the function in a foreach loop
   res=foreach(gr=input) %dopar%
   {
-           # get matrix of activity and expressions
-    mat=t(as.matrix(mcols(gr)[,-which(names(mcols(gr)) %in% c("name","name2",
-                                                              "featureType"))]))
+          
 
-    # only work with complete cases, hope there won't be
-    # any columns with only NAs
-    mat=mat[complete.cases(mat),]
+      mat=t(as.matrix(mcols(gr)[,-which(names(mcols(gr)) %in% c("name","name2",
+                                                          "featureType"))]))
+        colnames(mat) <-  gr$name
+    
+        
+      # only work with complete cases, hope there won't be
+      # any columns with only NAs
+      # mat=mat[complete.cases(mat),]
+      
+  # se complete.cases (remove cells, remove enhancers, remove random NA)  
+      mat <- stepwise.complete.cases(mat)
 
 
-
-    # get coef and pvalues, add number of samples to the result
-    cbind(n=nrow(mat),t(eval(model.func)))
-  }
-
+      # adjusting for the case where all rows and columns are filtered OUT
+     
+      x  <- data.frame(matrix(NA,nrow=length(gr$name[-1]),ncol=4,byrow = T,
+                              dimnames=list(gr$name[-1],
+                                       c("n","coefs","pval","qval"))))
+            
+      
+      # necessary for genes with one enhancer that is filtered out due to NA 
+          if (is.matrix(mat)==F) {x <- x
+          
+          # get coef and pvalues, add number of samples to the result
+          # adjusted for data with only one enhancer tested 
+   }else if (nrow(mat)==2){x <- data.frame(cbind(n=nrow(mat),
+                                                  t(eval(model.func))))
+                        colnames(x) <- c("n","coefs","pval","qval")
+      
+    }else if ((nrow(mat)>2)&(ncol(mat)==length(gr$name))){
+              x <- cbind(n=nrow(mat),t(eval(model.func)))
+              colnames(x) <- c("n","coefs","pval","qval")
+            
+    }else if ((nrow(mat)>2)&(ncol(mat)!=length(gr$name))){
+        # adjusting for the case where just some enhancers are filtered any(NA) 
+        x[colnames(mat)[-1],] <- cbind(n=nrow(mat), t(eval(model.func)))
+          
+    }
+      
+   return(x)
+      
+    }
+      
   
 
   # combine stats with Granges
@@ -106,6 +267,8 @@ associateReg2Gene<-function(input,method="pearson",tag=NULL,scale=TRUE,
   rownames(comb.res)=NULL # needed for GRanges DataFrame
 
   # add qvalues - adjusted for filtered results
+  
+  
   if (all(is.na(comb.res[,3]))) {comb.res=cbind(comb.res,qval=NA)}
   if (!all(is.na(comb.res[,3]))) {comb.res=cbind(comb.res,
                                            qval=qvalue(comb.res[,3])$qvalues)}
@@ -155,9 +318,6 @@ associateReg2Gene<-function(input,method="pearson",tag=NULL,scale=TRUE,
 #' @author Altuna Akalin
 grlist2gr<-function(grlist){
 
-  if(class(grlist)=="list"){
-    grlist=GRangesList(grlist)
-  }
   unlist(endoapply(grlist, function(x){
 
     reg=granges(x[x$featureType != "gene",])
@@ -165,7 +325,10 @@ grlist2gr<-function(grlist){
 
     grpairs=rep(gene,length(reg))
     grpairs$reg=reg
-
+    
+    # ordering meta-data to have correct input for benchmark()
+    mcols(grpairs) <-  mcols(grpairs)[c("reg","name","name2")]
+    
     grpairs
   }))
 }
@@ -286,6 +449,36 @@ manyZeros<-function(mat,col=1){
   FALSE
 }
 
+#' stepwise complete cases method
+#'
+#' Removes NA but in stepwise order: 1st cells that have NA for at least
+#' 3/4 of enhancer regions, then the same thing is applied for cell types
+#' then individual NAs are removed
+#'
+#' @param mat a column matrix that contains gene expression values and
+#'            regulatory region activities.
+#'
+#' @keywords internal
+#' @author Inga Patarcic
+stepwise.complete.cases <- function(x){
+  
+  similarity=0.75
+  
+  remove.cc <- function(x,similarity){
+    n.na <- sum(is.na(x))
+    if (n.na>=similarity*length(x)){return(F)}
+    if (n.na<similarity*length(x)){return(T)}
+  }
+  
+  # remove problematic cells, then enhancers then remove remaining NAs 
+  x <- x[apply(x,1,remove.cc,similarity=similarity),]
+  x <- x[,apply(x,2,remove.cc,similarity=similarity)]
+  
+  if (is.matrix(x)){x <- x[,apply(x,2,remove.cc,similarity=0.00001)]}
+  
+  return(x)
+  
+}
 
 #### END OF utility functions for association prediction ####
 #########------------------------------------------------############
@@ -465,7 +658,7 @@ glmnetResample<-function(mat,scale,col=1,B=1000,...){
 
   # decide if the matrix needs to be dropped and NA returned due
   # to low or zero variation in gene expression
-  if( zeroVar(mat) | manyZeros(mat) ){
+  if( zeroVar(mat) | manyZeros(mat) | ncol(mat)<=2){
     return(matrix(NA,ncol=ncol(mat)-1,nrow=3,
                   dimnames=list(c("coefs","pval","p2"),1:(ncol(mat)-1) ))
     )
@@ -492,6 +685,9 @@ glmnetResample<-function(mat,scale,col=1,B=1000,...){
 
 
   # calculate coeff for resampled Ys
+  # catching errors if in resampling all 0s selected 
+  
+  tryCatch({
   for(i in 1:B){
 
     mod<- cv.glmnet(x = mat[,-col], y = Ys[[i]],
@@ -500,6 +696,7 @@ glmnetResample<-function(mat,scale,col=1,B=1000,...){
 
     coefs[i,]=coef(mod,s="lambda.min")[-1,1]
   }
+  },error=function(coefs){coefs <- matrix(NA,ncol=ncol(mat[,-col]),nrow=(B))})
 
   # calculate p-vals
   pvals=estimateGammaPval(coefs,orig=orig,abs=TRUE,add=0)
@@ -536,7 +733,7 @@ rfResample<-function(mat,scale,col=1,B=1000,...){
 
   # decide if the matrix needs to be dropped and NA returned due
   # to low or zero variation in gene expression
-  if( zeroVar(mat) | manyZeros(mat) ){
+  if( zeroVar(mat) | manyZeros(mat) | ncol(mat)<=2){
     return(matrix(NA,ncol=ncol(mat)-1,nrow=3,
                   dimnames=list(c("coefs","pval","p2"),1:(ncol(mat)-1) ))
     )
@@ -549,7 +746,6 @@ rfResample<-function(mat,scale,col=1,B=1000,...){
 
   # resample response variables Ys
   Ys=lapply(1:B,function(x) sample(mat[,col],nrow(mat)))
-
   # original coefs in this case importance values as %incMSE
   #mod<- randomForest(x = mat[,-col], y = mat[,col],
   #                   importance=TRUE,na.action=na.omit)
@@ -566,6 +762,8 @@ rfResample<-function(mat,scale,col=1,B=1000,...){
 
 
   # calculate coeff/importance for resampled Ys
+  # handling case where by intense sampling occasionally only zeros are selected
+  tryCatch({
   for(i in 1:B){
     #mod<- randomForest(x = mat[,-col], y = Ys[[i]],
     #                   importance=TRUE,na.action=na.omit)
@@ -578,6 +776,7 @@ rfResample<-function(mat,scale,col=1,B=1000,...){
     coefs[i,]=mod$variable.importance # gini index
 
   }
+  },error=function(coefs){coefs <- matrix(NA,ncol=ncol(mat[,-col]),nrow=(B))})
 
   # calculate p-vals
   pvals=estimateGammaPval(coefs,orig=orig,abs=TRUE,add=0)
