@@ -12,8 +12,7 @@
 #' object output from \code{\link{associateReg2Gene}} function.
 #'
 #'
-#' @return returns a \code{\link[GenomicRanges]{GRanges}} object with
-#' updated statistics
+#' @return returns a GRanges object with updated statistics
 #' from the meta-analysis. The output will be similar to
 #' the output of \code{\link{associateReg2Gene}} function, it
 #' will have the same meta-data columns in the same order.
@@ -37,9 +36,10 @@ metaAssociations<-function(associations){
   # check the input GRanges structure and if something is wrong return error
   if(!checkGrlStrMeta(associations)){
     stop("\ncheck if input 'associations' object has the correct structure:\n",
-         "1) It must be a GRangesList where each GRanges has a column called 'reg'\n",
+         "1) It must be a GRangesList,
+          2) where each GRanges has a column called 'reg'\n",
          "and that column points to another GRanges\n",
-         "2) GRanges objects must have 'coefs' and 'pval' columns")
+         "3) GRanges objects must have 'coefs' and 'pval' columns")
   }
 
   # create an key-stats table where each key is an association
@@ -109,10 +109,11 @@ assocTable<-function(grlist){
 # the right columns, it should have"name","name2","reg","coefs","pval"
 # columns. And reg column points to a GRanges object
 # returns TRUE if all checks out
-checkGrlStrMeta<-function(){
+checkGrlStrMeta<-function(associations){
 
   all(c(sapply(associations,function(x){
-    is.reg=all(c("name","name2","reg","coefs","pval")  %in% colnames(mcols(x)) )
+    is.reg=all(c("name","name2","reg","coefs","pval")  %in% colnames(mcols(x)))
+    #is.reg=sum(str_detect(colnames(mcols(x)),"name|name2|reg|coefs|pval"))==5
     is.gr=(class(x$reg) == "GRanges")
     all(is.reg,is.gr)}
   ), (class(associations)=="GRangesList") ))
