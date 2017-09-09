@@ -186,6 +186,7 @@ complexOverlaps <- function(reg1,reg2, reg.col){
 #' 
 #' @examples benchmark(GRReg1_toy,GRReg2_toy)
 #' benchmark(GRReg1_toy,GRReg2_toy,binary=TRUE)
+#' benchmark(filterPreBench(GRReg2_toy,GRReg1_toy),GRReg1_toy)
 #' @export
 benchmark <- function(reg2Gene,
                       benchReg,
@@ -274,6 +275,12 @@ benchmark <- function(reg2Gene,
 #' thresholdValue = 0.05,benchCol = "BenchmarkO",statistics = "ConfusionMatrix")
 #' confusionMatrix(BenchMarkedReg2Gene_toy,thresholdID = "PValue",
 #'   thresholdValue = 0.5,benchCol = "BenchmarkO",statistics = "PPV")
+#'   # confusion matrix statistics with prefiltering step
+#'   confusionMatrix(filterPreBench(BenchMarkedReg2Gene_toy,GRReg2_toy),
+#'   thresholdID = "PValue",
+#'   thresholdValue = 0.05,
+#'   benchCol = "BenchmarkO",
+#'   statistics = "ConfusionMatrix")
 #' 
 #'      
 #' @export
@@ -299,12 +306,11 @@ confusionMatrix <- function(reg2GeneBench,
   predictedEntries <- mcols(reg2GeneBench)[,thresholdID] <= thresholdValue
   benchmarkedEntries <- mcols(reg2GeneBench)[,"BenchmarkO"]
             
-  Confusion.matrix <- table(predictedEntries,benchmarkedEntries)
-  
-            TP <- Confusion.matrix["TRUE","TRUE"]
-            TN <- Confusion.matrix["FALSE","FALSE"]
-            FN <- Confusion.matrix["FALSE","TRUE"]
-            FP <- Confusion.matrix["TRUE","FALSE"]
+      # calculating TP,FN,TN,FP adjusted for 0 observance
+            TP <- sum(which(predictedEntries)%in%which(benchmarkedEntries))
+            TN <- sum(which(!predictedEntries)%in%which(!benchmarkedEntries))
+            FP <- sum(which(predictedEntries)%in%which(!benchmarkedEntries))
+            FN <- sum(which(!predictedEntries)%in%which(benchmarkedEntries))
             
   
   
@@ -325,5 +331,67 @@ confusionMatrix <- function(reg2GeneBench,
   }
             
             
+}
+
+
+
+
+#' Eliminates all regulatory regions and TSSs that do not overlap with benchmark
+#' dataset of choice (eliminates high number of true negatives)
+#'
+#' Function the eliminates all enhancers and TSSs that do not overlap with 
+#' benchmark dataset, eg it selects reg2gene regions only when regulatory region 
+#' and TSS overlap with at least one benchmarking region.  
+#' This is useful to improve the confusion matrix statistics reported by 
+#' \code{confusionMatrix} by eliminating the high number of true negatives. TN 
+#' are very abundant in the reg2gene dataset since benchmark dataset usually 
+#' covers much smaller regions of the genome (method limitations)
+#'
+#' @param reg2geneAssoc a GRanges object output from \code{associateReg2Gene} or
+#' any other modelling procedure implemented in the \code{reg2gene} package,
+#' such as \code{metaAssociations} or \code{voteAssociations}
+#' 
+#' @param benchmarkData a GRanges object with at least one meta-data column  
+#' which stores the second GRanges object named "reg". This object stores 
+#' benchmarking informations eg interacting region coordinates from techniques 
+#' such as HiC,eQTL studies, GWAS
+#' 
+#' @details Each reg2gene pair is overlapped with the benchmark dataset 
+#' (both regions of the benchmark dataset). If both: 1) the regulatory region 
+#' and 2) TSS from tested reg2gene pair overlap with at least one benchmarking 
+#' region, then this pair is kept for the benchmarking analyses.
+#' @examples filterPreBench(GRReg2_toy,GRReg1_toy)
+#' @export
+filterPreBench <- function(reg2geneAssoc,
+                           benchmarkData){
+  
+  
+  # setting both Benchmark coordinates on top of one another
+  benchmark2reg <- c(benchmarkData,switchReg(benchmarkData,"reg"))
+  
+  # checking if region1 or region2 overlap with any region from the
+  # benchmark dataset (granges pooled together)
+  reg2geneFilterC1 <- findOverlaps(reg2geneAssoc,benchmark2reg)
+  reg2geneFilterC2 <- findOverlaps(switchReg(reg2geneAssoc,"reg"),
+                                   benchmark2reg)
+  
+  
+  # identifying rows of reg2gene object which are present in both the 
+  # overlap with benchmarking region1 and benchmarking region2 but not 
+  # necessarily they overlap to the same benchmark, only prerequisite is
+  # that rows are detected in the both gene coordinates
+  reg2geneFilterRow1 <- unique(data.frame(reg2geneFilterC1)$queryHits)
+  reg2geneFilterRow2 <- unique(data.frame(reg2geneFilterC2)$queryHits)
+  
+  # identify rows present in both overlapping procedure
+  reg2geneFR <- reg2geneFilterRow1[reg2geneFilterRow1%in%reg2geneFilterRow2]
+  
+  # filtering by identified rows
+  reg2geneFiltered <- reg2geneAssoc[reg2geneFR,]
+  
+  
+  return(reg2geneFiltered)
+  
+  
 }
 
