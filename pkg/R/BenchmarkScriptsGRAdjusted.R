@@ -159,18 +159,22 @@ complexOverlaps <- function(reg1,reg2, reg.col){
 #' @param regCol character (default "reg"), a column name of meta-data object.
 #' Indicates the column where the location of the 2nd pair of GRanges is stored,
 #' (usually regulatory region locations)
+#' @param tag (default: NULL) name of the benchmarking dataset that will
+#' be used as a metadata column name to indicate from which benchmark data comes
+#' from 
 #' @param binary (def:FALSE) how many times reg2Gene interactions is observed in
 #' the benchmark dataset. If TRUE, reports if overlap with benchmark dataset is
 #' observed at least once).
-#' 
+#' @param reportGR (def:TRUE) Expected output format. If TRUE, GRanges object +
+#' column with benchmarking results returned. If FALSE only vector of
+#' benchmarking results reported. 
 #' @return GRanges object which is equall to the reg2Gene input object except 
 #' that a meta-data column reporting how many times interaction was overlapped
 #' or whether reported interaction was overlapped is added and 
-#' named "BenchmarkO"
+#' named "Bench"
 #' 
 #' 
-#' @details 
-#GRanges objects - an output of \code{associateReg2Gene} and 
+#' @details GRanges objects - an output of \code{associateReg2Gene} and 
 #' benchmark dataset is inputed are overlaped. ComplexOverlap between reg2Gene 
 #' and benchmark object is performed, and for each input pair it is reported 
 #' whether this pair is benchmarked or not,and how many times (if binary=F).
@@ -188,7 +192,7 @@ complexOverlaps <- function(reg1,reg2, reg.col){
 #' benchmark(GRReg1_toy,GRReg2_toy,binary=TRUE)
 #' benchmark(filterPreBench(GRReg2_toy,GRReg1_toy),GRReg1_toy)
 #' @export
-benchmark <- function(reg2Gene,
+benchmarkSimple <- function(reg2Gene,
                       benchReg,
                       regCol="reg",
                       binary=FALSE){
@@ -196,6 +200,7 @@ benchmark <- function(reg2Gene,
   ############################### 
   # benchmarking           
 
+      
         # Complexbenchmarking   
       reg2GeneBenchOverlap <- complexOverlaps(reg2Gene,
                                               benchReg,
@@ -205,16 +210,42 @@ benchmark <- function(reg2Gene,
         OverlapVector <- rep(0,length(reg2Gene))
         Duplicatedbenchmarks <- table(reg2GeneBenchOverlap$Coor1Coord2PAIR)
   OverlapVector[as.integer(names(Duplicatedbenchmarks))] <- Duplicatedbenchmarks
-          
-        if (binary==TRUE){ OverlapVector <- as.logical(OverlapVector)}
-           
-            reg2Gene$BenchmarkO <- OverlapVector
-            
-            
-  return(reg2Gene)
-        
-}
+       
+  # to report vector of Benchmarking results   
+  if (binary==T) {return(as.logical(OverlapVector))}
   
+  if (binary==F) {return(OverlapVector)}
+  
+ 
+  }
+
+
+benchmarkList <- function(reg2Gene,
+                          benchList,
+                          regCol="reg",
+                          binary=FALSE,
+                          nCores=1,
+                          ...){
+  
+  # running benchmarking per benchmark dataset
+  bench_list <- mclapply(benchList, function(x) {
+    
+    benchmarkSimple(reg2Gene=reg2Gene,
+                    benchReg=x,
+                    regCol = regCol,
+                    binary = binary)},
+          mc.cores = nCores)
+  
+  bench_list <- do.call("cbind.data.frame",bench_list)
+  
+  
+  
+  return(bench_list)
+  
+  
+}
+
+
   
 #' ConfusionTable statistics for the benchmarked reg2Gene object
 #' 
@@ -229,7 +260,7 @@ benchmark <- function(reg2Gene,
 #' true negatives by including only reg2gene entries that could be potentially
 #' benchmarked. THUS run \code{Filter_PreBench} prior running \code{benchmark})
 #' 
-#' @param benchCol character (default "benchmarkO"), a column name of metadata
+#' @param benchCol character (default NULL), a column name of metadata
 #' that indicates the column where the result of benchmarking procedure is 
 #' stored (as vector of TRUE and FALSE entries).
 #' 
@@ -272,20 +303,20 @@ benchmark <- function(reg2Gene,
 #' \deqn{F1 = (2*TP)/((2*TP)+FP+FN)}
 #' 
 #' @examples confusionMatrix(BenchMarkedReg2Gene_toy,thresholdID = "PValue",
-#' thresholdValue = 0.05,benchCol = "BenchmarkO",statistics = "ConfusionMatrix")
+#' thresholdValue = 0.05,benchCol = "Bench",statistics = "ConfusionMatrix")
 #' confusionMatrix(BenchMarkedReg2Gene_toy,thresholdID = "PValue",
-#'   thresholdValue = 0.5,benchCol = "BenchmarkO",statistics = "PPV")
+#'   thresholdValue = 0.5,benchCol = "Bench",statistics = "PPV")
 #'   # confusion matrix statistics with prefiltering step
 #'   confusionMatrix(filterPreBench(BenchMarkedReg2Gene_toy,GRReg2_toy),
 #'   thresholdID = "PValue",
 #'   thresholdValue = 0.05,
-#'   benchCol = "BenchmarkO",
+#'   benchCol = "Bench",
 #'   statistics = "ConfusionMatrix")
 #' 
 #'      
 #' @export
 confusionMatrix <- function(reg2GeneBench,
-                            benchCol="BenchmarkO",
+                            benchCol="Bench",
                             thresholdID=NULL,
                             thresholdValue=0.05,
                             statistics="PPV") {
@@ -304,7 +335,7 @@ confusionMatrix <- function(reg2GeneBench,
   ##################################
   # thresholding reg2GeneBench object
   predictedEntries <- mcols(reg2GeneBench)[,thresholdID] <= thresholdValue
-  benchmarkedEntries <- mcols(reg2GeneBench)[,"BenchmarkO"]
+  benchmarkedEntries <- mcols(reg2GeneBench)[,benchCol]
             
       # calculating TP,FN,TN,FP adjusted for 0 observance
             TP <- sum(which(predictedEntries)%in%which(benchmarkedEntries))
@@ -362,7 +393,7 @@ confusionMatrix <- function(reg2GeneBench,
 #' region, then this pair is kept for the benchmarking analyses.
 #' @examples filterPreBench(GRReg2_toy,GRReg1_toy)
 #' @export
-filterPreBench <- function(reg2geneAssoc,
+filterPreBenchSimple <- function(reg2geneAssoc,
                            benchmarkData){
   
   
@@ -394,4 +425,140 @@ filterPreBench <- function(reg2geneAssoc,
   
   
 }
+
+
+filterPreBench <- function(reg2geneAssoc,
+                           benchmarkData,
+                           chunks=1,
+                           nCores=1){
+  
+  Split.factor <- split(1:length(reg2geneAssoc),sort(1:length(reg2geneAssoc)%%chunks))
+  
+  Split.Results = mclapply(Split.factor,function(x){
+    
+    print(x)
+    
+    PerChunkbenchmark <- filterPreBenchSimple(reg2geneAssoc=reg2geneAssoc[x],
+                                              benchmarkData=benchmarkData)
+    
+    
+  },mc.cores = nCores)
+  
+  BenchmarkingResults <-  do.call(getMethod(c, "GenomicRanges"), Split.Results)
+  
+  return(BenchmarkingResults)
+}
+
+
+
+
+#' the function checks if the input GRanges in the GRangesList have
+#' the right columns, it should have at least a reg.definition column as a GRanges 
+#' object returns TRUE if GRanges has a reg column pointing to a GRanges and
+#' if associations is a GRangesList object
+#' @param GRangesO a named \code{GRangesList} where each element is a set of
+#' associations returned by \code{\link{associateReg2Gene}} or
+#' \code{\link{metaAssociations}}.
+#' @keywords internal
+#' @author Inga P
+checkGR<-function(GRangesO,reg.definition){
+  
+  lapply(GRangesO,function(x){
+    
+    is.reg=which(colnames(mcols(x)) %in% reg.definition)
+    
+    if (!length(is.reg)) {stop("No regCol detected")}
+    
+    if (class(mcols(x)[is.reg][,1]) != "GRanges") {stop("regCol not GRanges")}
+  })
+  
+}
+
+
+#largeData - skip problems of 400000*300000region overlap
+
+
+benchmark <- function(reg2Gene,
+                      benchData,
+                      regCol="reg",
+                      binary=TRUE,
+                      chunks=1,
+                      nCores=1,
+                      reportGR=FALSE,
+                      saveTag="chrM",
+                      largeData=FALSE,
+                      ...){
+  
+  
+  # checking format of benchmark  and tested input (correct columns,GrangesList)
+      tmp <- checkGR(GRangesO=benchData,reg.definition=regCol)
+      tmp <- checkGR(GRangesO=reg2Gene,reg.definition=regCol)
+      
+# split ranges into chunks
+     
+  Split.factor <- split(1:length(reg2Gene),sort(1:length(reg2Gene)%%chunks))
+
+# run associateReg2Gene for gene chunks and save them separately
+  
+      
+      if (class(benchData)=="GRangesList"){
+      
+        Split.Results = mclapply(Split.factor,function(x){
+    
+          print(x)
+            PerChunkbenchmark <- benchmarkList(reg2Gene=reg2Gene[x],
+                                            benchList=benchData,
+                                            regCol=regCol,
+                                            binary=binary)
+        
+        saveRDS(PerChunkbenchmark,paste0(out.dir,x[1],".rds"))
+            
+            },mc.cores=nCores)
+        
+        if (largeData==FALSE) {
+            BenchmarkingResults <- do.call("rbind.data.frame",Split.Results)
+        
+        
+        if (reportGR==TRUE) {mcols(reg2Gene) <- c(mcols(reg2Gene),
+                                                  BenchmarkingResults)
+                                  return(reg2Gene)}
+            
+        if (reportGR==F) {return(BenchmarkingResults)}  
+        }
+         
+      }  
+        
+      if (class(benchData)=="GRanges"){
+        
+        Split.Results = mclapply(Split.factor,function(x){
+         
+           print(x)
+          
+          PerChunkbenchmark <- benchmarkSimple(reg2Gene=reg2Gene[x],
+                                             benchReg=benchData,
+                                             regCol=regCol,
+                                             binary=binary)
+          
+          saveRDS(PerChunkbenchmark,paste0(out.dir,x[1],".rds"))
+          
+        },mc.cores=nCores)
+        
+        
+    if (largeData==FALSE) {  
+        BenchmarkingResults <- unlist(Split.Results)
+        
+        if (reportGR==TRUE) {reg2Gene$Bench <- BenchmarkingResults
+                return(reg2Gene)}
+        if (reportGR==F) {return(BenchmarkingResults)}  
+        }
+      } 
+  
+  # pool results together  
+  
+     
+         
+        
+}
+
+
 
