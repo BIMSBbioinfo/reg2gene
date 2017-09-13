@@ -145,7 +145,8 @@ complexOverlaps <- function(reg1,reg2, reg.col){
 #' By default it reportes how many times interactions is observed in the 
 #' benchmark dataset. If binary is set to TRUE, then logical vector of TRUE 
 #' (overlapping benchmark dataset at least once) and FALSE (not overlapping
-#' benchmark dataset at all) is reported.
+#' benchmark dataset at all) is reported. Optionally, it can report a vector
+#' or a dataframe of the result of benchmarking procedure.
 #' 
 #' 
 #' @param reg2Gene a GRanges object output (from \code{associatereg2Gene}).
@@ -154,24 +155,30 @@ complexOverlaps <- function(reg1,reg2, reg.col){
 #' locations, preferably TSS location, whereas the other GRanges object 
 #' corresponds to the regulatory region locations. Meta-data column name should
 #' be "reg".
-#' @param benchReg a GRanges object with at least one meta-data column which 
-#' stores the second GRanges object named "reg".
+#' @param benchData a GRanges or GrangesList object with at least one meta-data 
+#' column which stores the second GRanges object named "reg". Both regions
+#' are used in benchmarking procedure. This object stores 
+#' benchmarking informations eg interacting region coordinates from techniques 
+#' such as HiC,eQTL studies...
 #' @param regCol character (default "reg"), a column name of meta-data object.
-#' Indicates the column where the location of the 2nd pair of GRanges is stored,
+#' Indicates the column where the 2nd pair of GRanges is stored,
 #' (usually regulatory region locations)
-#' @param tag (default: NULL) name of the benchmarking dataset that will
-#' be used as a metadata column name to indicate from which benchmark data comes
-#' from 
 #' @param binary (def:FALSE) how many times reg2Gene interactions is observed in
-#' the benchmark dataset. If TRUE, reports if overlap with benchmark dataset is
-#' observed at least once).
+#' the benchmark dataset(s). If TRUE, reports if overlap with benchmark dataset 
+#' is observed at least once).
 #' @param reportGR (def:TRUE) Expected output format. If TRUE, GRanges object +
 #' column with benchmarking results returned. If FALSE only vector of
-#' benchmarking results reported. 
-#' @return GRanges object which is equall to the reg2Gene input object except 
-#' that a meta-data column reporting how many times interaction was overlapped
-#' or whether reported interaction was overlapped is added and 
-#' named "Bench"
+#' benchmarking results reported.
+#' @param nCores possible to be runned in parallel. Argument for mclapply f();
+#' how many cores to use.
+#' 
+#' @return GRanges object or vector/dataframe of benchmarked results. When 
+#' reportGR==T, GRanges object corresponding to the reg2Gene input object with 
+#' added benchmarked meta-data column(s) is reported. Each column corresponds
+#' to one benchmark dataset analyzed. Values can be either 0/1 (not/benchmarked)
+#' or 0-n (how many times each gene-enhancer pair is benchmared). When 
+#' reportGR==F a vector (one benchmark dataset was used as an input) or a 
+#' dataframe (>1 benchmark dataset was used as an input) is reported.
 #' 
 #' 
 #' @details GRanges objects - an output of \code{associateReg2Gene} and 
@@ -192,34 +199,120 @@ complexOverlaps <- function(reg1,reg2, reg.col){
 #' benchmark(GRReg1_toy,GRReg2_toy,binary=TRUE)
 #' benchmark(filterPreBench(GRReg2_toy,GRReg1_toy),GRReg1_toy)
 #' @export
-benchmarkSimple <- function(reg2Gene,
-                      benchReg,
+benchmark <- function(reg2Gene,
+                      benchData,
                       regCol="reg",
-                      binary=FALSE){
+                      binary=TRUE,
+                      nCores=1,
+                      reportGR=FALSE,
+                      ...){
+  
+  
+  # checking format of benchmark  and tested input (correct columns,GrangesList)
+  tmp <- checkGR(GRangesO=benchData,reg.definition=regCol)
+  if (!any(colnames(mcols(reg2Gene)) %in% regCol)){stop("No regCol detected")}
+  
+  
+  
+  # run associateReg2Gene for gene chunks and save them separately
+  
+  
+  if (class(benchData)=="GRangesList"){
     
+    
+    BenchmarkingResults <- benchmarkList(reg2Gene=reg2Gene,
+                                         benchList=benchData,
+                                         regCol=regCol,
+                                         binary=binary)
+    
+    if (reportGR==TRUE) {mcols(reg2Gene) <- c(mcols(reg2Gene),
+                                              BenchmarkingResults)
+    return(reg2Gene)}
+    
+    if (reportGR==F) {return(BenchmarkingResults)}  
+    
+  }  
+  
+  if (class(benchData)=="GRanges"){
+    
+    
+    BenchmarkingResults <- benchmarkSimple(reg2Gene=reg2Gene,
+                                           benchReg=benchData,
+                                           regCol=regCol,
+                                           binary=binary)
+    
+    
+    
+    if (reportGR==TRUE) {reg2Gene$Bench <- BenchmarkingResults
+    return(reg2Gene)}
+    if (reportGR==F) {return(BenchmarkingResults)}  
+  }
+} 
+
+
+#' Function that performs benchmarking procedure when benchData is GRanges obj
+#' 
+#' 
+#' @param reg2Gene a GRanges object output (from \code{associatereg2Gene}).
+#' GRanges object should have at least one meta-data column which stores
+#' the second GRanges object.
+#' @param benchData a GRanges object with at least one meta-data 
+#' column which stores the second GRanges object named "reg". Both regions
+#' are used in benchmarking procedure.
+#' @param regCol character (default "reg"), a column name of meta-data object.
+#' Indicates the column where the 2nd pair of GRanges is stored,
+#' @param binary (def:FALSE) how many times reg2Gene interactions is observed in
+#' the benchmark dataset(s). If TRUE, reports if overlap with benchmark dataset 
+#' is observed at least once). 
+#' @author Inga Patarcic
+#' @keywords internal
+benchmarkSimple <- function(reg2Gene,
+                            benchReg,
+                            regCol="reg",
+                            binary=FALSE){
+  
   ############################### 
   # benchmarking           
-
-      
-        # Complexbenchmarking   
-      reg2GeneBenchOverlap <- complexOverlaps(reg2Gene,
-                                              benchReg,
-                                              regCol)
- 
-          # counts or binary reported   
-        OverlapVector <- rep(0,length(reg2Gene))
-        Duplicatedbenchmarks <- table(reg2GeneBenchOverlap$Coor1Coord2PAIR)
+  
+  
+  # Complexbenchmarking   
+  reg2GeneBenchOverlap <- complexOverlaps(reg2Gene,
+                                          benchReg,
+                                          regCol)
+  
+  # counts or binary reported   
+  OverlapVector <- rep(0,length(reg2Gene))
+  Duplicatedbenchmarks <- table(reg2GeneBenchOverlap$Coor1Coord2PAIR)
   OverlapVector[as.integer(names(Duplicatedbenchmarks))] <- Duplicatedbenchmarks
-       
+  
   # to report vector of Benchmarking results   
   if (binary==T) {return(as.logical(OverlapVector))}
   
   if (binary==F) {return(OverlapVector)}
   
- 
-  }
+  
+}
 
 
+
+
+#' Function that performs benchmarking procedure when benchData is GRangesList
+#' 
+#' 
+#' @param reg2Gene a GRanges object output (from \code{associatereg2Gene}).
+#' GRanges object should have at least one meta-data column which stores
+#' the second GRanges object.
+#' @param benchList a GrangesList object with at least one meta-data 
+#' column which stores the second GRanges object named "reg". Both regions
+#' are used in benchmarking procedure.
+#' @param regCol character (default "reg"), a column name of meta-data object.
+#' Indicates the column where the 2nd pair of GRanges is stored,
+#' @param binary (def:FALSE) how many times reg2Gene interactions is observed in
+#' the benchmark dataset(s). If TRUE, reports if overlap with benchmark dataset 
+#' is observed at least once).
+#' @param nCores possible to be runned in parallel
+#' @author Inga Patarcic
+#' @keywords internal
 benchmarkList <- function(reg2Gene,
                           benchList,
                           regCol="reg",
@@ -234,7 +327,7 @@ benchmarkList <- function(reg2Gene,
                     benchReg=x,
                     regCol = regCol,
                     binary = binary)},
-          mc.cores = nCores)
+    mc.cores = nCores)
   
   bench_list <- do.call("cbind.data.frame",bench_list)
   
@@ -244,6 +337,7 @@ benchmarkList <- function(reg2Gene,
   
   
 }
+
 
 
   
@@ -260,9 +354,14 @@ benchmarkList <- function(reg2Gene,
 #' true negatives by including only reg2gene entries that could be potentially
 #' benchmarked. THUS run \code{Filter_PreBench} prior running \code{benchmark})
 #' 
-#' @param benchCol character (default NULL), a column name of metadata
-#' that indicates the column where the result of benchmarking procedure is 
-#' stored (as vector of TRUE and FALSE entries).
+#' @param benchCol character (default NULL), results of benchmarking 
+#' procedure; eg a column name of the metadata which indicates the column where 
+#' the result of benchmarking procedure is stored
+#' 
+#' @param prefilterCol character (default NULL), results of prefiltering 
+#' procedure; eg a column name of the metadata which indicates the column where 
+#' the result of prefiltering procedure is stored (as vector of TRUE and FALSE 
+#' entries).
 #' 
 #' @param thresholdID character (def:NULL) name which indicates a column where
 #' statistics of the modelling procedure is stored. This column is filtered such
@@ -303,20 +402,27 @@ benchmarkList <- function(reg2Gene,
 #' \deqn{F1 = (2*TP)/((2*TP)+FP+FN)}
 #' 
 #' @examples confusionMatrix(BenchMarkedReg2Gene_toy,thresholdID = "PValue",
-#' thresholdValue = 0.05,benchCol = "Bench",statistics = "ConfusionMatrix")
+#' thresholdValue = 0.05,benchCol = "BenchmarkO",statistics = "ConfusionMatrix") 
 #' confusionMatrix(BenchMarkedReg2Gene_toy,thresholdID = "PValue",
-#'   thresholdValue = 0.5,benchCol = "Bench",statistics = "PPV")
+#'   thresholdValue = 0.5,benchCol = "BenchmarkO",statistics = "PPV")
 #'   # confusion matrix statistics with prefiltering step
 #'   confusionMatrix(filterPreBench(BenchMarkedReg2Gene_toy,GRReg2_toy),
 #'   thresholdID = "PValue",
 #'   thresholdValue = 0.05,
-#'   benchCol = "Bench",
+#'   benchCol = "BenchmarkO",
 #'   statistics = "ConfusionMatrix")
-#' 
+#' BenchMarkedReg2Gene_toy$prefilter <- c(rep(1,4),0,0)
+#' confusionMatrix(reg2GeneBench=BenchMarkedReg2Gene_toy,
+#'                thresholdID = "PValue", 
+#'                thresholdValue = 0.05,
+#'                benchCol = "BenchmarkO",
+#'                prefilterCol = "prefilter",
+#'                statistics = "ConfusionMatrix")
 #'      
 #' @export
 confusionMatrix <- function(reg2GeneBench,
-                            benchCol="Bench",
+                            benchCol=NULL,
+                            prefilterCol=NULL,
                             thresholdID=NULL,
                             thresholdValue=0.05,
                             statistics="PPV") {
@@ -328,14 +434,17 @@ confusionMatrix <- function(reg2GeneBench,
   
   if (!any(stringr::str_detect(colnames(mcols(reg2GeneBench)),benchCol))){
     stop("benchCol column not detected")}  
-  
- 
+
+  # filter results of benchmarking procedure by prefiltering column
+  if (!is.null(prefilterCol)){ 
+    reg2GeneBench <- reg2GeneBench[mcols(reg2GeneBench)[,prefilterCol]]
+    }
   
     
   ##################################
   # thresholding reg2GeneBench object
   predictedEntries <- mcols(reg2GeneBench)[,thresholdID] <= thresholdValue
-  benchmarkedEntries <- mcols(reg2GeneBench)[,benchCol]
+  benchmarkedEntries <- as.logical(mcols(reg2GeneBench)[,benchCol])
             
       # calculating TP,FN,TN,FP adjusted for 0 observance
             TP <- sum(which(predictedEntries)%in%which(benchmarkedEntries))
@@ -378,32 +487,111 @@ confusionMatrix <- function(reg2GeneBench,
 #' are very abundant in the reg2gene dataset since benchmark dataset usually 
 #' covers much smaller regions of the genome (method limitations)
 #'
-#' @param reg2geneAssoc a GRanges object output from \code{associateReg2Gene} or
-#' any other modelling procedure implemented in the \code{reg2gene} package,
-#' such as \code{metaAssociations} or \code{voteAssociations}
-#' 
-#' @param benchmarkData a GRanges object with at least one meta-data column  
-#' which stores the second GRanges object named "reg". This object stores 
+#' @param reg2Gene a GRanges object output (from \code{associatereg2Gene}).
+#' GRanges object should have at least one meta-data column which stores
+#' the second GRanges object. Usually,one GRanges object corresponds to the gene 
+#' locations, preferably TSS location, whereas the other GRanges object 
+#' corresponds to the regulatory region locations. Meta-data column name should
+#' be "reg".
+#' @param benchData a GRanges or GrangesList object with at least one meta-data 
+#' column which stores the second GRanges object named "reg". Both regions
+#' are used in benchmarking procedure. This object stores 
 #' benchmarking informations eg interacting region coordinates from techniques 
 #' such as HiC,eQTL studies, GWAS
+#' @param regCol character (default "reg"), a column name of meta-data object.
+#' Indicates the column where the 2nd pair of GRanges is stored,
+#' (usually regulatory region locations)
+#' @param reportGR (def:TRUE) Expected output format. If TRUE, GRanges object +
+#' column with benchmarking results returned. If FALSE only vector of
+#' benchmarking results reported.
+#' @param nCores possible to be runned in parallel. Argument for mclapply f();
+#' how many cores to use.
 #' 
 #' @details Each reg2gene pair is overlapped with the benchmark dataset 
 #' (both regions of the benchmark dataset). If both: 1) the regulatory region 
 #' and 2) TSS from tested reg2gene pair overlap with at least one benchmarking 
 #' region, then this pair is kept for the benchmarking analyses.
 #' @examples filterPreBench(GRReg2_toy,GRReg1_toy)
+#' GR.list <- GRangesList(GRReg1_toy,GRReg2_toy)
+#' names(GR.list) <- c("GRReg1_toy","GRReg2_toy")
+#' filterPreBench(GRReg2_toy,GR.list)
+#' 
 #' @export
+filterPreBench <- function(reg2Gene,
+                           benchData,
+                           regCol="reg",
+                           nCores=1,
+                           reportGR=FALSE,
+                           ...){
+  
+  
+  # checking format of benchmark  and tested input (correct columns,GrangesList)
+  tmp <- checkGR(GRangesO=benchData,reg.definition=regCol)
+  if (!any(colnames(mcols(reg2Gene)) %in% regCol)){stop("No regCol detected")}
+  
+  
+  
+  # run associateReg2Gene for gene chunks and save them separately
+  
+  
+  if (class(benchData)=="GRangesList"){
+    
+    
+    BenchmarkingResults <- filterPreBenchList(reg2Gene=reg2Gene,
+                                              benchList=benchData,
+                                              regCol=regCol)
+    
+    if (reportGR==TRUE) {mcols(reg2Gene) <- c(mcols(reg2Gene),
+                                              BenchmarkingResults)
+    return(reg2Gene)}
+    
+    if (reportGR==F) {return(BenchmarkingResults)}  
+    
+  }  
+  
+  if (class(benchData)=="GRanges"){
+    
+    
+    BenchmarkingResults <- filterPreBenchSimple(reg2geneAssoc=reg2Gene,
+                                                benchmarkData=benchData,
+                                                regCol=regCol)
+    
+    
+    
+    if (reportGR==TRUE) {reg2Gene$Bench <- BenchmarkingResults
+    return(reg2Gene)}
+    if (reportGR==F) {return(BenchmarkingResults)}  
+  }
+} 
+
+
+
+#' Function that prefilters GRanges object prior benchmarking procedure 
+#' when benchmark is GRanges object 
+#' 
+#' @param reg2geneAssoc a GRanges object output (from \code{associatereg2Gene}).
+#' GRanges object should have at least one meta-data column which stores
+#' the second GRanges object.
+#' @param benchmarkData a Granges object with at least one meta-data 
+#' column which stores the second GRanges object named "reg". Both regions
+#' are used in benchmarking procedure.
+#' @param regCol character (default "reg"), a column name of meta-data object.
+#' Indicates the column where the 2nd pair of GRanges is stored,
+#' @param nCores possible to be runned in parallel
+#' @author Inga Patarcic
+#' @keywords internal
 filterPreBenchSimple <- function(reg2geneAssoc,
-                           benchmarkData){
+                                 benchmarkData,
+                                 regCol="reg"){
   
   
   # setting both Benchmark coordinates on top of one another
-  benchmark2reg <- c(benchmarkData,switchReg(benchmarkData,"reg"))
+  benchmark2reg <- c(benchmarkData,switchReg(benchmarkData,regCol))
   
   # checking if region1 or region2 overlap with any region from the
   # benchmark dataset (granges pooled together)
   reg2geneFilterC1 <- findOverlaps(reg2geneAssoc,benchmark2reg)
-  reg2geneFilterC2 <- findOverlaps(switchReg(reg2geneAssoc,"reg"),
+  reg2geneFilterC2 <- findOverlaps(switchReg(reg2geneAssoc,regCol),
                                    benchmark2reg)
   
   
@@ -418,38 +606,54 @@ filterPreBenchSimple <- function(reg2geneAssoc,
   reg2geneFR <- reg2geneFilterRow1[reg2geneFilterRow1%in%reg2geneFilterRow2]
   
   # filtering by identified rows
-  reg2geneFiltered <- reg2geneAssoc[reg2geneFR,]
+  # reg2geneFiltered <- reg2geneAssoc[reg2geneFR,]
   
+  
+  # reporting vector of zeros&ones
+  
+  reg2geneFiltered <- rep(0,length(reg2geneAssoc))
+  reg2geneFiltered[reg2geneFR] <- 1
   
   return(reg2geneFiltered)
   
   
 }
 
-
-filterPreBench <- function(reg2geneAssoc,
-                           benchmarkData,
-                           chunks=1,
-                           nCores=1){
+#' Function that prefilters GRanges object prior benchmarking procedure 
+#' when benchmark is GRangesList
+#' 
+#' 
+#' @param reg2Gene a GRanges object output (from \code{associatereg2Gene}).
+#' GRanges object should have at least one meta-data column which stores
+#' the second GRanges object.
+#' @param benchList a GrangesList object with at least one meta-data 
+#' column which stores the second GRanges object named "reg". Both regions
+#' are used in benchmarking procedure.
+#' @param regCol character (default "reg"), a column name of meta-data object.
+#' Indicates the column where the 2nd pair of GRanges is stored,
+#' @param nCores possible to be runned in parallel
+#' @author Inga Patarcic
+#' @keywords internal
+filterPreBenchList <- function(reg2Gene,
+                               benchList,
+                               regCol="reg",
+                               nCores=1,
+                               ...){
   
-  Split.factor <- split(1:length(reg2geneAssoc),sort(1:length(reg2geneAssoc)%%chunks))
+  # running benchmarking per benchmark dataset
+  bench_list <- mclapply(benchList, function(x) {
+    
+    filterPreBenchSimple(reg2geneAssoc=reg2Gene,
+                         benchmarkData=x,
+                         regCol = regCol)},
+    mc.cores = nCores)
   
-  Split.Results = mclapply(Split.factor,function(x){
-    
-    print(x)
-    
-    PerChunkbenchmark <- filterPreBenchSimple(reg2geneAssoc=reg2geneAssoc[x],
-                                              benchmarkData=benchmarkData)
-    
-    
-  },mc.cores = nCores)
+  bench_list <- do.call("cbind.data.frame",bench_list)
   
-  BenchmarkingResults <-  do.call(getMethod(c, "GenomicRanges"), Split.Results)
+  return(bench_list)
   
-  return(BenchmarkingResults)
+  
 }
-
-
 
 
 #' the function checks if the input GRanges in the GRangesList have
@@ -459,6 +663,7 @@ filterPreBench <- function(reg2geneAssoc,
 #' @param GRangesO a named \code{GRangesList} where each element is a set of
 #' associations returned by \code{\link{associateReg2Gene}} or
 #' \code{\link{metaAssociations}}.
+#' @param reg.definition column where 2nd GRanges object is stored
 #' @keywords internal
 #' @author Inga P
 checkGR<-function(GRangesO,reg.definition){
@@ -475,90 +680,16 @@ checkGR<-function(GRangesO,reg.definition){
 }
 
 
-#largeData - skip problems of 400000*300000region overlap
 
 
-benchmark <- function(reg2Gene,
-                      benchData,
-                      regCol="reg",
-                      binary=TRUE,
-                      chunks=1,
-                      nCores=1,
-                      reportGR=FALSE,
-                      saveTag="chrM",
-                      largeData=FALSE,
-                      ...){
-  
-  
-  # checking format of benchmark  and tested input (correct columns,GrangesList)
-      tmp <- checkGR(GRangesO=benchData,reg.definition=regCol)
-      tmp <- checkGR(GRangesO=reg2Gene,reg.definition=regCol)
-      
-# split ranges into chunks
-     
-  Split.factor <- split(1:length(reg2Gene),sort(1:length(reg2Gene)%%chunks))
 
-# run associateReg2Gene for gene chunks and save them separately
-  
-      
-      if (class(benchData)=="GRangesList"){
-      
-        Split.Results = mclapply(Split.factor,function(x){
-    
-          print(x)
-            PerChunkbenchmark <- benchmarkList(reg2Gene=reg2Gene[x],
-                                            benchList=benchData,
-                                            regCol=regCol,
-                                            binary=binary)
-        
-        saveRDS(PerChunkbenchmark,paste0(out.dir,x[1],".rds"))
-            
-            },mc.cores=nCores)
-        
-        if (largeData==FALSE) {
-            BenchmarkingResults <- do.call("rbind.data.frame",Split.Results)
-        
-        
-        if (reportGR==TRUE) {mcols(reg2Gene) <- c(mcols(reg2Gene),
-                                                  BenchmarkingResults)
-                                  return(reg2Gene)}
-            
-        if (reportGR==F) {return(BenchmarkingResults)}  
-        }
-         
-      }  
-        
-      if (class(benchData)=="GRanges"){
-        
-        Split.Results = mclapply(Split.factor,function(x){
-         
-           print(x)
-          
-          PerChunkbenchmark <- benchmarkSimple(reg2Gene=reg2Gene[x],
-                                             benchReg=benchData,
-                                             regCol=regCol,
-                                             binary=binary)
-          
-          saveRDS(PerChunkbenchmark,paste0(out.dir,x[1],".rds"))
-          
-        },mc.cores=nCores)
-        
-        
-    if (largeData==FALSE) {  
-        BenchmarkingResults <- unlist(Split.Results)
-        
-        if (reportGR==TRUE) {reg2Gene$Bench <- BenchmarkingResults
-                return(reg2Gene)}
-        if (reportGR==F) {return(BenchmarkingResults)}  
-        }
-      } 
-  
-  # pool results together  
-  
-     
-         
-        
-}
+
+
+
+
+
+
+
 
 
 
