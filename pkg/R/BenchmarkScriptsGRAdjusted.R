@@ -36,7 +36,10 @@ switchReg = function(reg, regCol){
 #' be "reg".
 #' @param reg2 - GRanges object with at least one meta-data column which stores
 #' the second GRanges object.  Meta-data column name should be "reg".
-#'   
+#' @param strandness When set to TRUE, the strand information is ignored in 
+#' the overlap calculations. ignore.strand argument in 
+#' \code{\link[GenomicRanges]{findOverlaps}}
+#'  
 #' @return GRanges object with interacting regions from the first datasets 
 #' that was present/confirmed by the second dataset of interacting regions. 
 #' Meta-data from both input GRanges objects (storing info about interacting 
@@ -49,11 +52,12 @@ switchReg = function(reg, regCol){
 #' combinations of overlaps are TRUE. 
 #' @author Inga Patarcic
 #' @keywords internal
-overlapRegions <- function(reg1,reg2){
+overlapRegions <- function(reg1,reg2, strandness=FALSE){
   
   # reg1-reg1 overlap            
-  reg1.reg1.Overlap <- data.frame(findOverlaps(reg1,reg2))
-  
+  reg1.reg1.Overlap <- data.frame(findOverlaps(reg1,reg2, 
+                                               ignore.strand=strandness))
+
   # adjusting names
   colnames(mcols(reg1)) <- paste0("reg1_",colnames(mcols(reg1)))
   colnames(mcols(reg2)) <- paste0("reg2_",colnames(mcols(reg2)))
@@ -67,7 +71,8 @@ overlapRegions <- function(reg1,reg2){
   ########## 
   # reg1-reg1 overlap            
   reg2.reg2.Overlap <- data.frame(findOverlaps(reg1reg2$reg1_reg,
-                                               reg1reg2$reg2_reg))
+                                               reg1reg2$reg2_reg,
+                                               ignore.strand=strandness))
   
   # if overlap is duplicated then reg1 overlaps reg1, and reg2 overlaps 
   # reg2 -> confirmed
@@ -103,7 +108,10 @@ overlapRegions <- function(reg1,reg2){
 #' the second GRanges object.  Meta-data column name should be "reg".
 #' @param reg.col  character, a meta-data column name which contains regulatory
 #' region locations for the reg2 object.
-#'
+#' @param strandness When set to TRUE, the strand information is ignored in 
+#' the overlap calculations. ignore.strand argument in 
+#' \code{\link[GenomicRanges]{findOverlaps}}
+#' 
 #' @return GRanges object with interacting regions from the first datasets 
 #' that was present/confirmed by the second dataset of interacting regions. 
 #' Meta-data from both input GRanges objects (storing info about interacting 
@@ -120,13 +128,14 @@ overlapRegions <- function(reg1,reg2){
 #' are switched).
 #' @author Inga Patarcic
 #' @keywords internal
-complexOverlaps <- function(reg1,reg2, reg.col){
+complexOverlaps <- function(reg1,reg2, reg.col,strandness=FALSE){
   
   # criss-cross overlap when orientation of overlaps is unknown
-  reg11reg22 <- overlapRegions(reg1=reg1,reg2=reg2)
+  reg11reg22 <- overlapRegions(reg1=reg1,reg2=reg2, strandness=strandness)
   # switch names in reg1 dataframe
   
-  reg12reg21 <- overlapRegions(reg1=reg1,reg2=switchReg(reg2,regCol=reg.col))
+  reg12reg21 <- overlapRegions(reg1=reg1,reg2=switchReg(reg2,regCol=reg.col),
+                               strandness=strandness)
   
   
   return(c(reg11reg22,reg12reg21))
@@ -137,7 +146,7 @@ complexOverlaps <- function(reg1,reg2, reg.col){
 
 #' Benchmarks reg2gene models using benchmark data
 #' 
-#  The function that takes as an input results of \code{associatereg2Gene} or
+#'  The function that takes as an input results of \code{associatereg2Gene} or
 #' any other modelling procedure implemente in \code{reg2gene} package,
 #' and predefined benchmark dataset as GRanges object.
 #' This function adds a metadata column with info about benchmarking success -
@@ -171,6 +180,10 @@ complexOverlaps <- function(reg1,reg2, reg.col){
 #' benchmarking results reported.
 #' @param nCores possible to be runned in parallel. Argument for mclapply f();
 #' how many cores to use.
+#' @param strandness When set to TRUE, the strand information is ignored in 
+#' the overlap calculations. ignore.strand argument in 
+#' \code{\link[GenomicRanges]{findOverlaps}}
+#' 
 #' 
 #' @return GRanges object or vector/dataframe of benchmarked results. When 
 #' reportGR==T, GRanges object corresponding to the reg2Gene input object with 
@@ -205,6 +218,7 @@ benchmark <- function(reg2Gene,
                       binary=TRUE,
                       nCores=1,
                       reportGR=FALSE,
+                      strandness=FALSE,
                       ...){
   
   
@@ -223,7 +237,8 @@ benchmark <- function(reg2Gene,
     BenchmarkingResults <- benchmarkList(reg2Gene=reg2Gene,
                                          benchList=benchData,
                                          regCol=regCol,
-                                         binary=binary)
+                                         binary=binary,
+                                         strandness=strandness)
     
     if (reportGR==TRUE) {mcols(reg2Gene) <- c(mcols(reg2Gene),
                                               BenchmarkingResults)
@@ -239,7 +254,8 @@ benchmark <- function(reg2Gene,
     BenchmarkingResults <- benchmarkSimple(reg2Gene=reg2Gene,
                                            benchReg=benchData,
                                            regCol=regCol,
-                                           binary=binary)
+                                           binary=binary,
+                                           strandness=strandness)
     
     
     
@@ -264,12 +280,16 @@ benchmark <- function(reg2Gene,
 #' @param binary (def:FALSE) how many times reg2Gene interactions is observed in
 #' the benchmark dataset(s). If TRUE, reports if overlap with benchmark dataset 
 #' is observed at least once). 
+#' @param strandness When set to TRUE, the strand information is ignored in 
+#' the overlap calculations. ignore.strand argument in 
+#' \code{\link[GenomicRanges]{findOverlaps}}
 #' @author Inga Patarcic
 #' @keywords internal
 benchmarkSimple <- function(reg2Gene,
                             benchReg,
                             regCol="reg",
-                            binary=FALSE){
+                            binary=FALSE,
+                            strandness=FALSE){
   
   ############################### 
   # benchmarking           
@@ -278,7 +298,8 @@ benchmarkSimple <- function(reg2Gene,
   # Complexbenchmarking   
   reg2GeneBenchOverlap <- complexOverlaps(reg2Gene,
                                           benchReg,
-                                          regCol)
+                                          regCol,
+                                          strandness)
   
   # counts or binary reported   
   OverlapVector <- rep(0,length(reg2Gene))
@@ -311,6 +332,9 @@ benchmarkSimple <- function(reg2Gene,
 #' the benchmark dataset(s). If TRUE, reports if overlap with benchmark dataset 
 #' is observed at least once).
 #' @param nCores possible to be runned in parallel
+#' @param strandness When set to TRUE, the strand information is ignored in 
+#' the overlap calculations. ignore.strand argument in 
+#' \code{\link[GenomicRanges]{findOverlaps}}
 #' @author Inga Patarcic
 #' @keywords internal
 benchmarkList <- function(reg2Gene,
@@ -318,6 +342,7 @@ benchmarkList <- function(reg2Gene,
                           regCol="reg",
                           binary=FALSE,
                           nCores=1,
+                          strandness=FALSE,
                           ...){
   
   # running benchmarking per benchmark dataset
@@ -326,7 +351,8 @@ benchmarkList <- function(reg2Gene,
     benchmarkSimple(reg2Gene=reg2Gene,
                     benchReg=x,
                     regCol = regCol,
-                    binary = binary)},
+                    binary = binary,
+                    strandness=strandness)},
     mc.cores = nCores)
   
   bench_list <- do.call("cbind.data.frame",bench_list)
@@ -393,6 +419,8 @@ benchmarkList <- function(reg2Gene,
 #' TN = (number of) true negative: reg2gene entry 
 #' that was NOT reported to be associated (reported gene-enhancer
 #' statistics NOT lower than a predefined threshold) AND is NOT benchmarked.
+#' If no benchmark and no statistically significant data is entered, then 0 is 
+#' reported.
 #' 
 #' The formulas used in this function are: \deqn{Sensitivity = TP/(TP+FN)} 
 #' \deqn{Specificity = TN/(TN+FP)} 
@@ -437,7 +465,8 @@ confusionMatrix <- function(reg2GeneBench,
 
   # filter results of benchmarking procedure by prefiltering column
   if (!is.null(prefilterCol)){ 
-    reg2GeneBench <- reg2GeneBench[mcols(reg2GeneBench)[,prefilterCol]]
+    rows.filt <- as.logical(mcols(reg2GeneBench)[,prefilterCol])
+    reg2GeneBench <- reg2GeneBench[rows.filt]
     }
   
     
@@ -446,6 +475,8 @@ confusionMatrix <- function(reg2GeneBench,
   predictedEntries <- mcols(reg2GeneBench)[,thresholdID] <= thresholdValue
   benchmarkedEntries <- as.logical(mcols(reg2GeneBench)[,benchCol])
             
+   if (all(c(predictedEntries==F,benchmarkedEntries==F))){return(0)}
+  
       # calculating TP,FN,TN,FP adjusted for 0 observance
             TP <- sum(which(predictedEntries)%in%which(benchmarkedEntries))
             TN <- sum(which(!predictedEntries)%in%which(!benchmarkedEntries))
@@ -506,6 +537,9 @@ confusionMatrix <- function(reg2GeneBench,
 #' benchmarking results reported.
 #' @param nCores possible to be runned in parallel. Argument for mclapply f();
 #' how many cores to use.
+#' @param strandness When set to TRUE, the strand information is ignored in 
+#' the overlap calculations. ignore.strand argument in 
+#' \code{\link[GenomicRanges]{findOverlaps}}
 #' 
 #' @details Each reg2gene pair is overlapped with the benchmark dataset 
 #' (both regions of the benchmark dataset). If both: 1) the regulatory region 
@@ -522,6 +556,7 @@ filterPreBench <- function(reg2Gene,
                            regCol="reg",
                            nCores=1,
                            reportGR=FALSE,
+                           strandness=FALSE,
                            ...){
   
   
@@ -539,7 +574,8 @@ filterPreBench <- function(reg2Gene,
     
     BenchmarkingResults <- filterPreBenchList(reg2Gene=reg2Gene,
                                               benchList=benchData,
-                                              regCol=regCol)
+                                              regCol=regCol,
+                                              strandness=strandness)
     
     if (reportGR==TRUE) {mcols(reg2Gene) <- c(mcols(reg2Gene),
                                               BenchmarkingResults)
@@ -554,7 +590,8 @@ filterPreBench <- function(reg2Gene,
     
     BenchmarkingResults <- filterPreBenchSimple(reg2geneAssoc=reg2Gene,
                                                 benchmarkData=benchData,
-                                                regCol=regCol)
+                                                regCol=regCol,
+                                                strandness=strandness)
     
     
     
@@ -578,11 +615,15 @@ filterPreBench <- function(reg2Gene,
 #' @param regCol character (default "reg"), a column name of meta-data object.
 #' Indicates the column where the 2nd pair of GRanges is stored,
 #' @param nCores possible to be runned in parallel
+#' @param strandness When set to TRUE, the strand information is ignored in 
+#' the overlap calculations. ignore.strand argument in 
+#' \code{\link[GenomicRanges]{findOverlaps}}
 #' @author Inga Patarcic
 #' @keywords internal
 filterPreBenchSimple <- function(reg2geneAssoc,
                                  benchmarkData,
-                                 regCol="reg"){
+                                 regCol="reg",
+                                 strandness=FALSE){
   
   
   # setting both Benchmark coordinates on top of one another
@@ -590,9 +631,11 @@ filterPreBenchSimple <- function(reg2geneAssoc,
   
   # checking if region1 or region2 overlap with any region from the
   # benchmark dataset (granges pooled together)
-  reg2geneFilterC1 <- findOverlaps(reg2geneAssoc,benchmark2reg)
+  reg2geneFilterC1 <- findOverlaps(reg2geneAssoc,benchmark2reg,
+                                   ignore.strand=strandness)
   reg2geneFilterC2 <- findOverlaps(switchReg(reg2geneAssoc,regCol),
-                                   benchmark2reg)
+                                   benchmark2reg,
+                                   ignore.strand=strandness)
   
   
   # identifying rows of reg2gene object which are present in both the 
@@ -604,10 +647,6 @@ filterPreBenchSimple <- function(reg2geneAssoc,
   
   # identify rows present in both overlapping procedure
   reg2geneFR <- reg2geneFilterRow1[reg2geneFilterRow1%in%reg2geneFilterRow2]
-  
-  # filtering by identified rows
-  # reg2geneFiltered <- reg2geneAssoc[reg2geneFR,]
-  
   
   # reporting vector of zeros&ones
   
@@ -632,12 +671,16 @@ filterPreBenchSimple <- function(reg2geneAssoc,
 #' @param regCol character (default "reg"), a column name of meta-data object.
 #' Indicates the column where the 2nd pair of GRanges is stored,
 #' @param nCores possible to be runned in parallel
+#' @param strandness When set to TRUE, the strand information is ignored in 
+#' the overlap calculations. ignore.strand argument in 
+#' \code{\link[GenomicRanges]{findOverlaps}}
 #' @author Inga Patarcic
 #' @keywords internal
 filterPreBenchList <- function(reg2Gene,
                                benchList,
                                regCol="reg",
                                nCores=1,
+                               strandness=FALSE,
                                ...){
   
   # running benchmarking per benchmark dataset
@@ -645,7 +688,8 @@ filterPreBenchList <- function(reg2Gene,
     
     filterPreBenchSimple(reg2geneAssoc=reg2Gene,
                          benchmarkData=x,
-                         regCol = regCol)},
+                         regCol = regCol,
+                         strandness=strandness)},
     mc.cores = nCores)
   
   bench_list <- do.call("cbind.data.frame",bench_list)
