@@ -69,10 +69,13 @@ voteAssociations<-function(associations,
 
   #recreate the GRanges from the key
   df=do.call("rbind",strsplit(dtl$ky,"||",fixed=T))
-  gr=GRanges(df[,1],name=df[,2],name2=df[,3],reg=GRanges(df[,4]),
+  # gr=GRanges(df[,1],name=df[,2],name2=df[,3],reg=GRanges(df[,4]),
+  #            votes=votes)
+
+
+  gr=GRanges(df[,4],name=df[,2],name2=df[,3],reg=GRanges(df[,1]),
              votes=votes)
-
-
+  
   # arrange GRanges and return
   
   gr=gr[gr$votes>=(vote.threshold*ncol(q)),]
