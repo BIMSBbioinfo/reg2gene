@@ -10,13 +10,14 @@
 #' @author Inga Patarcic
 scoresAsMcols <- function(scores.per.cell.type,sampleIDs){
   
-        mcols.per.cell.type <- rbind.data.frame(scores.per.cell.type,
-                                                stringsAsFactors=F,
-                                                make.row.names=T)
+  
+          mcols.per.cell.type <- plyr::rbind.fill(lapply(scores.per.cell.type,
+                      function(y){as.data.frame(t(y),stringsAsFactors=FALSE)}))
+     
         # adjust column names - remove bw extension
-        colnames(mcols.per.cell.type) <- sampleIDs
+        rownames(mcols.per.cell.type) <- sampleIDs
        
-     return(mcols.per.cell.type)
+     return(t(mcols.per.cell.type))
 }
 
 
