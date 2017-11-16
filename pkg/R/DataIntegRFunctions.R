@@ -385,7 +385,7 @@ regActivity <- function(regRegions,
 #'    regReg_toy$bw2 <- rep(4,length(regReg_toy))
 #' 
 #' regActivityAroundTSS(regReg_toy,regTSS_toy,upstream=1,downstream=1)
-#' 
+#' regActivityAroundTSS(regReg_toy,regTSS_toy,upstream=5,downstream=5)
 #' 
 #' 
 #' @details only enhancers located within (+/-)upstream/downstream of TSS 
@@ -408,20 +408,19 @@ regActivityAroundTSS <- function(regActivity,
   if (is.null(tss$name)) {stop("TSS object does not contain info about gene 
                                name. TSS GRanges object should be 2nd arg")}
   
-  # extend TSS for wanted region 
-  tss.prom <- promoters(tss,
-                        upstream,
-                        downstream)
+ 
   # split per gene 
-  tss.extended <- split(tss.prom,
-                        as.character(tss.prom$name))
+  tss.extended <- split(tss,
+                        as.character(tss$name))
   
   # getting EnhRegions which overlap extended TSS
   
   tssActivity <- parallel::mclapply(tss.extended,function(x){
     
-    # overlap extended TSS & regRegion
-    tss.regAct.overlap <- as.data.frame(findOverlaps(x,regActivity))
+    # overlap extended TSS (+/-downstream and upstream) & regRegion
+  tss.regAct.overlap <- as.data.frame(findOverlaps(promoters(x,
+                                                   upstream,downstream),
+                                                   regActivity))
     
     # if there is any overlap - GO!
     if (nrow(tss.regAct.overlap)!=0) {
