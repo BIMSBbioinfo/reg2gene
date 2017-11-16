@@ -799,12 +799,23 @@ qvaluCal <- function(comb.res){
     
     # add qval for pval1&2  
       test <- !all(is.na(comb.res[,3])) # test if any NA present
-    if (test){comb.res$qval=qvalue::qvalue(comb.res[,3])$qvalues}
+    # adjust for stimated pi0 <= 0 
+            if (test){qval <- try(qvalue::qvalue(comb.res[,3])$qvalues,silent=T)
+                            
+                              if(!is(qval, 'try-error')){comb.res$qval <- qval}
+                      
+                      }
+              
       test <- !all(is.na(comb.res[,4]))  # test if any NA present
-    if (test) {comb.res$qval2=qvalue::qvalue(comb.res[,4])$qvalues}
-
+            if (test){qval <- try(qvalue::qvalue(comb.res[,4])$qvalues,silent=T)
+            
+                              if(!is(qval, 'try-error')){comb.res$qval2 <- qval}
+            
+                      }
   return(comb.res)
-  }
   
+  }
+
+
   ########### END OF association prediction functions
 #########-------------------------------------------------###########
