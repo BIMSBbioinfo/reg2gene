@@ -306,13 +306,18 @@ associateReg2Gene<-function(input,method="pearson",tag=NULL,scale=TRUE,
 #'
 #' @examples
 #'
-#' m=readRDS("data/sample_rawActivityMatrices/Roadmap/H3K27ac/ENSG00000140718_FTO.rds")
-#'
-#' m=apply(m, 2,as.numeric) # change to numeric matrix
-#' glmnetResample(scale(m),col=1,B=1000)
+#' regTSS_toy <- GRReg1_toy
+#'   regTSS_toy$bw1 <- rep(1,length(GRReg1_toy))
+#'   regTSS_toy$bw2 <- rep(2,length(GRReg1_toy))
+#'   regTSS_toy$bw3 <- rep(3,length(GRReg1_toy))
+#' regReg_toy <- GRReg2_toy
+#'    regReg_toy$bw1 <- rep(3,length(regReg_toy))
+#'    regReg_toy$bw2 <- rep(4,length(regReg_toy))
+#' 
+#' grlist2gr(regActivityAroundTSS(regReg_toy,regTSS_toy,upstream=5,downstream=5))
 #'
 #' @keywords internal
-#' @author Altuna Akalin
+#' @author Altuna Akalin, Inga Patarcic
 grlist2gr<-function(grlist){
 
   unlist(endoapply(grlist, function(x){
@@ -321,12 +326,12 @@ grlist2gr<-function(grlist){
     gene=x[x$featureType == "gene",c("name" ,"name2")]
 
     grpairs=rep(gene,length(reg))
-    grpairs$reg=reg
+        reg$reg=grpairs
+        reg$name=grpairs$name
+        reg$name2=grpairs$name2
     
-    # ordering meta-data to have correct input for benchmark()
-    mcols(grpairs) <-  mcols(grpairs)[c("reg","name","name2")]
-    
-    grpairs
+   
+    reg
   }))
 }
 
