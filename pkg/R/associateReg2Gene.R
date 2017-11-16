@@ -244,11 +244,11 @@ associateReg2Gene<-function(input,method="pearson",tag=NULL,scale=TRUE,
           # adjusted for data with only one enhancer tested 
    }else if (nrow(mat)==2){x <- data.frame(cbind(n=nrow(mat),
                                                   t(eval(model.func))))
-                        colnames(x) <- c("n","coefs","pval","qval")
+                        colnames(x) <- c("n","coefs","pval","pval2")
       
     }else if ((nrow(mat)>2)&(ncol(mat)==length(gr$name))){
               x <- cbind(n=nrow(mat),t(eval(model.func)))
-              colnames(x) <- c("n","coefs","pval","qval")
+              colnames(x) <- c("n","coefs","pval","pval2")
             
     }else if ((nrow(mat)>2)&(ncol(mat)!=length(gr$name))){
         # adjusting for the case where just some enhancers are filtered any(NA) 
@@ -263,16 +263,13 @@ associateReg2Gene<-function(input,method="pearson",tag=NULL,scale=TRUE,
   
 
   # combine stats with Granges
-  comb.res=do.call("rbind",res)[,1:3]
+  comb.res=do.call("rbind.data.frame",res)[,1:4]
   rownames(comb.res)=NULL # needed for GRanges DataFrame
 
-  # add qvalues - adjusted for filtered results
+  # add qvalue calculations
+  comb.res <- qvaluCal(comb.res)
+    
   
-  
-  if (all(is.na(comb.res[,3]))) {comb.res=cbind(comb.res,qval=NA)}
-  if (!all(is.na(comb.res[,3]))) {comb.res=cbind(comb.res,
-                                           qval=qvalue(comb.res[,3])$qvalues)}
-
   # if a tag for column names given, add it
   if(!is.null(tag)){
     colnames(comb.res)=paste(colnames(comb.res),tag,sep=".")
@@ -785,5 +782,29 @@ rfResample<-function(mat,scale,col=1,B=1000,...){
   return(pvals)
 }
 
-########### END OF association prediction functions
+
+#' internal qvalue calculation function
+#'
+#' private function calculates qvalue for 2 categories of pvalue
+#' @importFrom qvalue qvalue
+#' @keywords internal
+
+qvaluCal <- function(comb.res){
+  
+    # add qvalues for pval1&2 - adjusted for filtered results
+  
+  qvalR <- matrix(NA,ncol=2,nrow=nrow(comb.res),
+                  dimnames =  list(1:nrow(comb.res),c("qval", "qval2")))
+      comb.res=cbind(comb.res,qvalR)
+    
+    # add qval for pval1&2  
+      test <- !all(is.na(comb.res[,3])) # test if any NA present
+    if (test){comb.res$qval=qvalue::qvalue(comb.res[,3])$qvalues}
+      test <- !all(is.na(comb.res[,4]))  # test if any NA present
+    if (test) {comb.res$qval2=qvalue::qvalue(comb.res[,4])$qvalues}
+
+  return(comb.res)
+  }
+  
+  ########### END OF association prediction functions
 #########-------------------------------------------------###########
