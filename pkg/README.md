@@ -1,6 +1,6 @@
 <a name="logo"/>
 <div align="center">
-<img src="https://github.com/IngaPa/reg2gene/pkg/inst/hex-reg2gene.png" alt="hex Logo"  ></img>
+<img src="https://github.com/IngaPa/reg2gene/blob/inga_functions/pkg/inst/hex-reg2gene.png" alt="hex Logo"  ></img>
 </a>
 </div>
 
