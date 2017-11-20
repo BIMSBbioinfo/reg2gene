@@ -12,7 +12,7 @@
 #' "randomForest". Default: "pearson". 
 #' @param tag a string to be used to append to results from methods. This string
 #'  will be attached to "n","coefs","pval" columns. Default NULL.
-#' @param scale if TRUE (default) the the values for gene expression and
+#' @param scaleData if TRUE (default) the the values for gene expression and
 #' regulatory activity will be scaled to have 0 mean and unit variance using
 #' \code{\link[base]{scale}} function.
 #' @param cores number of cores to be used
@@ -49,17 +49,21 @@
 #'
 #' @author Inga Patarcic
 #'
+#' @import foreach 
+#' @import stringr
 #' @importFrom doMC registerDoMC
-#' @import foreach
-#' @import stringr 
+#' @importFrom ranger ranger
+#' @importFrom glmnet glmnet
 #' @importFrom qvalue qvalue
+#' @importFrom fitdistrplus fitdist
+#' 
 #' @export
 associateReg2GeneChunks <- function(input,
                                     out.dir,
                                     method="pearson",
                                     tag=NULL,
                                     saveTag="ChunkAnalysis",
-                                    scale=TRUE,
+                                    scaleData=TRUE,
                                     cores=1,
                                     B=1000,
                                     chunks=1,
@@ -85,7 +89,7 @@ associateReg2GeneChunks <- function(input,
                                                        method=method,
                                                        B=B,
                                                        tag=tag,
-                                                       scale=scale,
+                                                       scaleData=scaleData,
                                                        cores=cores),silent=TRUE)
         if(!is(Res_associateReg2Gene, 'try-error')) break
         if(is(Res_associateReg2Gene, 'try-error')) {counter=counter+1}
@@ -139,7 +143,7 @@ associateReg2GeneChunks <- function(input,
 #' "randomForest". Default: "pearson". See Details for more.
 #' @param tag a string to be used to append to results from methods. This string
 #'  will be attached to "n","coefs","pval" columns. Default NULL.
-#' @param scale if TRUE (default) the the values for gene expression and
+#' @param scaleData if TRUE (default) the the values for gene expression and
 #' regulatory activity will be scaled to have 0 mean and unit variance using
 #' \code{\link[base]{scale}} function.
 #' @param cores number of cores to be used
@@ -153,14 +157,6 @@ associateReg2GeneChunks <- function(input,
 #' between a regulatory region and TSS, and the estimated association statistic
 #' , its P-value and Q-value.
 #'
-#' @examples
-#' \dontrun{
-#' regAcFile=system.file("extdata", "sampleRegActivityAroundTSS.rds",
-#'                       package = "reg2gene")
-#' input=readRDS(regAcFile)
-#' b=associateReg2Gene(input)
-#'
-#' }
 #'
 #' @details
 #' The function implements four methods to associate regulatory
@@ -181,13 +177,62 @@ associateReg2GeneChunks <- function(input,
 #'
 #' @author Altuna Akalin
 #'
-#' @importFrom doMC registerDoMC
 #' @import foreach 
+#' @import stringr
+#' @importFrom doMC registerDoMC
+#' @importFrom ranger ranger
+#' @importFrom glmnet glmnet
 #' @importFrom qvalue qvalue
+#' @importFrom fitdistrplus fitdist
+#' 
+#' @examples 
+#' ###############################
+#' #STEP 1.  Getting random and predefined .8 correlation
+#'  
+#'  require(GenomicRanges)
+#'  require(doMC)
+#'  require(glmnet)
+#'  require(foreach)
+#'  require(stringr)
+#'  require(qvalue)
+#'  
+#'  x <- c(2.000346,2.166255,0.7372374,0.9380581,2.423209, 
+#'       2.599857,4.216959,2.589133,1.848172,3.039659)
+#'
+#'
+#'  y <- c(2.866875,2.817145,2.1434456,2.9039771,3.819091,5.009990,
+#'       5.048476,2.884551,2.780067,4.053136)
+#'
+#'  corrM <- rbind(x,y)
+#'  
+#'   # define Granges object
+#'   gr0 <- GRanges(seqnames=rep("chr1",2),IRanges(1:2,3:4))
+#'     
+#'    featureType=c("gene","regulatory");featureType <- data.frame(featureType,
+#'                                                       stringsAsFactors=F)
+#'    name=c("gene1","regulatory1");name <- data.frame(name,stringsAsFactors=F)
+#'    name2=c("gene1","regulatory1");name2 <- data.frame(name2,
+#'                                                          stringsAsFactors=F)
+#'    mcols(gr0) <- cbind(featureType,name,name2,corrM)
+#'
+#' associateReg2Gene(gr0,cores = 1)
+#' associateReg2Gene(GRangesList(gr0),cores = 1,tag="TAGADDED")
+#' associateReg2Gene(GRangesList(gr0),cores = 1,tag="TAGADDED",B=100)
+#' associateReg2Gene(GRangesList(gr0),cores = 1,method="elasticnet")
+#' #should return all NA values because just one predictor variable(x) is used to predict y
+#' 
 #' @export
-associateReg2Gene<-function(input,method="pearson",tag=NULL,scale=TRUE,
-                            cores=1,B=1000,...){
-
+associateReg2Gene<-function(input,
+                            method="pearson",
+                            tag=NULL,
+                            scaleData=TRUE,
+                            cores=1,
+                            B=1000,
+                            ...){
+ 
+       #input=input[14];method="elasticnet";tag=NULL
+       #scaleData=TRUE;cores=1;B=1000
+  # 
   # drop NULL genes in the list
   nulls=which(sapply(input,is.null))
   if(length(nulls)>0){
@@ -200,86 +245,99 @@ associateReg2Gene<-function(input,method="pearson",tag=NULL,scale=TRUE,
   }
 
   # decide which prediction/association method you want to use
+  
   if(method=="pearson"){
-    model.func=quote(corResample(mat,scale,method="pearson",col=1,B=B) )
+    model.func=quote(corResample(mat,scaleData=scaleData,method="pearson",col=1,B=B))
   }else if(method == "spearman"){
-    model.func=quote( corResample(mat,scale,method="pearson",col=1,B=B) )
+    model.func=quote( corResample(mat,scaleData=scaleData,method="spearman",col=1,B=B) )
   }else if(method == "dcor"){
-    model.func=quote( dcorResample(mat,scale,col=1,B=B) )
+    model.func=quote( dcorResample(mat,scaleData=scaleData,col=1,B=B) )
   }else if(method == "elasticnet"){
-    model.func=quote( glmnetResample(mat,scale,col=1,B=B) )
+    model.func=quote( glmnetResample(mat,scaleData=scaleData,col=1,B=B) )
   }else if(method == "randomForest"){
-    model.func=quote( rfResample(mat,scale,col=1,B=B) )
+    model.func=quote( rfResample(mat,scaleData=scaleData,col=1,B=B) )
   }
+ 
 
-  # call the function in a foreach loop
-  res=foreach(gr=input) %dopar%
-  {
-          
-
-      mat=t(as.matrix(mcols(gr)[,-which(names(mcols(gr)) %in% c("name","name2",
-                                                          "featureType"))]))
-        colnames(mat) <-  gr$name
-    
+  # function runs for GRangesList and GRanges
+  
+      if (class(input)=="GRangesList") {
         
-      # only work with complete cases, hope there won't be
-      # any columns with only NAs
-      # mat=mat[complete.cases(mat),]
-      
-  # se complete.cases (remove cells, remove enhancers, remove random NA)  
-      mat <- stepwise.complete.cases(mat)
-
-
-      # adjusting for the case where all rows and columns are filtered OUT
-     
-      x  <- data.frame(matrix(NA,nrow=length(gr$name[-1]),ncol=4,byrow = T,
-                              dimnames=list(gr$name[-1],
-                                       c("n","coefs","pval","qval"))))
+          res=foreach(gr=input) %dopar% {
+                  
+            # def min output:
+            x  <- data.frame(matrix(NA,nrow=length(gr$name[-1]),ncol=4,byrow=T,
+                       dimnames=list(gr$name[-1],c("n","coefs","pval","qval"))))
             
-      
-      # necessary for genes with one enhancer that is filtered out due to NA 
-          if (is.matrix(mat)==F) {x <- x
+            mat <- getGeneEnhScoresDF(gr) # get DF of gr metadata (+remove NA)
+              
+            if (is.matrix(mat)) {
+              
+                if (ncol(mat)>0) {
+              # ensures that function works after stepwise filtering:
+              # covers cases when all enhancers are filtered out +/- gene filter
+                 if (!all(zeroVar(mat)|manyZeros(mat))){ 
+                    # filtering for low gene/enh variability and filtering prob
+                        ModelRes <- eval(model.func)
+                        
+                        x <- perGeneModelling(x,mat,ModelRes)
+                  }
+                }
+              }  
           
-          # get coef and pvalues, add number of samples to the result
-          # adjusted for data with only one enhancer tested 
-   }else if (nrow(mat)==2){x <- data.frame(cbind(n=nrow(mat),
-                                                  t(eval(model.func))))
-                        colnames(x) <- c("n","coefs","pval","pval2")
-      
-    }else if ((nrow(mat)>2)&(ncol(mat)==length(gr$name))){
-              x <- cbind(n=nrow(mat),t(eval(model.func)))
-              colnames(x) <- c("n","coefs","pval","pval2")
+            return(x)
             
-    }else if ((nrow(mat)>2)&(ncol(mat)!=length(gr$name))){
-        # adjusting for the case where just some enhancers are filtered any(NA) 
-        x[colnames(mat)[-1],] <- cbind(n=nrow(mat), t(eval(model.func)))
+            }
+            # combine perGene stats with Granges
+                
+                comb.res=do.call("rbind.data.frame",res)[,1:4]
+                
+                    rownames(comb.res)=NULL # needed for GRanges DataFrame
+                    
           
-    }
+      }
       
-   return(x)
-      
-    }
+      if (class(input)=="GRanges") { 
+        
+        comb.res  <- data.frame(matrix(NA,nrow=length(input$name[-1]),ncol=4,byrow=T,
+                    dimnames=list(input$name[-1],c("n","coefs","pval","qval"))))
+        
+        mat <- getGeneEnhScoresDF(input) # get DF of gr metadata (+remove NA)
+        
+        if (is.matrix(mat)) {
+          
+          if (ncol(mat)>0) {
+          
+              if (!all(zeroVar(mat)|manyZeros(mat))){ 
+                # filtering for low gene/enh variability and filtering prob
+                ModelRes <- eval(model.func)
+                
+                comb.res <- perGeneModelling(comb.res,mat,ModelRes)
+              
+                  }
+               
+              }
+            
+          }       
+      }
       
   
-
-  # combine stats with Granges
-  comb.res=do.call("rbind.data.frame",res)[,1:4]
-  rownames(comb.res)=NULL # needed for GRanges DataFrame
-
   # add qvalue calculations
-  comb.res <- qvaluCal(comb.res)
+      comb.res <- qvaluCal(comb.res)
     
   
   # if a tag for column names given, add it
-  if(!is.null(tag)){
-    colnames(comb.res)=paste(colnames(comb.res),tag,sep=".")
-  }
+      if (!is.null(tag)){
+        
+                colnames(comb.res)=paste(colnames(comb.res),tag,sep=".")
+      
+        }
 
-  # a function to create input ranges to output ranges
-  # later p-values, effect sizes etc will appended to this
-  # GRanges object
-  gr2=grlist2gr(input)
-  mcols(gr2)=cbind(mcols(gr2),DataFrame(comb.res ) )
+  # a function to create GRanges object for GRangesList
+  # later p-values, effect sizes etc will appended to this object
+      gr2 <- grlist2gr(input)
+      
+      mcols(gr2)=cbind(mcols(gr2),DataFrame(comb.res))
 
   # return result
   gr2
@@ -293,7 +351,6 @@ associateReg2Gene<-function(input,method="pearson",tag=NULL,scale=TRUE,
 
 # this part contains utility functions that will be needed for all
 # prediction functions
-
 
 #' convert GRangesList to GRanges with associated regulatory regions (internal)
 #'
@@ -319,23 +376,41 @@ associateReg2Gene<-function(input,method="pearson",tag=NULL,scale=TRUE,
 #' @keywords internal
 #' @author Altuna Akalin, Inga Patarcic
 grlist2gr<-function(grlist){
-
-  unlist(endoapply(grlist, function(x){
-
-    reg=granges(x[x$featureType != "gene",])
-    gene=x[x$featureType == "gene",c("name" ,"name2")]
-
-    grpairs=rep(gene,length(reg))
-        reg$reg=grpairs
-        reg$name=grpairs$name
-        reg$name2=grpairs$name2
+  
+  if (class(grlist)=="GRangesList") {
     
-   
-    reg
-  }))
+    return(unlist(endoapply(grlist,grReorg)))
+  
+    }
+  
+  if (class(grlist)=="GRanges") { 
+    
+    return(grReorg(grlist))
+  
+  }
 }
 
-
+#' Help GR reorganization f()
+#' The function converts output of \code{\link{regActivityAroundTSS}} (a
+#' GRangesList) to a GRanges object by rearranging the rows and columns so
+#' that output GRanges object mainly contains gene name and position with
+#' an additional column "reg" which contains the regulatory region coordinates
+#' 
+#' @keywords internal
+#' @author Inga Patarcic
+grReorg <- function(x){
+  
+  reg=granges(x[x$featureType != "gene",])
+  gene=x[x$featureType == "gene",c("name" ,"name2")]
+  
+  grpairs=rep(gene,length(reg))
+  reg$reg=grpairs
+  reg$name=grpairs$name
+  reg$name2=grpairs$name2
+  
+  
+  reg
+}
 
 #' Estimate P-values from resampling statistics using Gamma distribution
 #'
@@ -422,7 +497,7 @@ estimateGammaPval<-function(vals,orig,abs=TRUE,add=0){
 zeroVar<-function(mat,col=1){
 
   # flag 0 variation in gene expression
-  if(sd(mat[,col])==0){
+  if(sd(mat[,col],na.rm=T)==0){
     return(TRUE)
   }
   FALSE
@@ -445,7 +520,7 @@ zeroVar<-function(mat,col=1){
 manyZeros<-function(mat,col=1){
   # if many values are zero cross-validation or subsampling based techniques
   # will fail
-  if( sum(mat[,col]==0)/nrow(mat) > 0.9 ){
+  if( sum(mat[,col]==0,na.rm=T)/nrow(mat) > 0.9 ){
     return(TRUE)
   }
   FALSE
@@ -538,18 +613,15 @@ dcorMat<-function(y,mat){
 #' m=apply(m, 2,as.numeric) # change to numeric matrix
 #' corResample(m,method="pearson",col=1,B=1000)
 #'
-corResample<-function(mat,scale,method="pearson",col=1,B=1000){
+corResample<-function(mat,
+                      scaleData=scaleData,
+                      method="pearson",
+                      col=1,
+                      B=B){
 
-  # decide if the matrix needs to be dropped and NA returned due
-  # to low or zero variation in gene expression
-  if( zeroVar(mat) | manyZeros(mat) ){
-    return(matrix(NA,ncol=ncol(mat)-1,nrow=3,
-                  dimnames=list(c("coefs","pval","p2"),1:(ncol(mat)-1) ))
-    )
-  }
-  
-  # scale if necessary
-  if(scale){
+
+  # scaleData if necessary
+  if(scaleData){
     mat=scale(mat)
     mat[is.nan(mat)]=0 # when scaled all 0 columns will be NaN, conv. to 0
   }
@@ -595,17 +667,9 @@ corResample<-function(mat,scale,method="pearson",col=1,B=1000){
 #'
 #' m=apply(m, 2,as.numeric) # change to numeric matrix
 #' dcorResample(m,col=1,B=1000)
-dcorResample<-function(mat,scale,col=1,B=1000){
+dcorResample<-function(mat,scaleData=scaleData,col=1,B=B){
 
-  # decide if the matrix needs to be dropped and NA returned due
-  # to low or zero variation in gene expression
-  if( zeroVar(mat) | manyZeros(mat) ){
-    return(matrix(NA,ncol=ncol(mat)-1,nrow=3,
-                  dimnames=list(c("coefs","pval","p2"),1:(ncol(mat)-1) ))
-    )
-  }
-
-  if(scale){
+  if(scaleData){
     mat=scale(mat)
     mat[is.nan(mat)]=0 # when scaled all 0 columns will be NaN, conv. to 0
   }
@@ -655,19 +719,17 @@ dcorResample<-function(mat,scale,col=1,B=1000){
 #'
 #' m=apply(m, 2,as.numeric) # change to numeric matrix
 #' glmnetResample(scale(m),col=1,B=1000)
-glmnetResample<-function(mat,scale,col=1,B=1000,...){
+glmnetResample<-function(mat,scaleData=scaleData,col=1,B=B,...){
   #require(glmnet)
 
-  # decide if the matrix needs to be dropped and NA returned due
-  # to low or zero variation in gene expression
-  if( zeroVar(mat) | manyZeros(mat) | ncol(mat)<=2){
+  if (ncol(mat)<=2){
     return(matrix(NA,ncol=ncol(mat)-1,nrow=3,
                   dimnames=list(c("coefs","pval","p2"),1:(ncol(mat)-1) ))
     )
   }
   
   
-  if(scale){
+  if(scaleData){
     mat=scale(mat)
     mat[is.nan(mat)]=0 # when scaled all 0 columns will be NaN, conv. to 0
   }
@@ -675,31 +737,44 @@ glmnetResample<-function(mat,scale,col=1,B=1000,...){
   # resample response variables Ys
   Ys=lapply(1:B,function(x) sample(mat[,col],nrow(mat)))
 
+  # calculating coef and lambda.min
+      coefs <- matrix(NA,ncol=ncol(mat[,-col]),nrow=(B))
+      orig <- rep(NA,ncol(mat)-1)
+            names(orig) <- colnames(mat)[-col] 
+  
   # original coefs
-  mod<- cv.glmnet(x = mat[,-col], y = mat[,col],
-                  standardize=FALSE,
-                  nfolds=5,alpha=0.5)
-
-  orig=coef(mod,s="lambda.min")[-1,1]
-
-  #coefs from resampling
-  coefs=matrix(0.0,ncol=ncol(mat[,-col]),nrow=(B))
-
+  tryCatch({
+        mod<- cv.glmnet(x = mat[,-col], y = mat[,col],
+                        standardize=FALSE,
+                        nfolds=5,alpha=0.5)
+      
+        orig=coef(mod,s="lambda.min")[-1,1]
+      
+        #coefs from resampling
+        coefs=matrix(0.0,ncol=ncol(mat[,-col]),nrow=(B))
+        
+  },error=function(coefs){coefs <- coefs})
 
   # calculate coeff for resampled Ys
   # catching errors if in resampling all 0s selected 
   
   tryCatch({
-  for(i in 1:B){
+        for(i in 1:B){
+      
+          mod<- cv.glmnet(x = mat[,-col], y = Ys[[i]],
+                          standardize=FALSE,
+                          nfolds=5,alpha=0.5)
+      
+          coefs[i,]=coef(mod,s="lambda.min")[-1,1]
+        }
+  },error=function(coefs){
+    
+          coefs <- matrix(NA,ncol=ncol(mat[,-col]),nrow=(B))
+          
+          })
 
-    mod<- cv.glmnet(x = mat[,-col], y = Ys[[i]],
-                    standardize=FALSE,
-                    nfolds=5,alpha=0.5)
-
-    coefs[i,]=coef(mod,s="lambda.min")[-1,1]
-  }
-  },error=function(coefs){coefs <- matrix(NA,ncol=ncol(mat[,-col]),nrow=(B))})
-
+  
+  
   # calculate p-vals
   pvals=estimateGammaPval(coefs,orig=orig,abs=TRUE,add=0)
 
@@ -729,19 +804,19 @@ glmnetResample<-function(mat,scale,col=1,B=1000,...){
 #' m=apply(m, 2,as.numeric) # change to numeric matrix
 #' rfResample(scale(m),col=1,B=1000)
 #'
-rfResample<-function(mat,scale,col=1,B=1000,...){
+rfResample<-function(mat,scaleData=scaleData,col=1,B=B,...){
   #require(randomForest)
   #require(ranger)
 
   # decide if the matrix needs to be dropped and NA returned due
   # to low or zero variation in gene expression
-  if( zeroVar(mat) | manyZeros(mat) | ncol(mat)<=2){
+  if (ncol(mat)<=2){
     return(matrix(NA,ncol=ncol(mat)-1,nrow=3,
                   dimnames=list(c("coefs","pval","p2"),1:(ncol(mat)-1) ))
     )
   }
 
-  if(scale){
+  if(scaleData){
     mat=scale(mat)
     mat[is.nan(mat)]=0 # when scaled all 0 columns will be NaN, conv. to 0
   }
@@ -767,11 +842,7 @@ rfResample<-function(mat,scale,col=1,B=1000,...){
   # handling case where by intense sampling occasionally only zeros are selected
   tryCatch({
   for(i in 1:B){
-    #mod<- randomForest(x = mat[,-col], y = Ys[[i]],
-    #                   importance=TRUE,na.action=na.omit)
-
-    #coefs[i,]=importance(mod)[,2]
-
+   
     mod <-ranger( y ~ ., data = data.frame(y=Ys[[i]],mat[,-col]),
                   importance="impurity",
                   num.trees = 500,write.forest = FALSE)
@@ -793,7 +864,6 @@ rfResample<-function(mat,scale,col=1,B=1000,...){
 #' private function calculates qvalue for 2 categories of pvalue
 #' @importFrom qvalue qvalue
 #' @keywords internal
-
 qvaluCal <- function(comb.res){
   
     # add qvalues for pval1&2 - adjusted for filtered results
@@ -820,6 +890,71 @@ qvaluCal <- function(comb.res){
   return(comb.res)
   
   }
+
+ 
+#' extract gene-enhancer scores from GRanges object
+#'
+#' Extract gene-enhancer scores from metadata of GRanges object and filters NA
+#' values using stepwise.complete.cases()
+#'
+#' @param gr perGene GRanges object
+#'
+#' @keywords internal
+#' @author Inga Patarcic
+getGeneEnhScoresDF <- function(gr) {
+    
+    mat=t(as.matrix(mcols(gr)[,-which(names(mcols(gr)) %in% c("name","name2",
+                                                              "featureType"))]))
+    colnames(mat) <-  gr$name
+    
+    # se complete.cases (remove cells, remove enhancers, remove random NA)  
+    mat <- stepwise.complete.cases(mat)
+    
+    return(mat)
+    
+  }      
+  
+
+#' Function returns output of called modelling procedure indivudually for 
+#' each GRanges object
+#'
+#' It extracts gene-enhancer scores from metadata of GRanges object and filters
+#' NA values using stepwise.complete.cases() embedded in getGeneEnhScoresDF()
+#' Performs FILTERING: drop gene and NA is returned due to low or zero variation
+#' in gene expression or when no enhancers are remained after 
+#' stepwise.complete.cases() 
+#'
+#' @param gr perGene GRanges object
+#'
+#' @keywords internal
+#' @author Inga Patarcic
+perGeneModelling <- function(x,
+                             mat,
+                             ModelRes){
+  
+  nEnhancers <- ncol(mat)-1 # how many regulatory regions
+    
+        if ((ncol(mat)>=2)&
+            (nEnhancers==nrow(x))){
+          
+                x <- data.frame(cbind(n=nrow(mat),t(ModelRes)))
+          
+          
+        }else if ((ncol(mat)>=2)&
+                  (nEnhancers!=nrow(x))){
+          
+          # adjusting for the case where just some enhancers are filtered
+                x[colnames(mat)[-1],] <- cbind(n=nrow(mat), t(ModelRes))
+          
+        }
+        
+        colnames(x) <- c("n","coefs","pval","pval2")
+        
+      return(x)
+      
+    }
+     
+  
 
 
   ########### END OF association prediction functions
