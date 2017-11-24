@@ -10,8 +10,6 @@
 #' will be stored.
 #' @param method one of "pearson","spearman","dcor","elasticnet",
 #' "randomForest". Default: "pearson". 
-#' @param tag a string to be used to append to results from methods. This string
-#'  will be attached to "n","coefs","pval" columns. Default NULL.
 #' @param scaleData if TRUE (default) the the values for gene expression and
 #' regulatory activity will be scaled to have 0 mean and unit variance using
 #' \code{\link[base]{scale}} function.
@@ -21,24 +19,17 @@
 #' P-values for coeficients returned by different methods.
 #' @param chunks Default: 1 - everything is analyzed together. If >1 then
 #' regulatory regions are divided into N chunks (useful for >>N of genes/
-#' regulatory regions to avoid reaching R memory quota)
+#' regulatory regions to avoid reaching R memory quota). For each chunk of 
+#' genes separate .rds object is saved into memory, and when analysis is 
+#' finished for separate chunks, results are pooled together and saved. 
 #' @param saveTag (character, defult: "ChunkAnalysis") Unique naming for created
 #' .rds files which correspond to different gene chunks. This character is used 
 #' to pull together all .rds files from one round of analysis.
-#' @param ... further arguments to methods, not implemented yet
 #' @param remove.chunks (default T). To remove all chunks of .rds data created
 #' while running a function
 #' @return a GRanges object containing every potential association and
 #' between a regulatory region and TSS, and the estimated association statistic
 #' , its P-value and Q-value.
-#' @examples
-#' \dontrun{
-#' regAcFile=system.file("extdata", "sampleRegActivityAroundTSS.rds",
-#'                       package = "reg2gene")
-#' input=readRDS(regAcFile)
-#' b=associateReg2Gene(input)
-#'
-#' }
 #'
 #' @details
 #' The function implements \code{\link{associateReg2Gene}} function, but 
@@ -53,22 +44,21 @@
 #' @import stringr
 #' @importFrom doMC registerDoMC
 #' @importFrom ranger ranger
-#' @importFrom glmnet glmnet
+#' @import glmnet 
 #' @importFrom qvalue qvalue
 #' @importFrom fitdistrplus fitdist
+#' @import InteractionSet
 #' 
 #' @export
 associateReg2GeneChunks <- function(input,
                                     out.dir,
                                     method="pearson",
-                                    tag=NULL,
                                     saveTag="ChunkAnalysis",
                                     scaleData=TRUE,
                                     cores=1,
                                     B=1000,
                                     chunks=1,
-                                    remove.chunks=T,
-                                    ...){
+                                    remove.chunks=T){
   
   # save warnings, output,etc. 
   sink(paste0(out.dir,"log.txt"), append=TRUE, split=TRUE)
@@ -88,15 +78,14 @@ associateReg2GeneChunks <- function(input,
         Res_associateReg2Gene <- try(associateReg2Gene(input[x],
                                                        method=method,
                                                        B=B,
-                                                       tag=tag,
                                                        scaleData=scaleData,
                                                        cores=cores),silent=TRUE)
-        if(!is(Res_associateReg2Gene, 'try-error')) break
-        if(is(Res_associateReg2Gene, 'try-error')) {counter=counter+1}
+        if(!inherits(Res_associateReg2Gene, 'try-error')) break
+        if(inherits(Res_associateReg2Gene, 'try-error')) {counter=counter+1}
       }
     
     # report error even after 10 iterations of trying
-    if (is(Res_associateReg2Gene, 'try-error')&counter>10){print(paste0(out.dir,
+    if (inherits(Res_associateReg2Gene, 'try-error')&counter>10){print(paste0(out.dir,
                                                           saveTag,x[1],
                                                     ".rds was not successful"))}
     
@@ -141,17 +130,16 @@ associateReg2GeneChunks <- function(input,
 #' output of \code{\link{regActivityAroundTSS}} function.
 #' @param method one of "pearson","spearman","dcor","elasticnet",
 #' "randomForest". Default: "pearson". See Details for more.
-#' @param tag a string to be used to append to results from methods. This string
-#'  will be attached to "n","coefs","pval" columns. Default NULL.
 #' @param scaleData if TRUE (default) the the values for gene expression and
 #' regulatory activity will be scaled to have 0 mean and unit variance using
 #' \code{\link[base]{scale}} function.
 #' @param cores number of cores to be used
 #' @param B number of randomizations, default 1000. This procedure
-#' is used to estimate
-#' P-values for coeficients returned by different methods.
-#' @param chunks. Default: 1 - everything is analyzed together. Useful for >>N 
-#' of  genes/regulatory regions R memory 
+#' is used to estimate P-values for coeficients returned by different methods.
+#' @param asGInteractions if TRUE (default) results are reported as 
+#' \code{\link[InteractionSet]{GInteractions}}. Otherwise, a GRanges object with 
+#' regulatory region coordinates and an additional column "reg" containing gene
+#' GRanges is reported
 #' @param ... further arguments to methods, not implemented yet
 #' @return a GRanges object containing every potential association and
 #' between a regulatory region and TSS, and the estimated association statistic
@@ -181,7 +169,7 @@ associateReg2GeneChunks <- function(input,
 #' @import stringr
 #' @importFrom doMC registerDoMC
 #' @importFrom ranger ranger
-#' @importFrom glmnet glmnet
+#' @import glmnet
 #' @importFrom qvalue qvalue
 #' @importFrom fitdistrplus fitdist
 #' 
@@ -196,44 +184,51 @@ associateReg2GeneChunks <- function(input,
 #'  require(stringr)
 #'  require(qvalue)
 #'  
+#'  ####################################
+#'  # create example
+#'  
 #'  x <- c(2.000346,2.166255,0.7372374,0.9380581,2.423209, 
 #'       2.599857,4.216959,2.589133,1.848172,3.039659)
-#'
-#'
 #'  y <- c(2.866875,2.817145,2.1434456,2.9039771,3.819091,5.009990,
 #'       5.048476,2.884551,2.780067,4.053136)
-#'
 #'  corrM <- rbind(x,y)
 #'  
-#'   # define Granges object
+#'  # define Granges object
 #'   gr0 <- GRanges(seqnames=rep("chr1",2),IRanges(1:2,3:4))
 #'     
-#'    featureType=c("gene","regulatory");featureType <- data.frame(featureType,
-#'                                                       stringsAsFactors=F)
-#'    name=c("gene1","regulatory1");name <- data.frame(name,stringsAsFactors=F)
-#'    name2=c("gene1","regulatory1");name2 <- data.frame(name2,
-#'                                                          stringsAsFactors=F)
-#'    mcols(gr0) <- cbind(featureType,name,name2,corrM)
+#'     GeneInfo <- as.data.frame(matrix(rep(c("gene","regulatory"),each=3),
+#'                 ncol = 3,byrow = TRUE),stringsAsFactors=FALSE)
 #'
-#' associateReg2Gene(gr0,cores = 1)
-#' associateReg2Gene(GRangesList(gr0),cores = 1,tag="TAGADDED")
-#' associateReg2Gene(GRangesList(gr0),cores = 1,tag="TAGADDED",B=100)
-#' associateReg2Gene(GRangesList(gr0),cores = 1,method="elasticnet")
-#' #should return all NA values because just one predictor variable(x) is used to predict y
+#'         colnames(GeneInfo) <- c("featureType","name","name2")
+#'
+#'        mcols(gr0) <- DataFrame(cbind(GeneInfo,corrM))
+#'  
+#'  
+#'  ####################################
+#'  # associateReg2Gene
+#'  
+#'  
+#'     associateReg2Gene(gr0,cores = 1)
+#'     associateReg2Gene(gr0,cores = 1,asGInteractions=FALSE) # report as GRanges
+#'     associateReg2Gene(GRangesList(gr0),cores = 1)
+#'      
+#'  # change N of resampling rounds   
+#'     associateReg2Gene(GRangesList(gr0),cores = 1,B=100) 
+#'  # elastic net should return all NA values because 
+#'  # only one predictor variable(x) is used to predict y  
+#'   
+#'     associateReg2Gene(GRangesList(gr0),cores = 1,method="elasticnet") 
 #' 
 #' @export
 associateReg2Gene<-function(input,
                             method="pearson",
-                            tag=NULL,
                             scaleData=TRUE,
                             cores=1,
                             B=1000,
+                            asGInteractions=T,
                             ...){
  
-       #input=input[14];method="elasticnet";tag=NULL
-       #scaleData=TRUE;cores=1;B=1000
-  # 
-  # drop NULL genes in the list
+   # drop NULL genes in the list
   nulls=which(sapply(input,is.null))
   if(length(nulls)>0){
       input=input[-c(nulls)]
@@ -267,7 +262,7 @@ associateReg2Gene<-function(input,
                   
             # def min output:
             x  <- data.frame(matrix(NA,nrow=length(gr$name[-1]),ncol=4,byrow=T,
-                       dimnames=list(gr$name[-1],c("n","coefs","pval","qval"))))
+                       dimnames=list(gr$name[-1],c("n","coefs","pval","pval2"))))
             
             mat <- getGeneEnhScoresDF(gr) # get DF of gr metadata (+remove NA)
               
@@ -300,7 +295,7 @@ associateReg2Gene<-function(input,
       if (class(input)=="GRanges") { 
         
         comb.res  <- data.frame(matrix(NA,nrow=length(input$name[-1]),ncol=4,byrow=T,
-                    dimnames=list(input$name[-1],c("n","coefs","pval","qval"))))
+                    dimnames=list(input$name[-1],c("n","coefs","pval","pval2"))))
         
         mat <- getGeneEnhScoresDF(input) # get DF of gr metadata (+remove NA)
         
@@ -325,17 +320,13 @@ associateReg2Gene<-function(input,
   # add qvalue calculations
       comb.res <- qvaluCal(comb.res)
     
-  
-  # if a tag for column names given, add it
-      if (!is.null(tag)){
-        
-                colnames(comb.res)=paste(colnames(comb.res),tag,sep=".")
-      
-        }
-
   # a function to create GRanges object for GRangesList
   # later p-values, effect sizes etc will appended to this object
-      gr2 <- grlist2gr(input)
+     
+      
+      if (asGInteractions==T){gr2 <- grlist2GI(input)}
+      
+      if (asGInteractions!=T){gr2 <- grlist2gr(input)}
       
       mcols(gr2)=cbind(mcols(gr2),DataFrame(comb.res))
 
@@ -356,22 +347,10 @@ associateReg2Gene<-function(input,
 #'
 #' The function converts output of \code{\link{regActivityAroundTSS}} (a
 #' GRangesList) to a GRanges object by rearranging the rows and columns so
-#' that output GRanges object mainly contains gene name and position with
-#' an additional column "reg" which contains the regulatory region coordinates
+#' that output GRanges object mainly contains regulatory region coordinates 
+#' and an additional column "reg" which contains the gene info
 #'
 #' @param grlist a GRangesList output from \code{\link{regActivityAroundTSS}}
-#'
-#' @examples
-#'
-#' regTSS_toy <- GRReg1_toy
-#'   regTSS_toy$bw1 <- rep(1,length(GRReg1_toy))
-#'   regTSS_toy$bw2 <- rep(2,length(GRReg1_toy))
-#'   regTSS_toy$bw3 <- rep(3,length(GRReg1_toy))
-#' regReg_toy <- GRReg2_toy
-#'    regReg_toy$bw1 <- rep(3,length(regReg_toy))
-#'    regReg_toy$bw2 <- rep(4,length(regReg_toy))
-#' 
-#' grlist2gr(regActivityAroundTSS(regReg_toy,regTSS_toy,upstream=5,downstream=5))
 #'
 #' @keywords internal
 #' @author Altuna Akalin, Inga Patarcic
@@ -390,12 +369,7 @@ grlist2gr<-function(grlist){
   }
 }
 
-#' Help GR reorganization f()
-#' The function converts output of \code{\link{regActivityAroundTSS}} (a
-#' GRangesList) to a GRanges object by rearranging the rows and columns so
-#' that output GRanges object mainly contains gene name and position with
-#' an additional column "reg" which contains the regulatory region coordinates
-#' 
+#' Help for grlist2gr()
 #' @keywords internal
 #' @author Inga Patarcic
 grReorg <- function(x){
@@ -412,12 +386,55 @@ grReorg <- function(x){
   reg
 }
 
+
+
+#' convert GRangesList to GInteractions 
+#' 
+#' The function converts output of \code{\link{regActivityAroundTSS}} (a
+#' GRangesList) to a GInteractions object by rearranging the rows and columns so
+#' that output GInteractions object contains regulatory region coordinates 
+#' and an additional column "reg" which contains the gene info
+#'
+#' @param grlist a GRangesList output from \code{\link{regActivityAroundTSS}}
+#'
+#' @keywords internal
+#' @author Altuna Akalin, Inga Patarcic
+
+grlist2GI<-function(grlist){
+  
+  if (class(grlist)=="GRangesList") {
+    
+    gr <- unlist(endoapply(grlist,grReorg))
+    
+  }
+  
+  if (class(grlist)=="GRanges") { 
+    
+    gr <- grReorg(grlist)
+    
+  }
+
+  # arranging as GInteractions object
+  
+  gi <- GInteractions(gr,gr$reg)
+  
+  mcols(gi) <- mcols(gi)[c("anchor1.name","anchor2.name")]
+  
+  names(mcols(gi)) <- c("name","name2")
+  
+  return(gi)
+  }
+
+
+
+
+
 #' Estimate P-values from resampling statistics using Gamma distribution
 #'
 #' The function estimates gamma distribution based P-values from the null
 #' distribution obtained from resampling, a gamma distribution is fit
 #' to the null distribution and p-values are calculated based on that fitted
-#' distribution
+#' distribution. Details: stats::pgamma
 #'
 #' @param vals a vector or matrix of column vectors. Each column corresponds
 #' to coefficients obtained from resampling fit
@@ -429,6 +446,8 @@ grReorg <- function(x){
 #' have negative values.
 #'
 #' @importFrom fitdistrplus fitdist
+#' @importFrom stats pgamma
+#' 
 #' @keywords internal
 estimateGammaPval<-function(vals,orig,abs=TRUE,add=0){
 
@@ -488,9 +507,6 @@ estimateGammaPval<-function(vals,orig,abs=TRUE,add=0){
 #' @param mat a column matrix that contains gene expression values and
 #'            regulatory region activities.
 #' @param col  column number of response variables
-#' @examples
-#'
-#' m=readRDS("data/sample_rawActivityMatrices/Roadmap/H3K27ac/ENSG00000140718_FTO.rds")
 #'
 #' @keywords internal
 #' @author Altuna Akalin
@@ -511,9 +527,6 @@ zeroVar<-function(mat,col=1){
 #' @param mat a column matrix that contains gene expression values and
 #'            regulatory region activities.
 #' @param col  column number of response variables
-#' @examples
-#'
-#' m=readRDS("data/sample_rawActivityMatrices/Roadmap/H3K27ac/ENSG00000140718_FTO.rds")
 #'
 #' @keywords internal
 #' @author Altuna Akalin
@@ -556,6 +569,104 @@ stepwise.complete.cases <- function(x){
   return(x)
   
 }
+
+
+
+#' internal qvalue calculation function
+#'
+#' private function calculates qvalue for 2 categories of pvalue
+#' @importFrom qvalue qvalue
+#' @keywords internal
+qvaluCal <- function(comb.res){
+  
+  # add qvalues for pval1&2 - adjusted for filtered results
+  
+  qvalR <- matrix(NA,ncol=2,nrow=nrow(comb.res),
+                  dimnames =  list(1:nrow(comb.res),c("qval", "qval2")))
+  comb.res=cbind(comb.res,qvalR)
+  
+  # add qval for pval1&2  
+  test <- !all(is.na(comb.res[,3])) # test if any NA present
+  # adjust for stimated pi0 <= 0 
+  if (test){qval <- try(qvalue::qvalue(comb.res[,3])$qvalues,silent=T)
+  
+  if(!inherits(qval, 'try-error')){comb.res$qval <- qval}
+  
+  }
+  
+  test <- !all(is.na(comb.res[,4]))  # test if any NA present
+  if (test){qval <- try(qvalue::qvalue(comb.res[,4])$qvalues,silent=T)
+  
+  if(!inherits(qval, 'try-error')){comb.res$qval2 <- qval}
+  
+  }
+  return(comb.res)
+  
+}
+
+
+#' extract gene-enhancer scores from GRanges object
+#'
+#' Extract gene-enhancer scores from metadata of GRanges object and filters NA
+#' values using stepwise.complete.cases()
+#'
+#' @param gr perGene GRanges object
+#'
+#' @keywords internal
+#' @author Inga Patarcic
+getGeneEnhScoresDF <- function(gr) {
+  
+  mat=t(as.matrix(mcols(gr)[,-which(names(mcols(gr)) %in% c("name","name2",
+                                                            "featureType"))]))
+  colnames(mat) <-  gr$name
+  
+  # se complete.cases (remove cells, remove enhancers, remove random NA)  
+  mat <- stepwise.complete.cases(mat)
+  
+  return(mat)
+  
+}      
+
+
+#' Function returns output of called modelling procedure indivudually for 
+#' each GRanges object
+#'
+#' It extracts gene-enhancer scores from metadata of GRanges object and filters
+#' NA values using stepwise.complete.cases() embedded in getGeneEnhScoresDF()
+#' Performs FILTERING: drop gene and NA is returned due to low or zero variation
+#' in gene expression or when no enhancers are remained after 
+#' stepwise.complete.cases() 
+#'
+#' @param gr perGene GRanges object
+#'
+#' @keywords internal
+#' @author Inga Patarcic
+perGeneModelling <- function(x,
+                             mat,
+                             ModelRes){
+  
+  nEnhancers <- ncol(mat)-1 # how many regulatory regions
+  
+  if ((ncol(mat)>=2)&
+      (nEnhancers==nrow(x))){
+    
+    x <- data.frame(cbind(n=nrow(mat),t(ModelRes)))
+    
+    
+  }else if ((ncol(mat)>=2)&
+            (nEnhancers!=nrow(x))){
+    
+    # adjusting for the case where just some enhancers are filtered
+    x[colnames(mat)[-1],] <- cbind(n=nrow(mat), t(ModelRes))
+    
+  }
+  
+  colnames(x) <- c("n","coefs","pval","pval2")
+  
+  return(x)
+  
+}
+
 
 #### END OF utility functions for association prediction ####
 #########------------------------------------------------############
@@ -606,12 +717,6 @@ dcorMat<-function(y,mat){
 #' @param method pearson or spearman
 #' @param B number of random samples (shuffling) of given column
 #' @keywords internal
-#' @examples
-#'
-#' m=readRDS("data/sample_rawActivityMatrices/Roadmap/H3K27ac/ENSG00000140718_FTO.rds")
-#'
-#' m=apply(m, 2,as.numeric) # change to numeric matrix
-#' corResample(m,method="pearson",col=1,B=1000)
 #'
 corResample<-function(mat,
                       scaleData=scaleData,
@@ -662,11 +767,6 @@ corResample<-function(mat,
 #' @param col column number of response variable
 #' @param B number of random samples (shuffling) of given column
 #' @keywords internal
-#' @examples
-#' m=readRDS("data/sample_rawActivityMatrices/Roadmap/H3K27ac/ENSG00000140718_FTO.rds")
-#'
-#' m=apply(m, 2,as.numeric) # change to numeric matrix
-#' dcorResample(m,col=1,B=1000)
 dcorResample<-function(mat,scaleData=scaleData,col=1,B=B){
 
   if(scaleData){
@@ -709,17 +809,9 @@ dcorResample<-function(mat,scaleData=scaleData,col=1,B=B){
 #' @param mat matrix of response and predictor variables
 #' @param col column number of response variable
 #' @param B number of random samples (shuffling) of response variables
-#' @param ... further arguments to glmnet, not implemented yet
 #' @keywords internal
-#' @importFrom glmnet glmnet
-#'
-#' @examples
-#'
-#' m=readRDS("data/sample_rawActivityMatrices/Roadmap/H3K27ac/ENSG00000140718_FTO.rds")
-#'
-#' m=apply(m, 2,as.numeric) # change to numeric matrix
-#' glmnetResample(scale(m),col=1,B=1000)
-glmnetResample<-function(mat,scaleData=scaleData,col=1,B=B,...){
+#' @import glmnet
+glmnetResample<-function(mat,scaleData=scaleData,col=1,B=B){
   #require(glmnet)
 
   if (ncol(mat)<=2){
@@ -748,7 +840,7 @@ glmnetResample<-function(mat,scaleData=scaleData,col=1,B=B,...){
                         standardize=FALSE,
                         nfolds=5,alpha=0.5)
       
-        orig=coef(mod,s="lambda.min")[-1,1]
+        orig=coef.cv.glmnet(mod,s="lambda.min")[-1,1]
       
         #coefs from resampling
         coefs=matrix(0.0,ncol=ncol(mat[,-col]),nrow=(B))
@@ -765,7 +857,7 @@ glmnetResample<-function(mat,scaleData=scaleData,col=1,B=B,...){
                           standardize=FALSE,
                           nfolds=5,alpha=0.5)
       
-          coefs[i,]=coef(mod,s="lambda.min")[-1,1]
+          coefs[i,]=glmnet::coef(mod,s="lambda.min")[-1,1]
         }
   },error=function(coefs){
     
@@ -793,18 +885,11 @@ glmnetResample<-function(mat,scaleData=scaleData,col=1,B=B,...){
 #' @param mat matrix of response and predictor variables
 #' @param col column number of response variables
 #' @param B number of random samples (shuffling) of response variables
-#' @param ... further arguments to randomForest, not implemented yet
 #'
 #' @keywords internal
 #'
 #' @importFrom ranger ranger
-#' @examples
-#' m=readRDS("data/sample_rawActivityMatrices/Roadmap/H3K27ac/ENSG00000140718_FTO.rds")
-#'
-#' m=apply(m, 2,as.numeric) # change to numeric matrix
-#' rfResample(scale(m),col=1,B=1000)
-#'
-rfResample<-function(mat,scaleData=scaleData,col=1,B=B,...){
+rfResample<-function(mat,scaleData=scaleData,col=1,B=B){
   #require(randomForest)
   #require(ranger)
 
@@ -859,101 +944,7 @@ rfResample<-function(mat,scaleData=scaleData,col=1,B=B,...){
 }
 
 
-#' internal qvalue calculation function
-#'
-#' private function calculates qvalue for 2 categories of pvalue
-#' @importFrom qvalue qvalue
-#' @keywords internal
-qvaluCal <- function(comb.res){
-  
-    # add qvalues for pval1&2 - adjusted for filtered results
-  
-  qvalR <- matrix(NA,ncol=2,nrow=nrow(comb.res),
-                  dimnames =  list(1:nrow(comb.res),c("qval", "qval2")))
-      comb.res=cbind(comb.res,qvalR)
-    
-    # add qval for pval1&2  
-      test <- !all(is.na(comb.res[,3])) # test if any NA present
-    # adjust for stimated pi0 <= 0 
-            if (test){qval <- try(qvalue::qvalue(comb.res[,3])$qvalues,silent=T)
-                            
-                              if(!is(qval, 'try-error')){comb.res$qval <- qval}
-                      
-                      }
-              
-      test <- !all(is.na(comb.res[,4]))  # test if any NA present
-            if (test){qval <- try(qvalue::qvalue(comb.res[,4])$qvalues,silent=T)
-            
-                              if(!is(qval, 'try-error')){comb.res$qval2 <- qval}
-            
-                      }
-  return(comb.res)
-  
-  }
 
- 
-#' extract gene-enhancer scores from GRanges object
-#'
-#' Extract gene-enhancer scores from metadata of GRanges object and filters NA
-#' values using stepwise.complete.cases()
-#'
-#' @param gr perGene GRanges object
-#'
-#' @keywords internal
-#' @author Inga Patarcic
-getGeneEnhScoresDF <- function(gr) {
-    
-    mat=t(as.matrix(mcols(gr)[,-which(names(mcols(gr)) %in% c("name","name2",
-                                                              "featureType"))]))
-    colnames(mat) <-  gr$name
-    
-    # se complete.cases (remove cells, remove enhancers, remove random NA)  
-    mat <- stepwise.complete.cases(mat)
-    
-    return(mat)
-    
-  }      
-  
-
-#' Function returns output of called modelling procedure indivudually for 
-#' each GRanges object
-#'
-#' It extracts gene-enhancer scores from metadata of GRanges object and filters
-#' NA values using stepwise.complete.cases() embedded in getGeneEnhScoresDF()
-#' Performs FILTERING: drop gene and NA is returned due to low or zero variation
-#' in gene expression or when no enhancers are remained after 
-#' stepwise.complete.cases() 
-#'
-#' @param gr perGene GRanges object
-#'
-#' @keywords internal
-#' @author Inga Patarcic
-perGeneModelling <- function(x,
-                             mat,
-                             ModelRes){
-  
-  nEnhancers <- ncol(mat)-1 # how many regulatory regions
-    
-        if ((ncol(mat)>=2)&
-            (nEnhancers==nrow(x))){
-          
-                x <- data.frame(cbind(n=nrow(mat),t(ModelRes)))
-          
-          
-        }else if ((ncol(mat)>=2)&
-                  (nEnhancers!=nrow(x))){
-          
-          # adjusting for the case where just some enhancers are filtered
-                x[colnames(mat)[-1],] <- cbind(n=nrow(mat), t(ModelRes))
-          
-        }
-        
-        colnames(x) <- c("n","coefs","pval","pval2")
-        
-      return(x)
-      
-    }
-     
   
 
 

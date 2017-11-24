@@ -81,7 +81,8 @@ exonExpressionStrandAdjusted <- function(exonsForQuant,
                                           mc.cores,
                                           summaryOperation) {
   
-  
+  #exonsForQuant <- exons
+  #exonsSplitted <- exons.splitted
   if (length(exonsSplitted$`*`)!=0){stop("Strand of exons can be only + or -")}
   
         # detect stranded tracks and unstranded tracks    
@@ -149,8 +150,8 @@ exonExpressionStrandAdjusted <- function(exonsForQuant,
     
     
     # pool reverse and forward strand together        
-    values(exonsForQuant) <- (cbind(mcols(exonsForQuant),
-                                    rbind(exonscoresForwardStrand.df,
+    values(exonsForQuant) <- cbind(mcols(exonsForQuant),
+                                   DataFrame(rbind(exonscoresForwardStrand.df,
                                     exonscoresReverseStrand.df)))
     
     }
@@ -180,8 +181,8 @@ exonExpressionStrandAdjusted <- function(exonsForQuant,
                                                exonscoresUnstranded,
                                     sampleIDs=sampleIDs[Unstranded.libraries])                  
     
-    values(exonsForQuant) <- (cbind(mcols(exonsForQuant),
-                                    rbind(exonscoresUnstranded.df)))
+    values(exonsForQuant) <- cbind(mcols(exonsForQuant),
+                                  DataFrame(exonscoresUnstranded.df))
     
     
   }
@@ -269,8 +270,7 @@ quantifyGeneExpression <- function(expressionPerGene,exonsForGene){
 #' activity. This function might be extended to work with BAM files
 #' in the future. 
 #' 
-#' #@examples
-#' test.bw <- system.file("extdata", "test.bw",package = "reg2gene")
+#' @examples test.bw <- system.file("extdata", "test.bw",package = "reg2gene")
 #' test2.bw <- system.file("extdata", "test2.bw",package = "reg2gene")
 #' regTSS_toy <- GRanges(c(rep("chr1",4),rep("chr2",2)),
 #'                       IRanges(c(1,7,9,15,1,15),c(4,8,14,20,4,20)),
@@ -565,8 +565,15 @@ bwToGeneExp <- function(exons,
                         normalize=NULL){
   
   
+  #exons = regTSS_toy
+  #geneActSignals = c(test.bw,test2.bw)
+  # sampleIDs=NULL
+  # libStrand=NULL
+  # summaryOperation="mean"
+  # mc.cores=1
+  # normalize=NULL
   
-  # test if there is any info about genes in exon granges object
+  #test if there is any info about genes in exon granges object
   if (sum(stringr::str_detect(colnames(mcols(exons)),"name"))==0){
     stop("No info about the gene name")}
   
