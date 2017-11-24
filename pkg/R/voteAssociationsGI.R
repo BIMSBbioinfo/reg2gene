@@ -43,7 +43,7 @@
 #'    
 #'    
 #'    GeneInfo <- as.data.frame(matrix(c(rep("gene",3),rep("regulatory",6)),
-#'                ncol = 3,byrow = T),stringsAsFactors=FALSE)
+#'                ncol = 3,byrow = TRUE),stringsAsFactors=FALSE)
 #'                colnames(GeneInfo) <- c("featureType","name","name2")
 #'  
 #'  mcols(gr) <- DataFrame(cbind(GeneInfo,rbind(x,y,z)))
