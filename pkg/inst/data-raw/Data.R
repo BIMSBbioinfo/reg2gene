@@ -30,9 +30,10 @@ GRReg2_toy$reg <- GRanges(c(rep("chr1",12),rep("chr2",2)),
 GRReg2_toy$name <- GRReg2_toy$name2 <- paste0("TEST_Reg",1:length(GRReg2_toy))
 
 
+#save(GRReg2_toy,file="pkg/data/GRReg2_toy.RData")
+#save(GRReg1_toy,file="pkg/data/GRReg1_toy.RData")
 save(GRReg2_toy,file="data/GRReg2_toy.RData")
 save(GRReg1_toy,file="data/GRReg1_toy.RData")
-
 
 
 
