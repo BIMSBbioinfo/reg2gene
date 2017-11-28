@@ -250,7 +250,9 @@ quantifyGeneExpression <- function(expressionPerGene,exonsForGene){
 #' returned ; if set to "ratio" then "median ratio method" implemented
 #' as \code{\link[DESeq2]{estimateSizeFactorsForMatrix}} is used to normalize 
 #' activity measures.
-#' @param summaryOperation "mean"(default).
+#' @param summaryOperation "mean"(default).  An argument for 
+#' \code{\link[genomation]{ScoreMatrixBin}} that is in the nutshell of 
+#' quantifying enhancer activity across pre-defined enhancer regions.
 #' This designates which summary operation should be used over the regions.
 #' Currently, only mean is available, but "median" or "sum" will be implemented
 #' in the future.
@@ -481,13 +483,20 @@ regActivityAroundTSS <- function(regActivity,
 #'  
 #' 
 #' 
-#' @param exons A GRanges object that contains exon regions over which 
-#' the expression will be calculated. It is strongly suggested to adjust 
-#' seqlengths of this object to be equal to the seqlenghts Hsapiens from the 
-#' appropriate package (BSgenome.Hsapiens.UCSC.hg19 or whatever needed version).
-#' A meta-columns with following info are necessary: 1) name (character)- ENSEMBL 
-#' or other gene identifier; 2) name2(character,optional) - 2nd gene identifier,
-#' 3) reg - GRanges object - gene location, or TSS location. 
+#' @param exons A \code{\link[InteractionSet]{GInteractions}} object with 
+#' Anchor1 representing the exon locations, and Anchor2 represents location of 
+#' the corresponding gene. A meta-columns with following info should be present:
+#' 1) name (character)- ENSEMBL or other gene identifier; 2) name2 (character,
+#' optional) - 2nd gene identifier. 
+#' Optionally, GRanges object can be used as input object as well. It should
+#' contain exon regions over which the expression will be calculated.
+#' For this object, a meta-columns with following info are necessary: 
+#' 1) reg - GRanges object - gene location, or TSS location, 2) name (character)
+#' - ENSEMBL or other gene identifier; 3) name2(character,optional) - 
+#' 2nd gene identifier.  
+#' It is strongly suggested to adjust seqlengths of this object to be equal to 
+#' the seqlenghts Hsapiens from the appropriate package 
+#' (BSgenome.Hsapiens.UCSC.hg19 or whatever needed version).
 #' @param geneActSignals a named list of RNA-Seq BigWig files. Names correspond 
 #' to the unique sample ids/names. Stranded and unstranded libraries allowed.
 #'  BUT!!! It is crucial that forward and reverse RNA-Seq libraries are listed
@@ -505,7 +514,9 @@ regActivityAroundTSS <- function(regActivity,
 #' If libStrand=NULL than function will do it automatically, eg
 #' create a vector of "*".It is crucial that stranded RNA-Seq libraries are
 #' listed in a row (eg one on top of each other)
-#' @param summaryOperation "mean"(default).
+#' @param summaryOperation "mean"(default). An argument for 
+#' \code{\link[genomation]{ScoreMatrixBin}} that is in the nutshell of 
+#' quantifying exon expression across pre-defined exon regions.
 #' This designates which summary operation should be used over the regions.
 #' Currently, only mean is available, but "median" or "sum" will be implemented
 #' in the future.
@@ -546,15 +557,31 @@ regActivityAroundTSS <- function(regActivity,
 #' 
 #' @examples test.bw <- system.file("extdata", "test.bw",package = "reg2gene")
 #' test2.bw <- system.file("extdata", "test2.bw",package = "reg2gene")
-#' regTSS_toy <- GRanges(c(rep("chr1",4),rep("chr2",2)),
+#' 
+#' regTSS_toy <- GRanges(c(rep("chr1",2),"chr2",rep("chr1",3)),
 #'                       IRanges(c(1,7,9,15,1,15),c(4,8,14,20,4,20)),
 #'                                             c(rep("+",3),rep("-",3)))
-#' regTSS_toy$reg <-  regTSS_toy[c(1,1,3:6)]
-#' regTSS_toy$name2 <- regTSS_toy$name <- paste0("TEST_Reg",
-#'                                         c(1,1,3:length(regTSS_toy)))
-#'                                         
+#'  regTSS_toy$reg <-  regTSS_toy[c(1,1,3,5,5,5)]
+#'  regTSS_toy$name2 <- regTSS_toy$name <- paste0("TEST_Reg",c(1,1,3,5,5,5))
+#'  bwToGeneExp(exons = regTSS_toy,geneActSignals = c(test.bw,test2.bw),
+#'          sampleIDs=c("CellType1","CellType2"))
 #'                                         
 #' bwToGeneExp(exons = regTSS_toy,geneActSignals = c(test.bw,test2.bw))
+#' 
+#' # adding different sample IDs
+#' 
+#' bwToGeneExp(exons = regTSS_toy,geneActSignals = c(test.bw,test2.bw),
+#' sampleIDs=c("CellType1","CellType2"))
+#' 
+#' # if exons input is of GInteractions class object,the same output is obtained
+#' 
+#' require(InteractionSet)
+#' exons= GInteractions(regTSS_toy,regTSS_toy$reg)
+#'    exons$name=regTSS_toy$name
+#'    exons$name2=regTSS_toy$name2
+#'    
+#' bwToGeneExp(exons = regTSS_toy,geneActSignals = c(test.bw,test2.bw))
+#' 
 #' @export
 bwToGeneExp <- function(exons,
                         geneActSignals,
@@ -565,14 +592,7 @@ bwToGeneExp <- function(exons,
                         normalize=NULL){
   
   
-  #exons = regTSS_toy
-  #geneActSignals = c(test.bw,test2.bw)
-  # sampleIDs=NULL
-  # libStrand=NULL
-  # summaryOperation="mean"
-  # mc.cores=1
-  # normalize=NULL
-  
+ 
   #test if there is any info about genes in exon granges object
   if (sum(stringr::str_detect(colnames(mcols(exons)),"name"))==0){
     stop("No info about the gene name")}
@@ -584,6 +604,16 @@ bwToGeneExp <- function(exons,
                                       paste(bw.exts,collapse="|"),"")
   }
   
+  # adjusting for GInteractions object input - rearranging to GRanges object
+  
+  if (class(exons)=="GInteractions"){
+    
+    exons <- GRanges(first(exons),
+                        reg=second(exons),
+                        name=exons$name,
+                        name2=exons$name2)
+    
+  }
   
   
   # separate genes form forward and reverse strand
