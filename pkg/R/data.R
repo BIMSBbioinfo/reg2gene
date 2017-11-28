@@ -1,25 +1,23 @@
 ###################################################
-# Examples for Overlap functions
+# Examples for various functions from reg2gene
 
-#' Sample file for Region1 imported as GRanges
-#'
-#'
-#' @format GRanges object with 6 ranges and 3 metadata columns
+#' Genome locations are preselected in such way that all possible outputs of
+#' the  benchmarking procedure is captured. *Colums which correspond to the 
+#' expected outcome of the benchmarking procedure are:Bench1Exp,Filter2Exp,
+#' Bench2Exp,Filter1Exp
+#' Where Bench1 andFilter1 corresponds to the benchmarking of GRReg1_toy with 
+#' GRReg2_toy, whereas Bench2 and Filter2 corresponds to the benchmarking of 
+#' GRReg1_toy with itself.
+#' For example,following object GRReg1_toy[7] should be benchmarked 3 times 
+#' with  GRReg2_toy dataset
+#' 
+#' @format GRanges object with 9 ranges and 7 metadata columns
 #' @docType data
 "GRReg1_toy"
 
 
-#' Sample file for Region2 imported as data frame
+#' Sample file for benchmark dataset
 #'
-# This dataset contains a set of genomic regions stored in a dataframe format
-# Thus, it contains following columns: chr1,start1,end1,chr2,start2,end2.
-# Regions are selected in such way that 1st and 2nd row should overlap with the toy example
-# Reg1_toy. All others should not. They are selected in a manner that Coord1 of Reg1 and
-# Reg2 overlap with each other, but Coord2 of Reg1 and Reg2 DO NOT overlap (and vice-versa).
-# Thus, only 1 row of Reg1 finds a matching pairs in Reg2.
-#' ComplexOverlaps() should report 2 overlaps since the 2nd coordinates-pair of Reg2 is a
-#' flipped version of the 1st coordinates-pair of Reg2. ExpectedOverap column indicates what
-#' kind of overlap is expected to observe.
 #'
 #' @format GRanges object with 14 ranges and 3 metadata columns
 #' @docType data
