@@ -49,8 +49,7 @@
 #' @importFrom fitdistrplus fitdist
 #' @import InteractionSet
 #' 
-#' @export
-associateReg2GeneChunks <- function(input,
+.associateReg2GeneChunks <- function(input,
                                     out.dir,
                                     method="pearson",
                                     saveTag="ChunkAnalysis",
