@@ -2,11 +2,18 @@
 
 #' meta-analysis for regulatory region and gene associations
 #'
-#' The function combines association P-values and coefficients from
-#' different data
-#' sets using Fisher's method and weigthed averaging respectively. After,
-#' combining P-values, q-values are calculated using the
-#' \code{\link[qvalue]{qvalue}} function.
+#' The function combines association P-values and coefficients from different 
+#' data sets using Fisher's method and weigthed averaging respectively. 
+#' It is useful to combine datasets produced by different research groups while
+#' avoiding problems such as batch effects. 
+#' For example, it can be used to combine Roadmap and Blueprint 
+#' \code{\link{associateReg2Gene}} gene~enhancer single-model information 
+#' obtained using across cell RNA-Seq signals and CHiP-Seq H3K27ac tracks.
+#' Aggregating single-model information (gene-enhancer pairs) by means of 
+#' meta-analysis across different data-sources should increase the statistical 
+#' power, improve the precision and accuracy of estimates and altogether 
+#' produce more robust and reproducible results. After,combining P-values, 
+#' q-values are calculated using the \code{\link[qvalue]{qvalue}} function.
 #'
 #' @param associations A list of \code{\link[InteractionSet]{GInteractions}}
 #'  objects outputed from \code{\link{associateReg2Gene}} function.
