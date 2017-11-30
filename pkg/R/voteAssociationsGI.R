@@ -12,11 +12,10 @@
 #' \code{\link{metaAssociations}}.
 #' @param cutoff.stat (character,"pval" is default). Which statistics to 
 #' filter:"qval" or "pval"
-#' @param cutoff.val q-value cutoff that will be used to filter elements in the
-#' input list. This argument will only take effect when the 
-#' \code{\link[InteractionSet]{GInteractions}} object has a numeric "qval" 
-#' column. If the input object lacks this column, every association in the 
-#' object will be treated as a valid association prediction.
+#' @param cutoff.val a numeric cutoff (default 0.05) that will be used to filter 
+#' elements in the input list (cutoff.stat). If the input object lacks this 
+#' column, every association in the object will be treated as a valid 
+#' association prediction.
 #' @param vote.threshold A value between 0 and 1, designates the threshold
 #' needed for fraction of votes necessary to retain an association. Defaults to
 #' 0.5, meaning fraction of votes should be  greater than or equal to 0.5 to
@@ -26,7 +25,7 @@
 #' gene~enhancer pairs) for each result of \code{\link{associateReg2Gene}} 
 #' analysis that wants to be combined by  majority voting (for example results 
 #' of H3K4me1 and H3K27ac). Assessing statistically associated gene~enhancer 
-#' pairs has been done by filtering the statistics (cutoff.stat) of the elements
+#' pairs has been done by filtering the statistics (cutoff.stat) of the elements 
 #' of the input list (gene~enhancer pairs) based on the defined cutoff value 
 #' (cutoff.val). 
 #'

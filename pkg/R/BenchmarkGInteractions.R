@@ -95,9 +95,10 @@
 #'    benchmarkGI(reg2Gene[1],
 #'                benchData[1])      
 #'
-#'  # WARNING!
-#'  # However, be careful with benchmarkin anchors that overlap, because they
-#'  # will be reported to be benchmarked.  
+#'  # WARNING! 
+#'  However, one need to be careful when benchmarking anchors that overlap 
+#'  within test set (eg enhancer overlaps gene region), 
+#'  because these regions will be benchmarked.
 #'    
 #'    benchmarkGI(reg2Gene[5],
 #'                benchData)           
@@ -205,15 +206,17 @@ benchmarkGIsimple <- function(reg2Gene,
 
 #' Preadjustiong for high number of true negatives in regulatoryReg-TSS pairs
 #' 
-#' Function that eliminates all regulatory region-TSS pairs [anchor1 and anchor2 
-#' from reg2Gene] that do not overlap with any benchmark anchor1 or anchor2 
-#' location.
-#' Eg it selects reg2gene regions only when regulatory region and TSS overlap 
-#' with at least one benchmarking region.  This is useful to improve the 
-#' confusion matrix statistics reported by \code{confusionMatrix} by eliminating
-#' the high number of true negatives. TN are very abundant in the reg2gene 
-#' dataset since benchmark dataset usually covers much smaller regions of
-#' the genome (method limitations)
+#' By identifying entries that could be potentially benchmarked this 
+#' function eliminates all regulatory region-TSS pairs [anchor1 and anchor2 from
+#' reg2Gene] that do not overlap with any benchmark anchor1 or anchor2 location. 
+#' E.g. it selects reg2Gene regions only when both regulatory region and TSS  
+#' have overlapping regions somewhere in the benchmarking set; across all 
+#' benchmark anchor pairs, and not necessarily overlapping regions of the same
+#' benchmark pair.
+#' This is useful to improve the confusion matrix statistics reported by 
+#' \code{confusionMatrix} by eliminating the high number of true negatives. 
+#' TN are very abundant in the reg2gene dataset since benchmark dataset usually
+#' covers much smaller regions of the genome (method limitations)
 #'
 #' @param reg2Gene a \code{\link[InteractionSet]{GInteractions}} object output
 #' from \code{\link{associateReg2Gene}}). Usually, 1st GRanges object,or anchor1
@@ -372,10 +375,11 @@ filterPreBenchGIsimple <- function(reg2Gene,
 #' 
 #' @param reg2GeneBench GInteractions object with added benchmark 
 #' \code{benchmarkGI} and OPTIONAL filerPreBench \code{filterPreBenchGI} 
-#' metadata. However,prior this analysis, it is advised to reduce the number of 
+#' metadata. However,prior this analysis, it is advised to reduce the number of
 #' true negatives by including only reg2gene entries that could be potentially
-#' benchmarked. THUS run \code{filterPreBenchGI} prior 
-#' running \code{benchmarkGI})
+#' benchmarked.To get that info run \code{filterPreBenchGI} and add filter 
+#' column with metadata from this function to reg2GeneBench GInteractions 
+#' object prior running \code{benchmarkGI})
 #' 
 #' @param benchCol character (default "Bench"), results of benchmarking 
 #' procedure; eg a column name of the metadata which indicates the column where 
@@ -431,8 +435,7 @@ filterPreBenchGIsimple <- function(reg2Gene,
 #' require(InteractionSet)
 #'    
 #'    reg2GeneBench <- GInteractions(GRReg1_toy,GRReg1_toy$reg)
-#'    reg2GeneBench$PValue <- reg2GeneBench$PValue <- seq(0, 1, 
-#'    length.out = length(GRReg1_toy))
+#'    reg2GeneBench$PValue <- seq(0, 1,length.out = length(GRReg1_toy))
 #' 
 #'
 #' confusionMatrix(reg2GeneBench,

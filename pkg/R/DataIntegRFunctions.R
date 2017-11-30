@@ -362,11 +362,13 @@ regActivity <- function(regRegions,
 #' using mclapply from parallel package. Parallelization requires at 
 #' least two cores.
 #' 
-#' @return a GRangesList object per gene that contain location of TSS
-#' and regulatory regions around that gene. Names for the GRangesList
-#' are unique gene ids/names. 
-#' Metadata for a GRanges object in the list represents regulatory 
-#' activity and gene expression accross the same samples. 
+#' @return An output of regActivityAroundTSS() is a GRangesList object that 
+#' contains per gene GRanges with location of the corresponding TSS and
+#' regulatory regions identified around that gene. Names for the GRangesList 
+#' are unique gene ids/names. Metadata for each GRanges object in the 
+#' GRangesList represents regulatory activity and gene expression quantified 
+#' across a number of samples (.bw files) that have matched IDs in RNA-Seq and
+#' CHiP-Seq,DNase-Seq or bisulfite sequencing experiment. 
 #' The GRanges objects have the following metadata columns:
 #'  1. featureType: either "gene" or "regulatory"
 #'  2. name: name/id for gene and enhancers. Gene name could be id from a 
@@ -387,6 +389,9 @@ regActivity <- function(regRegions,
 #'    regReg_toy$bw2 <- rep(4,length(regReg_toy))
 #' 
 #' regActivityAroundTSS(regReg_toy,regTSS_toy,upstream=1,downstream=1)
+#' 
+#' # when different upstream/downstream argument is used:
+#' 
 #' regActivityAroundTSS(regReg_toy,regTSS_toy,upstream=5,downstream=5)
 #' 
 #' 
@@ -559,7 +564,7 @@ regActivityAroundTSS <- function(regActivity,
 #' test2.bw <- system.file("extdata", "test2.bw",package = "reg2gene")
 #' 
 #' regTSS_toy <- GRanges(c(rep("chr1",2),"chr2",rep("chr1",3)),
-#'                       IRanges(c(1,7,9,15,1,15),c(4,8,14,20,4,20)),
+#'                       IRanges(c(1,7,9,15,1,21),c(4,8,14,20,4,25)),
 #'                                             c(rep("+",3),rep("-",3)))
 #'  regTSS_toy$reg <-  regTSS_toy[c(1,1,3,5,5,5)]
 #'  regTSS_toy$name2 <- regTSS_toy$name <- paste0("TEST_Reg",c(1,1,3,5,5,5))
