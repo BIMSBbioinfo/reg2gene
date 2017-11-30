@@ -27,7 +27,7 @@
 #' to pull together all .rds files from one round of analysis.
 #' @param remove.chunks (default T). To remove all chunks of .rds data created
 #' while running a function
-#' @return a GRanges object containing every potential association and
+#' @return a GInteraction object containing every potential association and
 #' between a regulatory region and TSS, and the estimated association statistic
 #' , its P-value and Q-value.
 #'
@@ -141,7 +141,7 @@ associateReg2GeneChunks <- function(input,
 #' regulatory region coordinates and an additional column "reg" containing gene
 #' GRanges is reported
 #' @param ... further arguments to methods, not implemented yet
-#' @return a GRanges object containing every potential association and
+#' @return a GInteraction object containing every potential association and
 #' between a regulatory region and TSS, and the estimated association statistic
 #' , its P-value and Q-value.
 #'
@@ -319,7 +319,15 @@ associateReg2Gene<-function(input,
   
   # add qvalue calculations
       comb.res <- qvaluCal(comb.res)
-    
+      
+      
+  # for now, removing pval2 and qval2 add qvalue calculations
+      comb.res <- qvaluCal(comb.res)
+   
+  # for now, removing pval2 and qval2 add qvalue calculations   
+      
+      comb.res <- comb.res[,c("n","coefs","pval","qval")]
+       
   # a function to create GRanges object for GRangesList
   # later p-values, effect sizes etc will appended to this object
      
