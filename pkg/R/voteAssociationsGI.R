@@ -21,6 +21,14 @@
 #' needed for fraction of votes necessary to retain an association. Defaults to
 #' 0.5, meaning fraction of votes should be  greater than or equal to 0.5 to
 #' retain association.
+#' 
+#' @details Firstly, function selects POSITIVES (statistically associated 
+#' gene~enhancer pairs) for each result of \code{\link{associateReg2Gene}} 
+#' analysis that wants to be combined by  majority voting (for example results 
+#' of H3K4me1 and H3K27ac). Assessing statistically associated gene~enhancer 
+#' pairs has been done by filtering the statistics (cutoff.stat) of the elements
+#' of the input list (gene~enhancer pairs) based on the defined cutoff value 
+#' (cutoff.val). 
 #'
 #' @return A \code{\link[InteractionSet]{GInteractions}} object that contains 
 #' votes for associations from the voting procedure. The object will contain 
