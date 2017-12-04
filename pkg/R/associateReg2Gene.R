@@ -258,7 +258,11 @@ associateReg2Gene<-function(input,
       if (class(input)=="GRangesList") {
         
           res=foreach(gr=input) %dopar% {
-                  
+            
+            
+        if (detectGeneEnhPresence(gr)) { 
+          # check whether gene~enhancer info is provided in featureType column
+          
             # def min output:
             x  <- data.frame(matrix(NA,nrow=length(gr$name[-1]),ncol=4,byrow=T,
                        dimnames=list(gr$name[-1],c("n","coefs","pval","pval2"))))
@@ -281,7 +285,9 @@ associateReg2Gene<-function(input,
           
             return(x)
             
-            }
+        }
+            
+          }
             # combine perGene stats with Granges
                 
                 comb.res=do.call("rbind.data.frame",res)[,1:4]
@@ -292,6 +298,9 @@ associateReg2Gene<-function(input,
       }
       
       if (class(input)=="GRanges") { 
+        
+        if (detectGeneEnhPresence(input)) { 
+          # check whether gene~enhancer info is provided in featureType column
         
         comb.res  <- data.frame(matrix(NA,nrow=length(input$name[-1]),ncol=4,byrow=T,
                     dimnames=list(input$name[-1],c("n","coefs","pval","pval2"))))
@@ -313,24 +322,24 @@ associateReg2Gene<-function(input,
               }
             
           }       
-      }
       
+        
+        }else if (!detectGeneEnhPresence(input)) {
+              
+          print("Error in INPUT,featureType should contain 1 gene + min 1 enh")}
+      
+          }
   
-  # add qvalue calculations
-      comb.res <- qvaluCal(comb.res)
-      
-      
-  # for now, removing pval2 and qval2 add qvalue calculations
-      comb.res <- qvaluCal(comb.res)
-   
-  # for now, removing pval2 and qval2 add qvalue calculations   
-      
-      comb.res <- comb.res[,c("n","coefs","pval","qval")]
+       
+    if (exists("comb.res")) { # not existing when featureType entered wrongly
+    
+       comb.res <- qvaluCal(comb.res)  # add qvalue calculations
+     
+       comb.res <- comb.res[,c("n","coefs","pval","qval")] # pval2&qval2 removed
        
   # a function to create GRanges object for GRangesList
   # later p-values, effect sizes etc will appended to this object
      
-      
       if (asGInteractions==T){gr2 <- grlist2GI(input)}
       
       if (asGInteractions!=T){gr2 <- grlist2gr(input)}
@@ -339,6 +348,8 @@ associateReg2Gene<-function(input,
 
   # return result
   gr2
+    }
+  
 }
 
 
@@ -546,9 +557,9 @@ manyZeros<-function(mat,col=1){
   FALSE
 }
 
-#' stepwise complete cases method
+#' Stepwise complete cases method
 #'
-#' Removes NA but in stepwise order: 1st cells that have NA for at least
+#' Removes NA but in e order: 1st cells that have NA for at least
 #' 3/4 of enhancer regions, then the same thing is applied for cell types
 #' then individual NAs are removed
 #'
@@ -576,6 +587,30 @@ stepwise.complete.cases <- function(x){
   return(x)
   
 }
+
+
+#' GRanges contains gene+enhancer info
+#' 
+#' Function that tests each GRanges object in GRangesList that it contains 
+#' necessary info to run associateReg2Gene(): info about gene expression and
+#' enhancer activity
+#'
+#' @param x GRanges object - which contains info about gene expression and
+#' enhancer activity
+#'
+#' @keywords internal
+#' @author Inga Patarcic
+detectGeneEnhPresence <- function(x){
+
+  TestGene <- sum(x$featureType%in%"gene")==1
+  TestEnh <-sum(x$featureType%in%"regulatory")>=1
+ 
+  return(TestGene&TestEnh)
+   
+}  
+  
+  
+
 
 
 
