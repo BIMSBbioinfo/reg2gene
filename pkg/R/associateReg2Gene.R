@@ -184,27 +184,28 @@
 #'  require(qvalue)
 #'  
 #'  ####################################
-#'  # create example
+#'  # INPUT1: GRanges
+#'  # create an example: 2 vectors with correlation 0.8
 #'  
-#'  x <- c(2.000346,2.166255,0.7372374,0.9380581,2.423209, 
-#'       2.599857,4.216959,2.589133,1.848172,3.039659)
-#'  y <- c(2.866875,2.817145,2.1434456,2.9039771,3.819091,5.009990,
-#'       5.048476,2.884551,2.780067,4.053136)
-#'  corrM <- rbind(x,y)
+#'    x <- c(2.000346,2.166255,0.7372374,0.9380581,2.423209, 
+#'         2.599857,4.216959,2.589133,1.848172,3.039659)
+#'    y <- c(2.866875,2.817145,2.1434456,2.9039771,3.819091,5.009990,
+#'         5.048476,2.884551,2.780067,4.053136)
+#'      corrM <- rbind(x,y)
 #'  
-#'  # define Granges object
-#'   gr0 <- GRanges(seqnames=rep("chr1",2),IRanges(1:2,3:4))
+#'  # define Granges object:
+#'    gr0 <- GRanges(seqnames=rep("chr1",2),IRanges(1:2,3:4))
 #'     
-#'     GeneInfo <- as.data.frame(matrix(rep(c("gene","regulatory"),each=3),
-#'                 ncol = 3,byrow = TRUE),stringsAsFactors=FALSE)
+#'       GeneInfo <- as.data.frame(matrix(rep(c("gene","regulatory"),each=3),
+#'                  ncol = 3,byrow = TRUE),stringsAsFactors=FALSE)
 #'
 #'         colnames(GeneInfo) <- c("featureType","name","name2")
 #'
-#'        mcols(gr0) <- DataFrame(cbind(GeneInfo,corrM))
+#'    mcols(gr0) <- DataFrame(cbind(GeneInfo,corrM))
 #'  
 #'  
 #'  ####################################
-#'  # associateReg2Gene
+#'  # OUTPUT: associateReg2Gene
 #'  
 #'  
 #'     associateReg2Gene(gr0,cores = 1)
@@ -253,9 +254,15 @@ associateReg2Gene<-function(input,
   }
  
 
-  # function runs for GRangesList and GRanges
   
-      if (class(input)=="GRangesList") {
+  # function runs for GRangesList and GRanges
+  if ((class(input)!="GRangesList")&(class(input)!="GRanges")){
+    
+    stop("Error in INPUT: neither GRanges nor GRangesList")
+    
+  }
+  
+  if (class(input)=="GRangesList") {
         
           res=foreach(gr=input) %dopar% {
             
@@ -293,7 +300,9 @@ associateReg2Gene<-function(input,
                 comb.res=do.call("rbind.data.frame",res)[,1:4]
                 
                     rownames(comb.res)=NULL # needed for GRanges DataFrame
-                    
+         
+          input <- input[as.logical(sapply(res,length))] # remove GE with wrong 
+                    #featureType                     
           
       }
       
@@ -324,14 +333,12 @@ associateReg2Gene<-function(input,
           }       
       
         
-        }else if (!detectGeneEnhPresence(input)) {
-              
-          print("Error in INPUT,featureType should contain 1 gene + min 1 enh")}
-      
-          }
-  
+        }
+      }
        
-    if (exists("comb.res")) { # not existing when featureType entered wrongly
+    if (exists("comb.res")) {
+      
+      if (as.logical(nrow(comb.res))) { # not existing when featureType entered wrongly
     
        comb.res <- qvaluCal(comb.res)  # add qvalue calculations
      
@@ -340,17 +347,29 @@ associateReg2Gene<-function(input,
   # a function to create GRanges object for GRangesList
   # later p-values, effect sizes etc will appended to this object
      
-      if (asGInteractions==T){gr2 <- grlist2GI(input)}
       
-      if (asGInteractions!=T){gr2 <- grlist2gr(input)}
+       if (asGInteractions==T){gr2 <- grlist2GI(input)}
+      
+       if (asGInteractions!=T){gr2 <- grlist2gr(input)}
       
       mcols(gr2)=cbind(mcols(gr2),DataFrame(comb.res))
 
   # return result
-  gr2
-    }
+  return(gr2)
+    
+      }
+  
+      if (!as.logical(nrow(comb.res))) {
+        
+        message("Error in INPUT,featureType should contain 1 gene + min 1 enh")}
+      
+  }else {
+     
+      message("Error in INPUT,featureType should contain 1 gene + min 1 enh")}
   
 }
+
+
 
 
 
@@ -899,7 +918,7 @@ glmnetResample<-function(mat,scaleData=scaleData,col=1,B=B){
                           standardize=FALSE,
                           nfolds=5,alpha=0.5)
       
-          coefs[i,]=glmnet::coef(mod,s="lambda.min")[-1,1]
+          coefs[i,]=glmnet::coef.cv.glmnet(mod,s="lambda.min")[-1,1]
         }
   },error=function(coefs){
     
