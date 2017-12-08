@@ -1435,9 +1435,16 @@ $NPV = TN/(TN+FN)$
 $F1 = (2*TP)/((2*TP)+FP+FN)$
 
 
-###__confusionMatrix() OUTPUT:__
+__INPUT DATA DETAIL description (confusionMatrix() min arguments):__
 
-With following INPUT object:
+####reg2GeneBench
+GInteractions object with added benchmark benchmarkGI() and OPTIONAL  filterPreBenchGI() metadata (however,prior this analysis, it is advised to reduce the number of true negatives by including only reg2gene entries that could be potentially benchmarked).To get that info run filterPreBenchGI and add filter column with metadata from this function to reg2GeneBench GInteractions object prior running benchmarkGI)
+
+
+####thresholdID
+Character (def:NULL), name which indicates a column where statistics of the modelling procedure is stored: for example: "pval". If not changed to the existing column name, then function will return ERROR. This column is filtered such that everything below predefined threshold is considered to be statistically significant association (set to be equal to 0), whereas everything above that threshold is 0". Details below.
+
+
 
 ```{r, echo=FALSE}
 reg2GeneBench <- GInteractions(GRReg1_toy,GRReg1_toy$reg)
@@ -1464,7 +1471,7 @@ confusionMatrix(reg2GeneBench,
                 statistics = "ConfusionMatrix")
 
 
-Will output:
+###__confusionMatrix() OUTPUT:__
 
 ```{r, echo=FALSE}
 reg2GeneBench <- GInteractions(GRReg1_toy,GRReg1_toy$reg)
@@ -1509,19 +1516,18 @@ confusionMatrix(reg2GeneBench,
 
 __INPUT DATA DETAIL description (confusionMatrix() specific arguments):__
 
+####benchCol	
+a column name where results of benchmarking procedure are stored.
+Default: Bench. A vector of 0's and 1's is expected to be stored in __benchCol__ column.
+Take a look at an example below.
+
+
 ####thresholdValue
 
 Since __associatereg2Gene()__ reports all input gene-enhancer associations together with the corresponding test statistics, a threshold for this test statistics needs to be set as __thresholdValue__ in __confusionMatrix()__. 
 Every gene-enhancer pair with test statistics below __thresholdValue__ will be considered to be statistically significant pair - POSITIVE. Otherwise, it is consider to be NEGATIVE.
 Take a look at an example above.
 
-####thresholdID
-points the function to the column where test statistics is stored. For example: "pval".
-Take a look at an example above.
-
-####benchCol	
-a column name where results of benchmarking procedure are stored. A vector of 0's and 1's is expected to be stored in __benchCol__ column.
-Take a look at an example above.
 
 
 __INPUT DATA DETAIL description (confusionMatrix() minimum arguments):__
@@ -1720,7 +1726,7 @@ Wright, Marvin N., and Andreas Ziegler. "ranger: A fast implementation of random
 # IN ADDITION: Projects flowchart
 
 ```{r fig1, fig.height = 5, fig.width = 3, fig.align = "left"}
-knitr::include_graphics("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/pkg/vignettes/Figures/reg2gene flowchart2.png")
+knitr::include_graphics("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/pkg/vignettes/Figures/reg2geneflowchart2.png")
 
 ```
 
