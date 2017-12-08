@@ -29,6 +29,8 @@
 #' require(GenomicRanges)
 #' require(InteractionSet)
 #' 
+#' # INPUT 0: 2 GRanges objects with toy expression values (x,y,z,a)
+#' 
 #' gr2 <- gr <- GRanges(seqnames=rep("chr1",3),IRanges(1:3,3:5))
 #'    x <- 1:5
 #'    y <- 2:6
@@ -43,8 +45,7 @@
 #'  mcols(gr) <- DataFrame(cbind(GeneInfo,rbind(x,y,z)))
 #'  mcols(gr2) <- DataFrame(cbind(GeneInfo,rbind(x,y,a)))
 #'  
-#'  # create associateReg2Gene output objects, GInteractions will all 
-#'  # output results
+#' # RUNNING associateReg2Gene and obtaining output results
 #'  
 #'  AssocObject <- reg2gene::associateReg2Gene(gr)
 #'  AssocObject2 <- reg2gene::associateReg2Gene(gr2)
@@ -54,7 +55,8 @@
 #'  associations <- list(AssocObject,AssocObject2)
 #'  names(associations) <- c("AssocObject","AssocObject2")
 #'  
-#'  # Run metaA
+#'  # OUTPUT: Run metaA
+#'  
 #'  metaAssociations(associations)
 #'
 #' @importFrom  data.table data.table
@@ -86,46 +88,53 @@ metaAssociations <- function(associations){
   # a merge operation
   
   aTbl = assocTable(associations)
+  
+  if (nrow(aTbl)!=0) {
 
-  # create p-values matrix and do meta analysis with Fisher's method
-  pCols=seq(2,ncol(aTbl),by=3)+2
+      # create p-values matrix and do meta analysis with Fisher's method
+      pCols=seq(2,ncol(aTbl),by=3)+2
+      
+      p=as.matrix(aTbl[,pCols,with = FALSE]) # this the p-value matrix
+      
+      comb=-2 * rowSums(log(p),na.rm=TRUE) # this combines p-values
+      
+      pval=1-pchisq(comb,df=2*rowSums(!is.na(p))) # this calculates new P-values
+                                                  # using Chi-sq test
+    
+      # create sample number and effect size matrices and
+      # do weighted averaging for the effect sizes
+      coefs=as.matrix(aTbl[,(pCols-1),with = FALSE])
+      
+      ns=as.matrix(aTbl[,(pCols-2),with = FALSE])
+      
+      coefs2=rowSums(ns*coefs,na.rm=TRUE)/rowSums(ns,na.rm=TRUE) # average coeffs
+    
+      #recreate the GInteractions from the key
+      
+      df=do.call("rbind",strsplit(aTbl$ky,"||",fixed=T))
+      
+      gr <- GInteractions(GRanges(df[,1]),
+                          GRanges(df[,4]),
+                          name=df[,2],
+                          name2=df[,3],
+                          n=rowSums(ns,na.rm=T),
+                          coefs=coefs2,
+                          pval=pval,
+                          qval=NA)
+      
+      # calculate q-value
+    
+      qval <- try(qvalue::qvalue(gr$pval)$qvalues,silent=T)
+      
+      if(!inherits(qval, 'try-error')){gr$qval <- qval}
+      
+      #return the GInteractions 
+      gr
+  }else if(nrow(aTbl)==0){
+      
+    message("Not overlapping input regions between lists")}
+      
   
-  p=as.matrix(aTbl[,pCols,with = FALSE]) # this the p-value matrix
-  
-  comb=-2 * rowSums(log(p),na.rm=TRUE) # this combines p-values
-  
-  pval=1-pchisq(comb,df=2*rowSums(!is.na(p))) # this calculates new P-values
-                                              # using Chi-sq test
-
-  # create sample number and effect size matrices and
-  # do weighted averaging for the effect sizes
-  coefs=as.matrix(aTbl[,(pCols-1),with = FALSE])
-  
-  ns=as.matrix(aTbl[,(pCols-2),with = FALSE])
-  
-  coefs2=rowSums(ns*coefs,na.rm=TRUE)/rowSums(ns,na.rm=TRUE) # average coeffs
-
-  #recreate the GInteractions from the key
-  
-  df=do.call("rbind",strsplit(aTbl$ky,"||",fixed=T))
-  
-  gr <- GInteractions(GRanges(df[,1]),
-                      GRanges(df[,4]),
-                      name=df[,2],
-                      name2=df[,3],
-                      n=rowSums(ns,na.rm=T),
-                      coefs=coefs2,
-                      pval=pval,
-                      qval=NA)
-  
-  # calculate q-value
-
-  qval <- try(qvalue::qvalue(gr$pval)$qvalues,silent=T)
-  
-  if(!inherits(qval, 'try-error')){gr$qval <- qval}
-  
-  #return the GInteractions 
-  gr
 }
 
 #----- private functions ------
@@ -170,8 +179,7 @@ assocTable<-function(grlist){
 #' @keywords internal
 checkGrlStrMeta <- function(associations){
 
-  ExpectedAssResults <- c("name","name2","n","coefs","pval","pval2",
-                          "qval","qval2")
+  ExpectedAssResults <- c("name","name2","n","coefs","pval","qval")
  
   all(c(sapply(associations,function(x){
  

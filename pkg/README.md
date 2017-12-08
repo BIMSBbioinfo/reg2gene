@@ -5,12 +5,23 @@
 </div>
 
 
+
 ---
 title: "reg2gene"
 author: Inga Patarcic, Altuna Akalin
 output: github_document
 
 ---
+
+# reg2gene project
+https://github.com/IngaPa/reg2gene/pkg
+[![Build Status](https://travis-ci.org/IngaPa/reg2gene/pkg.svg?branch=master)](https://travis-ci.org/IngaPa/reg2gene/pkg)
+![codecov.io](https://codecov.io/github/IngaPa/reg2gene/pkg/coverage.svg?branch=master)
+
+
+
+
+
 
 
 This repo contains the code for predicting the target genes for regulatory elements

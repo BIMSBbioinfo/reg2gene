@@ -45,9 +45,80 @@ test2.bw <- test.bw <- GRanges(c("chr1","chr1","chr1","chr2","chr2","chr2"),
                                        c(4,9,25,4,9,25)))
 
 test.bw$score <- c(0,1:(length(test.bw)-1))
-test2.bw$score <- 2*(1:(length(test.bw)))
+#test2.bw$score <- 2*(1:(length(test.bw)))
+test2.bw$score <- c(0,1,0,0,0,1)
 
+  
 seqlengths(test2.bw) <- seqlengths(test.bw) <- c(249250621,243199373)
 
+
+test3.bw <- shift(test2.bw,100)
 #rtracklayer::export.bw(test.bw,"/inst/extdata/test.bw")
 #rtracklayer::export.bw(test2.bw,"inst/extdata/test2.bw")
+#rtracklayer::export.bw(test3.bw,"inst/extdata/test3.bw")
+
+
+
+########################################
+# Create testing matrix of variables with predefined corr 
+# library('MASS')
+# library(corpcor)
+# library(GenomicRanges)
+# 
+# r_vector = c(0.99,0.9,0.8,0.6,0.4,0.3,0.1,0)
+# samples <- 52
+# 
+# # generate random seeds for all 14 matrices
+# set.seed(390711161)
+# 
+# mu_mvnorm <- runif(length(r_vector)+1, min=1.5, max=3.5) 
+# 
+#   # generating a random matrix
+#       RandomMatrix <- matrix(0,ncol = length(r_vector)+1, nrow=length(r_vector)+1)
+#       diag(RandomMatrix) <- 1
+#       set.seed(390711161)
+#       RandomMatrix = mvrnorm(n=max_samples, mu=mu_mvnorm,
+#                              Sigma=RandomMatrix, empirical=TRUE)
+#       
+#  
+#   # generating matrix with predefined corr
+#   # but corr matrix needs to be positive semi-definite matrix, thus
+#   # make.positive.definite() is used to compute the nearest positive definite of a real symmetric matrix
+#   # but such that wanted correlation remains the same - diag=1, and edges equal to predefined value
+#   
+#   Var_matrix <- matrix(0,ncol = length(r_vector)+1, nrow=length(r_vector)+1)
+#   diag(Var_matrix) <- 1
+#   Var_matrix[1,2:ncol(Var_matrix)] <-  r_vector
+#   Var_matrix[2:nrow(Var_matrix),1] <-  r_vector
+#   
+#   
+#   # finding random positive-semidefinite correlation matrices with wanted corr
+#   set.seed(390711161)      
+#   while(is.positive.definite(Var_matrix)!=T){
+#     
+#     Var_matrix <- make.positive.definite(Var_matrix,tol = )
+#     diag(Var_matrix) <- 1
+#     Var_matrix[1,2:ncol(Var_matrix)] <-  r_vector
+#     Var_matrix[2:nrow(Var_matrix),1] <-  r_vector
+#   
+#   }
+#   set.seed(390711161)      
+#   data = mvrnorm(n=samples, mu=mu_mvnorm,Sigma=Var_matrix, empirical=TRUE)
+#   
+#     data[data<=0] <- 0.00000001
+# 
+#     cor(data[,1],data[,-1])
+#     
+#     # Creating GRanges object
+#     
+#     ModellingTest <- GRanges(rep("chr1",9),IRanges(1:9,2:10),
+#                             featureType=c("gene",rep("regulatory",8)),
+#                             name=rep("test",9),
+#                             name2=rep("test",9))
+#                     
+#   
+#     mcols(ModellingTest) <- cbind(mcols(ModellingTest),DataFrame(t(data)))
+#   
+#     
+# save(ModellingTest,file="data/ModellingTest.RData")
+  

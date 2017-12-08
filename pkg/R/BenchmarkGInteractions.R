@@ -57,7 +57,7 @@
 #' @import GenomicRanges
 #' @import InteractionSet
 #' 
-#' @examples
+#' @examples # Creating testing and benchmarking dataset
 #' require(GenomicRanges)
 #' require(InteractionSet)
 #'    
@@ -96,9 +96,9 @@
 #'                benchData[1])      
 #'
 #'  # WARNING! 
-#'  However, one need to be careful when benchmarking anchors that overlap 
-#'  within test set (eg enhancer overlaps gene region), 
-#'  because these regions will be benchmarked.
+#'  # However, one need to be careful when benchmarking anchors that overlap 
+#'  # within test set (eg enhancer overlaps gene region), 
+#'  # because these regions will be benchmarked.
 #'    
 #'    benchmarkGI(reg2Gene[5],
 #'                benchData)           
@@ -247,7 +247,9 @@ benchmarkGIsimple <- function(reg2Gene,
 #' this set anchor1 or anchor2 regions form reg2Gene object necessarily need to
 #' have other member of the pair overlapping somewhere in benchmark dataset.
 #' 
-#' @examples require(GenomicRanges)
+#' @examples # Creating testing and benchmarking dataset
+#' 
+#' require(GenomicRanges)
 #' require(InteractionSet)
 #'    
 #'    reg2Gene <- GInteractions(GRReg1_toy,GRReg1_toy$reg)
@@ -374,7 +376,7 @@ filterPreBenchGIsimple <- function(reg2Gene,
 #' 
 #' 
 #' @param reg2GeneBench GInteractions object with added benchmark 
-#' \code{benchmarkGI} and OPTIONAL filerPreBench \code{filterPreBenchGI} 
+#' \code{benchmarkGI} and OPTIONAL  \code{filterPreBenchGI} 
 #' metadata. However,prior this analysis, it is advised to reduce the number of
 #' true negatives by including only reg2gene entries that could be potentially
 #' benchmarked.To get that info run \code{filterPreBenchGI} and add filter 
@@ -456,7 +458,7 @@ filterPreBenchGIsimple <- function(reg2Gene,
 #'      
 #' @export
 confusionMatrix <- function(reg2GeneBench,
-                            benchCol=NULL,
+                            benchCol="Bench",
                             prefilterCol=NULL,
                             thresholdID=NULL,
                             thresholdValue=0.05,

@@ -42,7 +42,10 @@
 #' require(GenomicRanges)
 #' require(InteractionSet)
 #' 
-#' gr2 <- gr <- GRanges(seqnames=rep("chr1",3),IRanges(1:3,3:5))
+#' # INPUT 0: 2 GRanges objects with toy expression values (x,y,z,a)
+#' 
+#'  gr2 <- gr <- GRanges(seqnames=rep("chr1",3),IRanges(1:3,3:5))
+#'    
 #'    x <- 1:5
 #'    y <- 2:6
 #'    z <- 10:14
@@ -53,30 +56,56 @@
 #'                ncol = 3,byrow = TRUE),stringsAsFactors=FALSE)
 #'                colnames(GeneInfo) <- c("featureType","name","name2")
 #'  
-#'  mcols(gr) <- DataFrame(cbind(GeneInfo,rbind(x,y,z)))
-#'  mcols(gr2) <- DataFrame(cbind(GeneInfo,rbind(x,y,a)))
+#'       mcols(gr) <- DataFrame(cbind(GeneInfo,rbind(x,y,z)))
+#'       mcols(gr2) <- DataFrame(cbind(GeneInfo,rbind(x,y,a)))
 #'  
-#'  # create associateReg2Gene output objects, GInteractions will all 
-#'  # output results
+#'  # RUNNING associateReg2Gene and obtaining output results
 #'  
 #'  AssocObject <- reg2gene::associateReg2Gene(gr)
 #'  AssocObject2 <- reg2gene::associateReg2Gene(gr2)
 #'  
-#'  # input for meta-analysis is list of such objects
+#'  # INPUT1 a list of GInteraction objects from associateReg2Gene()
+#'  
 #'  
 #'  associations <- list(AssocObject,AssocObject2)
 #'  names(associations) <- c("AssocObject","AssocObject2")
 #'  
-#'  # Run voteAssociations
-#'  voteAssociations(associations, 
+#'  # OUTPUT: Run voteAssociations
+#'  
+#'   voteAssociations(associations, 
 #'                   cutoff.stat="pval",
 #'                   cutoff.val=0.05,
 #'                   vote.threshold=0.5)
 #'                   
-#'  voteAssociations(associations,
+#'   voteAssociations(associations,
 #'                   cutoff.stat="pval",
 #'                   cutoff.val=0.05,
 #'                   vote.threshold=0.51)
+#'  
+#'  #CREATING EXAMPLE2:
+#'                                    
+#'  set.seed(6878); x=rnorm(15)
+#'  set.seed(444);  y=rnorm(15)
+#'  set.seed(6848);  z=rnorm(15)
+#'  
+#'  example <-  example2 <-   GRanges(GRReg1_toy[1:2],
+#'                                  featureType=c("gene","regulatory"),
+#'                                  name=c("gene","regulatory"),
+#'                                  name2=c("gene","regulatory"))
+#'                                  
+#'  mcols(example2) <-  cbind(mcols(example2)[,1:3],DataFrame(rbind(x,y)))
+#'  mcols(example) <-  cbind(mcols(example)[,1:3],DataFrame(rbind(x,z)))
+#'  
+#'  AssocExample2 <- associateReg2Gene(example2)
+#'  AssocExample <- associateReg2Gene(example)
+#'  
+#'  # OUTPUT: Run voteAssociations
+#'  
+#'  # ERROR! both ranges fail at filtering    
+#'  # voteAssociations(list(AssocExample2,AssocExample))
+#'  
+#'                   
+#'                   
 #' @author Altuna Akalin
 #' @export
 voteAssociations<-function(associations,
@@ -89,8 +118,8 @@ voteAssociations<-function(associations,
     
     stop("\ncheck if input 'associations' object has the correct structure:\n",
          "\n a)It must be a list of GInteractions,:\n",
-         "\n b) and each GInteractions must have:name,name2,n,coefs,pval,pval2,
-               qval,qval2 columns\n")
+         "\n b) and each GInteractions must have:name,name2,n,coefs,pval,
+               qval columns\n")
   }
   
   # create Table from after merge
@@ -117,6 +146,7 @@ voteAssociations<-function(associations,
   # arrange GRanges and return
   
   gr=gr[gr$votes>=(vote.threshold*ncol(q)),]
+  gr=gr[gr$votes>1,] # removing 1/1 cases
   
   return(gr)
 }
@@ -154,8 +184,13 @@ assocTable2<-function(grlist,
   # make keys and stats for each GRanges
   # keys are locations for TSS,regulatory regions and names
   dt.list=lapply(grlist,function(x,qval){
-
+    
     # adjusting for filtering for pval or qval
+    if (!cutoff.column%in%colnames(mcols(x))){ x <- NULL
+      message("cutoff.column not identified")
+      
+    }else
+    
     if (cutoff.column=="qval"){
     
             if("qval" %in% colnames(mcols(x))){
@@ -172,7 +207,10 @@ assocTable2<-function(grlist,
     
             
             # adjusting for the fact that no qvalue or pvalue pass threshold
-            if (length(x)==0){stop("No association identified!")}
+            if (length(x)==0){ NULL
+              message("No association identified for at least on INPUT list!")
+              
+              }
             
             if (length(x)!=0){
               data.table::data.table(ky=paste(as.character(first(x)),
@@ -184,10 +222,15 @@ assocTable2<-function(grlist,
             },qval=qval)
 
   
-  # merge tables
-  # data.table merge is faster, that's why we rely on it
-  Reduce(function(...) merge(...,all=TRUE, by = "ky"),
-         dt.list)
+  if (exists("dt.list")){
+    
+      dt.list <- dt.list[as.logical(sapply(dt.list,length))]
+      # merge tables
+      # data.table merge is faster, that's why we rely on it
+      Reduce(function(...) merge(...,all=TRUE, by = "ky"),
+             dt.list)
+      
+  }
 }
 
 # the function checks if the input GInteractions  in the list have
@@ -197,8 +240,7 @@ assocTable2<-function(grlist,
 #' @keywords internal
 checkGrlStr<-function(associations){
   
-  ExpectedAssResults <- c("name","name2","n","coefs","pval","pval2",
-                          "qval","qval2")
+  ExpectedAssResults <- c("name","name2","n","coefs","pval","qval")
   
   all(c(sapply(associations,function(x){
     

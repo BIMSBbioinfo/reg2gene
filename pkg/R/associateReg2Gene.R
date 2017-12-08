@@ -125,8 +125,8 @@
 #' on regulatory activity and gene expression relationship.
 #'
 #' @param input a GRangesList that contains regulatory activity and
-#' gene expression results. It has to have specific columns, see the
-#' output of \code{\link{regActivityAroundTSS}} function.
+#' gene expression results. It has to have specific columns, see the example 
+#' below or the output of \code{\link{regActivityAroundTSS}} function.
 #' @param method one of "pearson","spearman","dcor","elasticnet",
 #' "randomForest". Default: "pearson". See Details for more.
 #' @param scaleData if TRUE (default) the the values for gene expression and

@@ -149,10 +149,12 @@ exonExpressionStrandAdjusted <- function(exonsForQuant,
                                     and splitted exon object are not equal")}
     
     
-    # pool reverse and forward strand together        
+    # pool reverse and forward strand together    
+    
+    DF_exons <- rbind(exonscoresForwardStrand.df,exonscoresReverseStrand.df)
+        row.names(DF_exons) <- NULL # adjusting for problem of equal row.names
     values(exonsForQuant) <- cbind(mcols(exonsForQuant),
-                                   DataFrame(rbind(exonscoresForwardStrand.df,
-                                    exonscoresReverseStrand.df)))
+                                   DataFrame(DF_exons))
     
     }
   
@@ -272,15 +274,31 @@ quantifyGeneExpression <- function(expressionPerGene,exonsForGene){
 #' activity. This function might be extended to work with BAM files
 #' in the future. 
 #' 
-#' @examples test.bw <- system.file("extdata", "test.bw",package = "reg2gene")
+#' @examples # INPUT1: defining .bw files:
+#' 
+#' test.bw <- system.file("extdata", "test.bw",package = "reg2gene")
 #' test2.bw <- system.file("extdata", "test2.bw",package = "reg2gene")
-#' regTSS_toy <- GRanges(c(rep("chr1",4),rep("chr2",2)),
+#' 
+#' # INPUT2: defining regulatory regions:regRegions
+#' 
+#' regRegions <- GRanges(c(rep("chr1",4),rep("chr2",2)),
 #'                       IRanges(c(1,7,9,15,1,15),c(4,8,14,20,4,20)),
 #'                                             c(rep("+",3),rep("-",3)))
-#' regTSS_toy$reg <-  regTSS_toy[c(1,1,3:6)]
-#' regTSS_toy$name2 <- regTSS_toy$name <- paste0("TEST_Reg",
-#'                                         c(1,1,3:length(regTSS_toy)))
-#' regActivity(regTSS_toy,c(test.bw,test2.bw))   
+#' regRegions$reg <-  regRegions[c(1,1,3:6)]
+#' regRegions$name2 <- regRegions$name <- paste0("TEST_Reg",
+#'                                         c(1,1,3:length(regRegions)))
+#'                         
+#'  # OUTPUT  regActivity():                                                      
+#' regActivity(regRegions,c(test.bw,test2.bw))   
+#' 
+#' # Additionaly, sample names can changed with sampleIDs argument
+#' 
+#' regActivity(regRegions,c(test.bw,test2.bw),sampleIDs=c("Cell1","Cell2"))
+#' 
+#' # Additionaly, it supports different normalization procedures:
+#' 
+#' regActivity(regRegions,c(test.bw,test2.bw),normalize ="ratio")
+#' regActivity(regRegions,c(test.bw,test2.bw),normalize ="quantile")
 #' 
 #' @export
 regActivity <- function(regRegions,
@@ -378,21 +396,27 @@ regActivity <- function(regRegions,
 #'  4. other columns: numeric values for gene expression or regulatory actvity.
 #'    Column names represent sample names/ids.
 #' 
-#' @examples 
+#' @examples  # INPUT1: CREATING Toy example for quantified gene expression:
 #' 
-#' regTSS_toy <- GRReg1_toy
-#'   regTSS_toy$bw1 <- rep(1,length(GRReg1_toy))
-#'   regTSS_toy$bw2 <- rep(2,length(GRReg1_toy))
-#'   regTSS_toy$bw3 <- rep(3,length(GRReg1_toy))
-#' regReg_toy <- GRReg2_toy
-#'    regReg_toy$bw1 <- rep(3,length(regReg_toy))
-#'    regReg_toy$bw2 <- rep(4,length(regReg_toy))
+#' geneExpression <- GRReg1_toy
+#'   geneExpression$bw1 <- rep(1,length(GRReg1_toy))
+#'   geneExpression$bw2 <- rep(2,length(GRReg1_toy))
+#'   geneExpression$bw3 <- rep(3,length(GRReg1_toy))
+#'   
+#'   # INPUT2: CREATING TOY example for quantified enhancer activity:
+#'   
+#' regRegion <- GRReg2_toy
+#'    regRegion$bw1 <- rep(3,length(regRegion))
+#'    regRegion$bw2 <- rep(4,length(regRegion))
 #' 
-#' regActivityAroundTSS(regReg_toy,regTSS_toy,upstream=1,downstream=1)
+#' # Overlapping quantified enhancer activity and gene expression:
+#' # OUTPUT  regActivityAroundTSS():
+#' regActivityAroundTSS(regActivity=regRegion, tss=geneExpression,
+#' upstream=1,downstream=1)
 #' 
 #' # when different upstream/downstream argument is used:
 #' 
-#' regActivityAroundTSS(regReg_toy,regTSS_toy,upstream=5,downstream=5)
+#' regActivityAroundTSS(regRegion,geneExpression,upstream=5,downstream=5)
 #' 
 #' 
 #' @details only enhancers located within (+/-)upstream/downstream of TSS 
@@ -560,32 +584,35 @@ regActivityAroundTSS <- function(regActivity,
 #' 
 #' 
 #' 
-#' @examples test.bw <- system.file("extdata", "test.bw",package = "reg2gene")
+#' @examples #INPUT1 DEFINING .BW FILES:
+#' test.bw <- system.file("extdata", "test.bw",package = "reg2gene")
 #' test2.bw <- system.file("extdata", "test2.bw",package = "reg2gene")
 #' 
-#' regTSS_toy <- GRanges(c(rep("chr1",2),"chr2",rep("chr1",3)),
+#' #INPUT2 DEFINING EXONS:
+#' exons <- GRanges(c(rep("chr1",2),"chr2",rep("chr1",3)),
 #'                       IRanges(c(1,7,9,15,1,21),c(4,8,14,20,4,25)),
 #'                                             c(rep("+",3),rep("-",3)))
-#'  regTSS_toy$reg <-  regTSS_toy[c(1,1,3,5,5,5)]
-#'  regTSS_toy$name2 <- regTSS_toy$name <- paste0("TEST_Reg",c(1,1,3,5,5,5))
-#'  bwToGeneExp(exons = regTSS_toy,geneActSignals = c(test.bw,test2.bw),
+#'  exons$reg <-  exons[c(1,1,3,5,5,5)]
+#'  exons$name2 <- exons$name <- paste0("TEST_Reg",c(1,1,3,5,5,5))
+#'  bwToGeneExp(exons = exons,geneActSignals = c(test.bw,test2.bw),
 #'          sampleIDs=c("CellType1","CellType2"))
-#'                                         
-#' bwToGeneExp(exons = regTSS_toy,geneActSignals = c(test.bw,test2.bw))
+#'  
+#'  # OUTPUT bwToGeneExp():                                                                                                                       
+#' bwToGeneExp(exons = exons,geneActSignals = c(test.bw,test2.bw))
 #' 
 #' # adding different sample IDs
 #' 
-#' bwToGeneExp(exons = regTSS_toy,geneActSignals = c(test.bw,test2.bw),
-#' sampleIDs=c("CellType1","CellType2"))
+#' bwToGeneExp(exons = exons,geneActSignals = c(test.bw,test2.bw),
+#'             sampleIDs=c("CellType1","CellType2"))
 #' 
-#' # if exons input is of GInteractions class object,the same output is obtained
+#' # if exons input is GInteractions class object,the same output is obtained
 #' 
 #' require(InteractionSet)
-#' exons= GInteractions(regTSS_toy,regTSS_toy$reg)
-#'    exons$name=regTSS_toy$name
-#'    exons$name2=regTSS_toy$name2
+#' exonsGI= GInteractions(exons,exons$reg)
+#'    exonsGI$name=exons$name
+#'    exonsGI$name2=exons$name2
 #'    
-#' bwToGeneExp(exons = regTSS_toy,geneActSignals = c(test.bw,test2.bw))
+#' bwToGeneExp(exons = exonsGI,geneActSignals = c(test.bw,test2.bw))
 #' 
 #' @export
 bwToGeneExp <- function(exons,
@@ -599,8 +626,17 @@ bwToGeneExp <- function(exons,
   
  
   #test if there is any info about genes in exon granges object
-  if (sum(stringr::str_detect(colnames(mcols(exons)),"name"))==0){
-    stop("No info about the gene name")}
+  if (any(stringr::str_detect(colnames(mcols(exons)),"name"))==0){
+    stop("No info about the gene name, e.g. name column is missing")}
+  
+  if ((class(exons)=="GRanges")&
+      (any(stringr::str_detect(colnames(mcols(exons)),"reg"))==0)){
+    stop("No info about the gene location, e.g. reg column is missing ")}
+  
+  if ((class(exons)=="GInteractions")&
+      (any(stringr::str_detect(colnames(mcols(exons)),"name2"))==0)){
+    stop("No info about gene name2,e.g. name2 column needed for GInteractions")}
+  
   
   
   if (is.null(sampleIDs)) {
@@ -683,7 +719,13 @@ bwToGeneExp <- function(exons,
                                     name2,
                   GeneExpression.df[match(name,rownames(GeneExpression.df)),],
                             stringsAsFactors = F)
-
+    
+             if (length(colnames(metadata))==3) {
+               
+               colnames(metadata)[3] <- sampleIDs[1]
+               
+               }
+             
           mcols(tss) <- metadata
 
   return(tss)
