@@ -1,9 +1,8 @@
 <a name="logo"/>
 <div align="center">
-<img src="https://github.com/IngaPa/reg2gene/blob/inga_functions/pkg/inst/hex-reg2gene.png" alt="hex Logo"  ></img>
+<img src="https://github.com/IngaPa/reg2gene/blob/master/pkg/inst/hex-reg2gene.png" alt="hex Logo"  ></img>
 </a>
 </div>
-
 
 
 ---
@@ -23,16 +22,19 @@ https://github.com/IngaPa/reg2gene/pkg
 
 
 
-
 This repo contains the code for predicting the target genes for regulatory elements
 
 It contains the following:
 
--  regulatory activity quantification per pre-defined region (regulatoryActivity)
-    - the code base that is used to quantify enhancer activties across different markers and studies
-    - The scripts to match enhancers to potential target genes within pre-defined window around gene TSSes
+
+-  regulatory activity quantification per pre-defined region: 
+    - the code used to quantify enhancer activties across different markers and studies: *regActivity()*
+    - the code used to quantify gene expression across different studies: *bwToGeneExp()*
+    - the code used to match enhancers to potential target genes within pre-defined window around gene TSSes: *regActivityAroundTSS()*
 - enhancer target prediction (targetPrediction)
-    - This should contain the code for target prediction methods
+    - the code for target prediction methods: *associateReg2Gene()*
+- benchmark predicted interactions:
+   - the code for benchmarking predicted interactions given some benchmark dataset: *benchmarkGI()*
 - performance metrics (performance):
-    - should contain the code for performance metrics.
+    -  the code for performance metrics via calculating and reporting confusion matrix for tested benchmarked dataset: *confusionMatrix()* + *filterPreBenchGI()*
 
