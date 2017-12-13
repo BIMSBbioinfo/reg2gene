@@ -195,8 +195,7 @@ object together with gene of interest and its calculated expression levels
 ## Schematic representation of quantification and data integration:
 
 ```{r fig2, fig.height = 5, fig.width = 3, fig.align = "center"}
-knitr::include_graphics("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/pkg/vignettes/Figures/QuantificationDataIntegrationSimplified.png")
-
+knitr::include_graphics("https://github.com/BIMSBbioinfo/reg2gene/blob/master/vignettes/Figures/QuantificationDataIntegrationSimplified.png")
 ```
 
 ---
@@ -911,19 +910,19 @@ Since __associateReg2Gene()__ analysis can be done easily for different types of
 ## Schematic representation of majority voting:
 
 ```{r fig3, fig.height = 5, fig.width = 5, fig.align = "center"}
-knitr::include_graphics("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/pkg/vignettes/Figures/VOTING.png")
+knitr::include_graphics("https://github.com/BIMSBbioinfo/reg2gene/master/vignettes/Figures/VOTING.png")
 
 ```
 
 Thus, multiple associations output by different methods and data sets can be merged this way, and only the associations that have support in __vote.threshold__ fraction of the datasets will be retained. 
 
-For example, retain only gene~enhancer pairs that are supported by modelling __reg2gene__ analysis using both __H3K4me1__ and __H3K27ac__ to quantify enhancer activity. Or, retain only gene~enhancer pairs that are supported by modelling __reg2gene__ analysis using  __pearson__, __spearman__ and __elasticnet__ algorithms.
+For example, retain only gene-enhancer pairs that are supported by modelling __reg2gene__ analysis using both __H3K4me1__ and __H3K27ac__ to quantify enhancer activity. Or, retain only gene-enhancer pairs that are supported by modelling __reg2gene__ analysis using  __pearson__, __spearman__ and __elasticnet__ algorithms.
 
 
 First, __voteAssociations()__ selects POSITIVES (statistically associated gene~enhancer pairs) 
 for each result of __associateReg2Gene()__ analysis that wants to be combined by  __majority voting__ (for example results of __H3K4me1__ and __H3K27ac__ __associateReg2Gene()__ analysis). 
 
-Assessing statistically associated gene~enhancer pairs has been done by filtering the statistics (__cutoff.stat__) of the elements of the input list (gene~enhancer pairs) based on the defined cutoff value (__cutoff.val__). 
+Assessing statistically associated gene-enhancer pairs has been done by filtering the statistics (__cutoff.stat__) of the elements of the input list (gene-enhancer pairs) based on the defined cutoff value (__cutoff.val__). 
 
 
 __voteAssociations() OUTPUT:__
@@ -1091,7 +1090,7 @@ After, combining P-values, q-values are calculated using the qvalue function.
 ### Meta-analysis - simplified pictorial representation:
 
 ```{r, fig.height = 10, fig.width = 10, fig.align = "center"}
-knitr::include_graphics("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/pkg/vignettes/Figures/Meta-Analysis_Simplified.png")
+knitr::include_graphics("https://github.com/BIMSBbioinfo/reg2gene/blob/master/vignettes/Figures/Meta-Analysis_Simplified.png")
 
 ```
 
@@ -1212,7 +1211,7 @@ If anchor1 of the first GInteractions object (__reg2Gene__) overlaps either anch
 ## Schematic representation of possible benchmarking procedure
 
 ```{r fig5, fig.height = 5, fig.width = 3, fig.align = "center"}
-knitr::include_graphics("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/pkg/vignettes/Figures/BenchSimpleE.png")
+knitr::include_graphics("https://github.com/BIMSBbioinfo/reg2gene/blob/master/vignettes/Figures/BenchSimpleE.png")
 
 ```
 
@@ -1726,7 +1725,7 @@ Wright, Marvin N., and Andreas Ziegler. "ranger: A fast implementation of random
 # IN ADDITION: Projects flowchart
 
 ```{r fig1, fig.height = 5, fig.width = 3, fig.align = "left"}
-knitr::include_graphics("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/pkg/vignettes/Figures/reg2geneflowchart2.png")
+knitr::include_graphics("https://github.com/BIMSBbioinfo/reg2gene/blob/master/vignettes/Figures/reg2geneflowchart2.png")
 
 ```
 
