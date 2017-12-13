@@ -13,9 +13,9 @@ output: github_document
 ---
 
 # reg2gene project
-https://github.com/IngaPa/reg2gene/pkg
-[![Build Status](https://travis-ci.org/IngaPa/reg2gene/pkg.svg?branch=master)](https://travis-ci.org/IngaPa/reg2gene/pkg)
-![codecov.io](https://codecov.io/github/IngaPa/reg2gene/pkg/coverage.svg?branch=master)
+https://github.com/BIMSBbioinfo/reg2gene
+[![Build Status](https://travis-ci.org/BIMSBbioinfo/reg2gene.svg?branch=master)](https://travis-ci.org/BIMSBbioinfo/reg2gene)
+![codecov.io](https://codecov.io/github/BIMSBbioinfo/reg2gene/coverage.svg?branch=master)
 
 
 
@@ -37,4 +37,12 @@ It contains the following:
    - the code for benchmarking predicted interactions given some benchmark dataset: *benchmarkGI()*
 - performance metrics (performance):
     -  the code for performance metrics via calculating and reporting confusion matrix for tested benchmarked dataset: *confusionMatrix()* + *filterPreBenchGI()*
+    
+    
+    
+    # package installation
+    
+        library(devtools)
+        install_github("BIMSBbioinfo/reg2gene")
+    
 
