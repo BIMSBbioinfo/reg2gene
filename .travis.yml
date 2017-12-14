@@ -14,7 +14,9 @@ r:
 
 bioc_packages:
   - BiocCheck
-
+  
+r_packages:
+  - devtools
 r_github_packages:
   - jimhester/covr
   
