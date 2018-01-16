@@ -375,10 +375,17 @@ regActivity <- function(regRegions,
 #' regulatory regions. default 500kb
 #' @param downstream number of basepairs downstream from TSS to look for 
 #' regulatory regions. default 500kb
-#'@param mc.cores (def:1) Define the number of cores to use;
+#' @param mc.cores (def:1) Define the number of cores to use;
 #' at most how many child processes will be run simultaneously 
 #' using mclapply from parallel package. Parallelization requires at 
 #' least two cores.
+#' @param force (DEFAULT: FALSE) This argument allows to test input enhancers
+#' and genes in 1-to-1 manner. Meaning,a gene expression of gene1 is modelled 
+#' using enhancer1 enhancer activity, gene2 gene expression is modelled with
+#' enhancer2 enhancer activity, etc. Thus, input gene expression GRanges object
+#' (tss) needs to have equal length as enhancer activity GRanges object 
+#' (regActivity). It overwrites upstream and downstream arguments since 1-to-1
+#' relationship is tested. 
 #' 
 #' @return An output of regActivityAroundTSS() is a GRangesList object that 
 #' contains per gene GRanges with location of the corresponding TSS and
@@ -418,6 +425,9 @@ regActivity <- function(regRegions,
 #' 
 #' regActivityAroundTSS(regRegion,geneExpression,upstream=5,downstream=5)
 #' 
+#' # force=T, forcing 1-to-1 relationship
+#'  regActivityAroundTSS(regRegion[1:length(geneExpression)],
+#'  geneExpression,upstream=5,downstream=5,force=T)
 #' 
 #' @details only enhancers located within (+/-)upstream/downstream of TSS 
 #' are identified,extracted and reported in output (together with info
@@ -433,60 +443,100 @@ regActivityAroundTSS <- function(regActivity,
                                  tss,
                                  upstream=500000,
                                  downstream=500000,
-                                 mc.cores=1){
+                                 mc.cores=1,
+                                 force=FALSE){
   
   
   if (is.null(tss$name)) {stop("TSS object does not contain info about gene 
                                name. TSS GRanges object should be 2nd arg")}
   
- 
-  # split per gene 
-  tss.extended <- split(tss,
-                        as.character(tss$name))
   
-  # getting EnhRegions which overlap extended TSS
+  # getting modelling data for testing 1-to-1 relationship
   
-  tssActivity <- parallel::mclapply(tss.extended,function(x){
+    if (force==TRUE){
     
-    # overlap extended TSS (+/-downstream and upstream) & regRegion
-  tss.regAct.overlap <- as.data.frame(findOverlaps(promoters(x,
-                                                   upstream,downstream),
-                                                   regActivity))
+    if (length(regActivity)!=length(tss)){stop(
+          "Force=T, but data doesn't have an equal length")
+      
+      }else if (length(regActivity)==length(tss)){
     
-    # if there is any overlap - GO!
-    if (nrow(tss.regAct.overlap)!=0) {
-      regActivity <- regActivity[tss.regAct.overlap$subjectHits]
+        tssActivity <- parallel::mclapply(1:length(tss),function(x){
+    
+      GeneInfo <- tss[x]
+      EnhancerInfo <- regActivity[x]
+    
+      # getting shared info between gene expression and enh activity datasets
+      CommonData <- colnames(mcols(GeneInfo))[colnames(mcols(GeneInfo))%in%
+                                                colnames(mcols(EnhancerInfo))]
       
-      # adjusting mcols for reg region
-            name <- as.character(regActivity)
-            featureType <- rep("regulatory",length(name))
-            name2 <- rep(NA,length(name))
-            
-            mcols(regActivity) <- cbind(featureType,
-                                        name,
-                                        name2,
-                                        data.frame(mcols(regActivity)))
-            
-      # adjusting mcols for gene expression object
-            featureType <- "gene"
-            mcols(x) <- cbind(featureType,
-                              data.frame(mcols(x)))
-            
-            tss.colnames <- colnames(mcols(x))[colnames(mcols(x))%in%
-                                               colnames(mcols(regActivity))]
-            mcols(x) <-  mcols(x)[tss.colnames]
-            mcols(regActivity) <-  mcols(regActivity)[tss.colnames]
-            
-            geneReg <- c(x,regActivity)
-            geneReg$featureType  <- as.character(geneReg$featureType)
-            geneReg$name   <- as.character(geneReg$name)
-            geneReg$name2   <- as.character(geneReg$name2)
-            
-      return(geneReg)
+      # adjusting for common cell types
+          mcols(GeneInfo) <- mcols(GeneInfo)[CommonData]
+          mcols(EnhancerInfo) <- mcols(EnhancerInfo)[CommonData]
+          
+      EnhGene <- c(GeneInfo,EnhancerInfo)
+            # adding meta-data   
+      EnhGene$featureType <- c("gene","regulatory")
+       
+          return(EnhGene)
+            })
+  
+         names(tssActivity) <- tss$name
+  
+      }
+  }
+  
+  # testing many-to-many relationship
+  
+    if (force==FALSE){
       
+      # per gene analysis
+      tss.extended <- split(tss,
+                            as.character(tss$name))
+    
+        tssActivity <- parallel::mclapply(tss.extended,function(x){
+          
+          # overlap extended TSS (+/-downstream and upstream) & regRegion
+        tss.regAct.overlap <- as.data.frame(findOverlaps(promoters(x,
+                                                         upstream,downstream),
+                                                         regActivity))
+          
+          # if there is any overlap - GO!
+          if (nrow(tss.regAct.overlap)!=0) {
+            regActivity <- regActivity[tss.regAct.overlap$subjectHits]
+            
+            # adjusting mcols for reg region
+                  name <- as.character(regActivity)
+                  featureType <- rep("regulatory",length(name))
+                  name2 <- rep(NA,length(name))
+                  
+                  mcols(regActivity) <- cbind(featureType,
+                                              name,
+                                              name2,
+                                              data.frame(mcols(regActivity)))
+                  
+            # adjusting mcols for gene expression object
+                  featureType <- "gene"
+                  mcols(x) <- cbind(featureType,
+                                    data.frame(mcols(x)))
+                  
+                  tss.colnames <- colnames(mcols(x))[colnames(mcols(x))%in%
+                                                     colnames(mcols(regActivity))]
+                  mcols(x) <-  mcols(x)[tss.colnames]
+                  mcols(regActivity) <-  mcols(regActivity)[tss.colnames]
+                  
+                  geneReg <- c(x,regActivity)
+                  geneReg$featureType  <- as.character(geneReg$featureType)
+                  geneReg$name   <- as.character(geneReg$name)
+                  geneReg$name2   <- as.character(geneReg$name2)
+                  
+            return(geneReg)
+            
+          }
+        },
+        mc.cores = mc.cores)
+  
     }
-  },
-  mc.cores = mc.cores)
+  
   
   # removing NULL entries
   tssActivity <- tssActivity[!sapply(tssActivity,is.null)]
