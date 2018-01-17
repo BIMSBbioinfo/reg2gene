@@ -5,7 +5,7 @@
 \title{Identify regulatory regions around provided TSSes}
 \usage{
 regActivityAroundTSS(regActivity, tss, upstream = 5e+05, downstream = 5e+05,
-  mc.cores = 1)
+  mc.cores = 1, force = FALSE)
 }
 \arguments{
 \item{regActivity}{a GRanges object output from \code{regActivity}
@@ -30,6 +30,14 @@ regulatory regions. default 500kb}
 at most how many child processes will be run simultaneously 
 using mclapply from parallel package. Parallelization requires at 
 least two cores.}
+
+\item{force}{(DEFAULT: FALSE) This argument allows to test input enhancers
+and genes in 1-to-1 manner. Meaning,a gene expression of gene1 is modelled 
+using enhancer1 enhancer activity, gene2 gene expression is modelled with
+enhancer2 enhancer activity, etc. Thus, input gene expression GRanges object
+(tss) needs to have equal length as enhancer activity GRanges object 
+(regActivity). It overwrites upstream and downstream arguments since 1-to-1
+relationship is tested.}
 }
 \value{
 An output of regActivityAroundTSS() is a GRangesList object that 
@@ -85,5 +93,8 @@ upstream=1,downstream=1)
 
 regActivityAroundTSS(regRegion,geneExpression,upstream=5,downstream=5)
 
+# force=T, forcing 1-to-1 relationship
+ regActivityAroundTSS(regRegion[1:length(geneExpression)],
+ geneExpression,upstream=5,downstream=5,force=T)
 
 }

@@ -476,7 +476,9 @@ regActivityAroundTSS <- function(regActivity,
       EnhGene <- c(GeneInfo,EnhancerInfo)
             # adding meta-data   
       EnhGene$featureType <- c("gene","regulatory")
-       
+      EnhGene$name <- c(GeneInfo$name,as.character(EnhancerInfo))
+      EnhGene$name2 <- c(GeneInfo$name,as.character(EnhancerInfo))
+      
           return(EnhGene)
             })
   
