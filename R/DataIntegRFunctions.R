@@ -465,6 +465,9 @@ regActivityAroundTSS <- function(regActivity,
       GeneInfo <- tss[x]
       EnhancerInfo <- regActivity[x]
     
+      #keep names, because GeneInfo is stripped off this info afterwards
+      names <- c(GeneInfo$name,GeneInfo$name2)
+      
       # getting shared info between gene expression and enh activity datasets
       CommonData <- colnames(mcols(GeneInfo))[colnames(mcols(GeneInfo))%in%
                                                 colnames(mcols(EnhancerInfo))]
@@ -476,8 +479,14 @@ regActivityAroundTSS <- function(regActivity,
       EnhGene <- c(GeneInfo,EnhancerInfo)
             # adding meta-data   
       EnhGene$featureType <- c("gene","regulatory")
-      EnhGene$name <- c(GeneInfo$name,as.character(EnhancerInfo))
-      EnhGene$name2 <- c(GeneInfo$name,as.character(EnhancerInfo))
+      EnhGene$name <- c(names[1],as.character(EnhancerInfo))
+      EnhGene$name2 <- c(names[2],as.character(EnhancerInfo))
+      
+      #ordering meta-data
+      FirstMetaData <- c("featureType","name","name2")
+      BigWigMetaData <- colnames(mcols(EnhGene))[!colnames(mcols(EnhGene))
+                                                 %in%FirstMetaData]
+        mcols(EnhGene) <- mcols(EnhGene)[c(FirstMetaData,BigWigMetaData)]
       
           return(EnhGene)
             })
