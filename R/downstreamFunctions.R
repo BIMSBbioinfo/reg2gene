@@ -28,7 +28,8 @@ extractInfo <- function(path,
 #' 
 #' @param pathModels (character) a path to folder where .rds files are stored or 
 #' an object with paths to .rds files.  
-#' IMPORTANT! cohort/method/algorithm names should be indicated in the path, 
+#' # IMPORTANT! 
+#' cohort/method/algorithm names should be indicated in the path, 
 #' or .rds files with this name should be present in the defined directory 
 #' @param type "ind" (default; character)
 #' OPTIONS: ("votingAlgoritm","votingCohorts","votingMethods","metaA","regAct",
@@ -78,7 +79,7 @@ extractInfo <- function(path,
 #' type="ind",method="H3K4me1",algorithm="pearson",cohort="Roadmap")
 #' 
 #' # cohort/method/algorithm names should be indicated in the path, or .rds 
-#' files with this name should be present in the defined directory
+#' # files with this name should be present in the defined directory
 #' 
 #' makeIndexTable(pathModels="~/test.rds",
 #' type="ind",method="H3K4me1",algorithm="pearson",cohort="Roadmap")
@@ -378,7 +379,6 @@ selectEP <- function(indexTable,
 #' IndexTable <- readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Results/Validation/Fishillevic/VoteD//CohortVoting_McGillH3K4me1.rds")
 #' 
 #' votedtEP(indexTable,
-#' topN="all",
 #' votingType="votingAlgorithm",
 #' method="H3K4me1",
 #' algorithm="pearson",
@@ -492,12 +492,10 @@ plotTopGEEA <- function(enhPromPairs, # output of selectEP
                         indexTable,
                         method="H3K4me1",
                         algorithm="dcor",
-                        cohort="Roadmap",
-                        ...) {
+                        cohort="Roadmap") {
   
   
        regActRes <-  votedtEP(indexTable,
-                              topN="all",
                               votingType="votingAlgorithm",
                               method=method,
                               algorithm=algorithm,
@@ -552,8 +550,7 @@ plotTopGEEA <- function(enhPromPairs, # output of selectEP
                      nrow = 4,ncol=4, scales = "free")  + 
           coord_equal() +
           labs(x = "Gene Expression", y = "Enh Activity") +
-          ggtitle(paste0(c("Details:", method,algorithm,cohort,
-                           "; N(enh~prom): ",topN),collapse = ""))
+          ggtitle(paste0(c("Details:", method,algorithm,cohort),collapse = ""))
   
      
 }
@@ -660,7 +657,6 @@ metaVotePoStat <- function(indexTable=IndexTable,
       
     # obtaining voting statistics
           positivesN <- length(votedtEP(indexTable.ss,
-                         topN="all",
                          votingType=type,
                          method=method,
                          algorithm=algorithm,
