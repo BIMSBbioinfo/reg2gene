@@ -61,12 +61,12 @@ individual modelling  or a result of regActivityAroundTSS()
 }
 \details{
 An IndexTable which is a result of makeIndexTable() is used as
-an input for following functions: selectEP(),votedtEP(),plotTopGEEA() to
+an input for following functions: selectEP(),votedEP(),plotGEEA() to
 gathers paths to different reg2gene data integration and modelling results,
 and allows easier downstream analysis. This f() should be separately runned
 for voting("votingAlgoritm","votingCohorts","votingMethods"), 
 meta-analysis and individual modelling, and regActivityAroundTSS() results, 
-and individual IndexTables should be pooled together, such that plotTopGEEA()
+and individual IndexTables should be pooled together, such that plotGEEA()
 function can be runned (it requires paths to "regAct" .rds files - results of 
 regActivityAroundTSS() and for example modelling paths.
 }

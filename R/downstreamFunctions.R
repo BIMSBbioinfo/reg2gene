@@ -62,12 +62,12 @@ extractInfo <- function(path,
 #' modelling ("ind") or a result of regActivityAroundTSS() ("regAct")
 #' 
 #' @details  An IndexTable which is a result of makeIndexTable() is used as
-#' an input for following functions: selectEP(),votedtEP(),plotTopGEEA() to
+#' an input for following functions: selectEP(),votedEP(),plotGEEA() to
 #' gathers paths to different reg2gene data integration and modelling results,
 #' and allows easier downstream analysis. This f() should be separately runned
 #' for voting("votingAlgoritm","votingCohorts","votingMethods"), 
 #' meta-analysis and individual modelling, and regActivityAroundTSS() results, 
-#' and individual IndexTables should be pooled together, such that plotTopGEEA()
+#' and individual IndexTables should be pooled together, such that plotGEEA()
 #' function can be runned (it requires paths to "regAct" .rds files - results of 
 #' regActivityAroundTSS() and for example modelling paths.
 #' 
@@ -378,7 +378,7 @@ selectEP <- function(indexTable,
 #' library(stringr)
 #' IndexTable <- readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Results/Validation/Fishillevic/VoteD//CohortVoting_McGillH3K4me1.rds")
 #' 
-#' votedtEP(indexTable,
+#' votedEP(indexTable,
 #' votingType="votingAlgorithm",
 #' method="H3K4me1",
 #' algorithm="pearson",
@@ -386,7 +386,8 @@ selectEP <- function(indexTable,
 #'  
 #' }
 #' @author Inga Patarcic
-votedtEP <- function(indexTable,
+#' @export
+votedEP <- function(indexTable,
                      votingType="votingAlgoritm",
                      method="H3K4me1",
                      algorithm="pearson",
@@ -480,7 +481,7 @@ votedtEP <- function(indexTable,
 #' TOPgenes <- readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Results/Validation/Fishillevich/TOPgenesH3K4me1dcorRoadmap.rds")
 #' IndexTable <- readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Results/Validation/Fishillevic/VoteD//CohortVoting_McGillH3K4me1.rds")
 #' 
-#' plotTopGEEA(TOPgenes,
+#' plotGEEA(TOPgenes,
 #'        indexTable=IndexTable,
 #'        method="H3K4me1",
 #'        algorithm="dcor",
@@ -488,20 +489,19 @@ votedtEP <- function(indexTable,
 #' 
 #' }
 #' @export
-plotTopGEEA <- function(enhPromPairs, # output of selectEP
+plotGEEA <- function(enhPromPairs, # output of selectEP
                         indexTable,
                         method="H3K4me1",
                         algorithm="dcor",
                         cohort="Roadmap") {
   
   
-       regActRes <-  votedtEP(indexTable,
-                              votingType="votingAlgorithm",
-                              method=method,
-                              algorithm=algorithm,
-                              cohort=cohort)
-      
-       
+    
+  regActRes <- readRDS(indexTable$path[which(((indexTable$methods==method)
+                                   &(indexTable$type=="regAct")
+                                   &(indexTable$cohort==cohort)))])
+  
+  
        # creating per gene~enhancer object to plot
        
        #enhPromPairs <- TOPgenes
@@ -561,7 +561,7 @@ plotTopGEEA <- function(enhPromPairs, # output of selectEP
 #' Reports a number of statistically significant enhancer~
 #' promoter associations
 #' 
-#' metaVotePoStat() reports the number of statistically significant enhancer~
+#' compareModelStat() reports the number of statistically significant enhancer~
 #' promoter associations for voting or meta-analysis and corresponing individual
 #' modelling results. IMORTANT NOTE: since it uses results of previously runned
 #' voting procedure it is important that statistics and threshold values used in
@@ -628,7 +628,7 @@ plotTopGEEA <- function(enhPromPairs, # output of selectEP
 #' 
 #' IndexTable <- readRDS("/data/akalin/Projects/AAkalin_Catalog_RI/Results/Validation/Fishillevic/VoteD//CohortVoting_McGillH3K4me1.rds")
 #' 
-#' metaVotePoStat(indexTable=IndexTable, 
+#' compareModelStat(indexTable=IndexTable, 
 #' type="votingAlgorithm",
 #' method="H3K4me1", 
 #' algorithm="dcor",
@@ -637,7 +637,7 @@ plotTopGEEA <- function(enhPromPairs, # output of selectEP
 #' }
 #' 
 #' @export
-metaVotePoStat <- function(indexTable=IndexTable,
+compareModelStat <- function(indexTable=IndexTable,
                     type="votingAlgorithm",
                     typeSuccess="pval",
                     thresholdSuccess=0.1,
@@ -656,7 +656,7 @@ metaVotePoStat <- function(indexTable=IndexTable,
   if (type!="metaA"){
       
     # obtaining voting statistics
-          positivesN <- length(votedtEP(indexTable.ss,
+          positivesN <- length(votedEP(indexTable.ss,
                          votingType=type,
                          method=method,
                          algorithm=algorithm,
