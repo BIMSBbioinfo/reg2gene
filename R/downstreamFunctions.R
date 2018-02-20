@@ -463,7 +463,8 @@ votedEP <- function(indexTable,
 #' @details This function allows quick visualization of selected EP pairs as a
 #' scatterplot of corresponding levels of enhancer activity and gene expression 
 #' for all data entries (cell types used in the modelling procedure:
-#' \code{\link{associateReg2Gene}}). This info is plotted for max 16 EP pairs. 
+#' \code{\link{associateReg2Gene}}). This info is plotted for max 16 EP pairs, 
+#' thus only the first 16 pairs will be plotted.
 #' It is useful in the case when one wants to visualize the background levels of 
 #' enhancer activity and gene expression for TOP EP associations. Since, for 
 #' each combination of cohort/methods/algorithms separated modelling is 
@@ -495,6 +496,9 @@ plotGEEA <- function(enhPromPairs, # output of selectEP
                         algorithm="dcor",
                         cohort="Roadmap") {
   
+  
+    # current plot allows max 16 interactions to be plotted
+  if (length(enhPromPairs)>16){enhPromPairs <- enhPromPairs[1:16]}
   
     
   regActRes <- readRDS(indexTable$path[which(((indexTable$methods==method)
