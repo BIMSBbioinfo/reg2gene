@@ -533,7 +533,7 @@ plotGEEA <- function(enhPromPairs, # output of selectEP
                                " coef=", signif(gEeA$coefs,digits=2)),
                                collapse = "")
            
-          EPpairs <- paste(geneExpression$name,enhActivity)
+          EPpairs <- paste(geneExpression$name2,enhActivity)
            
           return(cbind(geneExp,enhAct,ModResult,EPpairs))
        })
