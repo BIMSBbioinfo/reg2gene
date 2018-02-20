@@ -9,12 +9,12 @@ confusionMatrix(reg2GeneBench, benchCol = "Bench", prefilterCol = NULL,
 }
 \arguments{
 \item{reg2GeneBench}{GInteractions object with added benchmark 
-\code{benchmarkGI} and OPTIONAL  \code{filterPreBenchGI} 
+\code{benchmarkAssociations} and OPTIONAL  \code{filterPreBenchGI} 
 metadata. However,prior this analysis, it is advised to reduce the number of
 true negatives by including only reg2gene entries that could be potentially
 benchmarked.To get that info run \code{filterPreBenchGI} and add filter 
 column with metadata from this function to reg2GeneBench GInteractions 
-object prior running \code{benchmarkGI})}
+object prior running \code{benchmarkAssociations})}
 
 \item{benchCol}{character (default "Bench"), results of benchmarking 
 procedure; eg a column name of the metadata which indicates the column where 

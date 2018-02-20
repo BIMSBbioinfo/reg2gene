@@ -4,8 +4,8 @@
 \alias{associateReg2Gene}
 \title{Associate regulatory regions to genes}
 \usage{
-associateReg2Gene(input, method = "pearson", scaleData = TRUE, cores = 1,
-  B = 1000, asGInteractions = T, ...)
+associateReg2Gene(input, method = "pearson", scaleData = TRUE,
+  mc.cores = 1, B = 1000, asGInteractions = T, ...)
 }
 \arguments{
 \item{input}{a GRangesList that contains regulatory activity and
@@ -19,7 +19,7 @@ below or the output of \code{\link{regActivityAroundTSS}} function.}
 regulatory activity will be scaled to have 0 mean and unit variance using
 \code{\link[base]{scale}} function.}
 
-\item{cores}{number of cores to be used}
+\item{mc.cores}{number of cores to be used}
 
 \item{B}{number of randomizations, default 1000. This procedure
 is used to estimate P-values for coeficients returned by different methods.}
@@ -93,16 +93,16 @@ forests.
  # OUTPUT: associateReg2Gene
  
  
-    associateReg2Gene(gr0,cores = 1)
-    associateReg2Gene(gr0,cores = 1,asGInteractions=FALSE) # report as GRanges
-    associateReg2Gene(GRangesList(gr0),cores = 1)
+    associateReg2Gene(gr0,mc.cores = 1)
+    associateReg2Gene(gr0,mc.cores = 1,asGInteractions=FALSE) # report as GRanges
+    associateReg2Gene(GRangesList(gr0),mc.cores = 1)
      
  # change N of resampling rounds   
-    associateReg2Gene(GRangesList(gr0),cores = 1,B=100) 
+    associateReg2Gene(GRangesList(gr0),mc.cores = 1,B=100) 
  # elastic net should return all NA values because 
  # only one predictor variable(x) is used to predict y  
   
-    associateReg2Gene(GRangesList(gr0),cores = 1,method="elasticnet") 
+    associateReg2Gene(GRangesList(gr0),mc.cores = 1,method="elasticnet") 
 
 }
 \author{

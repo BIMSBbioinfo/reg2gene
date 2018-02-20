@@ -2,7 +2,7 @@
 % Please edit documentation in R/BenchmarkGInteractions.R
 \name{forceByname}
 \alias{forceByname}
-\title{Benchmarks help function}
+\title{Benchmarks help function - forceByName}
 \usage{
 forceByname(benchData, reg2Gene)
 }
