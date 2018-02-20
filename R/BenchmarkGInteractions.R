@@ -528,7 +528,7 @@ confusionMatrix <- function(reg2GeneBench,
 }
 
  
-#' Benchmarks help function 
+#' Benchmarks help function - forceByName
 #' 
 #' Forces benchmark input object to use gene coordinates of reg2Gene object if
 #' gene names overlap. It is crucial that benchData & reg2Gene both contain
