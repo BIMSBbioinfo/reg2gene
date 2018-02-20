@@ -507,8 +507,8 @@ regActivityAroundTSS <- function(regActivity,
         tssActivity <- parallel::mclapply(tss.extended,function(x){
           
           # overlap extended TSS (+/-downstream and upstream) & regRegion
-        tss.regAct.overlap <- as.data.frame(findOverlaps(promoters(x,
-                                                         upstream,downstream),
+        tss.regAct.overlap <- as.data.frame(findOverlaps(
+                trim(suppressWarnings(promoters(x,upstream,downstream))),
                                                          regActivity))
           
           # if there is any overlap - GO!
