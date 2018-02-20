@@ -53,14 +53,14 @@ library(reg2gene)
    QFR <- annotateGenomicRegions(genomicRegions=genomicRegions,
                        annotations=annotations)
   expect_is(QFR,"GInteractions")
-  expect_equal(names(mcols(QFR)),"name")
+  expect_equal(names(mcols(QFR)),c("name","annotatedAs"))
    
    
   # if annotation is GRanges object - works ok
    QFR <- annotateGenomicRegions(genomicRegions=genomicRegions,
                               annotations=annotationsGenes) 
    expect_is(QFR,"GInteractions")
-   expect_equal(names(mcols(QFR)),"name")
+   expect_equal(names(mcols(QFR)),c("name","annotatedAs"))
  })
    
  
@@ -84,6 +84,8 @@ library(reg2gene)
          
          expect_equal(length(QFRIT),3) # 3 ranges should be identified
          expect_equal(QFRIT$name,c("gen1","gen2","gen3"))
+         # check annotatedAs argument
+         expect_equal(QFRIT$annotatedAs,c("promoter","enhancer","nearestGene"))
          expect_false("gen4"%in%QFRIT$name)
          
    # location of result is equal to input

@@ -160,69 +160,100 @@ annotateGenomicRegions <- function(genomicRegions,
                       PromoterAssociated <- DataFrame(
                                       findOverlaps(genomicRegions, TSSextended)
                                                       )
-            
+                      if (nrow(PromoterAssociated)!=0){ 
+                        # if something is associated with promoter - proceed
+                      
                       PromotersPeak <- GInteractions(
                                   genomicRegions[PromoterAssociated$queryHits],
                                   TSSextended[PromoterAssociated$subjectHits])
                       
                       mcols(PromotersPeak) <- mcols(annotations[
-                        PromoterAssociated$subjectHits])
-                        PromotersPeak$annotatedAs <- "promoter"
-                # remaining genomicRegions:
+                                                PromoterAssociated$subjectHits])
+                        
+                          PromotersPeak$annotatedAs <- "promoter"
+                      }
+                
+                # for remaining genomicRegions:
                 #-----------------
                 
                 # 1. try to explain as an enhancer
                         # identify remaining unexplained genomicRegions
+                        
+                       
                       genomicRegionsEnhancer <- genomicRegions[
                                        -(unique(PromoterAssociated$queryHits))]
                         
-                        # overlap with regulatory regions
-                     EnhancerAssociated <- DataFrame(
+                        if (length(genomicRegionsEnhancer)!=0){ 
+                          
+                          # is there anything that can be associated with enh
+                        
+                          # overlap with regulatory regions
+                          EnhancerAssociated <- DataFrame(
                             findOverlaps(genomicRegionsEnhancer,rRegionextended)
                                                     )
+                          if (nrow(EnhancerAssociated)!=0){
+                            
+                            # is there anything that is associated with enh
+                            
                         # identify corresponding genes
-                      EnhancerPeak <- GInteractions(
-                          genomicRegionsEnhancer[EnhancerAssociated$queryHits],
-                          TSSextended[EnhancerAssociated$subjectHits])
+                          EnhancerPeak <- GInteractions(
+                           genomicRegionsEnhancer[EnhancerAssociated$queryHits],
+                                    TSSextended[EnhancerAssociated$subjectHits])
                         
-                        mcols(EnhancerPeak) <- mcols(annotations[
-                          EnhancerAssociated$subjectHits])
+                          mcols(EnhancerPeak) <- mcols(annotations[
+                                              EnhancerAssociated$subjectHits])
                         
-                        EnhancerPeak$annotatedAs <- "enhancer"
+                            EnhancerPeak$annotatedAs <- "enhancer"
                         
+                          }
+                        
+                        }
+                      
+                      
                 # 2. or assign to the closest gene within +/- 1000000
                         
                         #  identify remaining unexplained genomicRegions
                       genomicRegionsClosestG <- genomicRegionsEnhancer[-(unique(
                                                  EnhancerAssociated$queryHits))]
-                        # find nearest genes
-                      nearestGenes <- DataFrame(
+                        
+                      
+                        if (length(genomicRegionsClosestG)!=0){
+                          # is there anything that can be associated with 
+                          # nearest gene
+                           
+                            nearestGenes <- DataFrame(
                            distanceToNearest(genomicRegionsClosestG,TSSextended)
-                                                )
+                                  
+                                         )
                       
+                            nearestGenesAss <- nearestGenes[
+                              which(nearestGenes$distance<distance),]
+                            
+                        if (nrow(nearestGenesAss)!=0){        
                         # threshold nearest genes by distance
-                      nearestGenesAss <- nearestGenes[
-                                        which(nearestGenes$distance<distance),]
-                         
-                      
-                        # genes 
-                  NearestGenePeak <- GInteractions(
+                           
+                          # genes 
+                            NearestGenePeak <- GInteractions(
                               genomicRegionsClosestG[nearestGenesAss$queryHits],
                                        TSSextended[nearestGenesAss$subjectHits])
                         
-                    mcols(NearestGenePeak) <- mcols(annotations[
+                            mcols(NearestGenePeak) <- mcols(annotations[
                                                   nearestGenesAss$subjectHits])  
                       
-                    NearestGenePeak$annotatedAs <- "nearestGene" 
+                            NearestGenePeak$annotatedAs <- "nearestGene"
+                        }  
+                             
                 # 3. unassign if none of these categories is matched
                 
                     RemainGenes <- nearestGenes[which(nearestGenes$distance>
                                                         distance),]
                   
-                  
+                        }
                   # return genomicRegions that remained unexplained
                   
                        
+                      
+                      # what to report
                         if (!identified) {
                           
                           return(genomicRegionsClosestG[RemainGenes$queryHits])
