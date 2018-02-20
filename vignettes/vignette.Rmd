@@ -1720,14 +1720,7 @@ Visel, Axel, et al. "VISTA Enhancer Browser—a database of tissue-specific huma
 
 Wright, Marvin N., and Andreas Ziegler. "ranger: A fast implementation of random forests for high dimensional data in C++ and R." arXiv preprint arXiv:1508.04409 (2015).
 
----
 
-# IN ADDITION: Projects flowchart
-
-```{r fig1, fig.height = 5, fig.width = 3, fig.align = "left"}
-#knitr::include_graphics("https://github.com/BIMSBbioinfo/reg2gene/blob/master/vignettes/Figures/reg2geneflowchart2.png")
-
-```
 
 
 
