@@ -118,7 +118,7 @@ extractInfo <- function(path,
 #' 
 #' }
 #' 
-#' @export
+#' @keywords internal
 makeIndexTable <- function(pathModels,
                            type="ind",
                            method="H3K4me1",
@@ -234,7 +234,7 @@ makeIndexTable <- function(pathModels,
 #' 
 #' 
 #' 
-#' @export
+#' @keywords internal
 selectEP <- function(indexTable,
                   topN="all", #change argument "all" not all
                   select="top", #"bottom","random",
@@ -386,7 +386,7 @@ selectEP <- function(indexTable,
 #'  
 #' }
 #' @author Inga Patarcic
-#' @export
+#' @keywords internal
 votedEP <- function(indexTable,
                      votingType="votingAlgoritm",
                      method="H3K4me1",
@@ -489,7 +489,7 @@ votedEP <- function(indexTable,
 #'        cohort="Roadmap")
 #' 
 #' }
-#' @export
+#' @keywords internal
 plotGEEA <- function(enhPromPairs, # output of selectEP
                         indexTable,
                         method="H3K4me1",
@@ -640,7 +640,7 @@ plotGEEA <- function(enhPromPairs, # output of selectEP
 #' 
 #' }
 #' 
-#' @export
+#' @keywords internal
 compareModelStat <- function(indexTable=IndexTable,
                     type="votingAlgorithm",
                     typeSuccess="pval",
