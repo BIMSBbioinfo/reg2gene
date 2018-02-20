@@ -9,40 +9,30 @@ Author: person("Inga", "Patarcic", email = "inga.patarcic@mdc-berlin.de",
 Maintainer: Inga Patarcic <inga.patarcic@mdc-berlin.de>
 Description: 
 reg2gene R package was build to perform two main categories of tasks:
-  
-   1.  to predict target genes for regulatory elements genome-wide by
+     1.  to predict target genes for regulatory elements genome-wide by
    building "gene expression ~ enhancer activity" models.
    2. to annotate genomic regions to genes they are associated with. 
-    
-
 TASK 1: Building models & predicting target genes set of reg2gene functions 
 allows users to perform: 
-    
   1. DATA INTEGRATION - e.g. to extract information stored in bigWig files 
   (across  different cell types) to
   a. quantify (enhancer) activity (regulatory potential) for genomic regions 
   of interest (enhancer regions), and
   b. quantify gene expression for genes of interest, and/or
   c. to combine these informations into one object used further for modelling
-  
   2. DATA MODELLING (including performance assessment) - model of 
   gene expression ~ enhancer activity using different algorithms, 
   and combine different models with meta-analysis and voting procedure.
   Additionally, one can benchmark results & obtain confusion matrix.
-
   3. DATA VISUALIZATION - 
     Reported regulatory regions ~ genes associations can be visualized as loops
     in the context of the genome. 
- 
- 
 TASK 2: Annotate genomic regions to the genes they are associated with
-  
   One can annotate regions of interest (ChIP-Seq peaks or similar regions in 
   the genome) to the genes they are associated with based on the modelled 
   enhancer~gene associations. 
   *Optionally one can as well associate genes with diseases reported in the
   disease-gene databases.
-
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.4.0),
