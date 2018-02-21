@@ -27,6 +27,7 @@ Description: reg2gene R package was build to perform 2 main categories of tasks:
   genome) to genes they are associated with based on the modelled enhancer-gene 
   associations. Optionally one can as well associate genes with diseases 
   reported in the disease-gene databases.
+License: Artistic-2.0
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.4.0),
