@@ -1,6 +1,6 @@
-#' Hierarchically associates input GRanges object with corresponding genes
+#' Hierarchically annotates input GRanges object with corresponding genes
 #'
-#' This function either associates input regions to their nearby genes or it 
+#' This function either annotates input regions to their nearby genes or it 
 #' hierarchical runs association procedure (when GIneraction object is used as
 #' an input) as follows: promoters,enhancers, nearby genes.
 #'
@@ -22,24 +22,26 @@
 #' @param downstream number of basepairs downstream from TSS to look for 
 #' input genomicRegions. default 1000
 #' @param distance (default 1Mb). Maximal allowed distance between genes TSS and
-#' input peak. Used in the 3rd step of the association procedure (genomicRegions
-#' are assiciated to the closest gene within predefined distance)
-#' @param identified (default TRUE). Whether to report genomicRegions for
-#' which corresponding genes are idenfitied or to report regions for which
-#' info about gene is missing.
+#' input peak. Used in the 3rd step of the association procedure (genomic 
+#' regions is associated to the closest gene if the distance between these 
+#' two locations is smaller than prediefined distance threshold.)
+#' @param identified (default TRUE). 
+#' If TRUE, report genomic regions AND corresponding genes;
+#' If FALSE, report regions for which info about gene is missing.
 #' 
-#' @details This function associates input genomicRegions to the promoter 
+#' 
+#' @details This function annotates input genomicRegions to the promoter 
 #' regions of genes (and correspondingly to that gene) if only location of genes
 #' (as GRanges object) and of genomicRegions is provided. 
 #' Meaning that, if the input genomicRegions is located within +/- 
-#' upstream/downstream distance from TSS of a gene, then this gene is associated
+#' upstream/downstream distance from TSS of a gene, then this gene is annotated
 #' to the queried region.
 #' When GIneraction object is used as an input, then hierarchical association
 #' procedure is runned as follows: promoters,enhancers, nearby genes, eg:
 #' 1) genomic regions of interest are first considered to be 
-#' promoters and associated with nearby genes if they are located within a 
+#' promoters and annotated with nearby genes if they are located within a 
 #' certain distance from TSS of nerbay gene (default +/-1000bp); otherwise
-#' 2) remaning genes are overlapped with enhancer regions, and genes associated
+#' 2) remaning genes are overlapped with enhancer regions, and genes annotated
 #' to that enhancer regions are reported, 
 #' 3) if no overlap with either promoters nor enhancers is identified, then 
 #' closest gene is reported if it is located within 1Mb
@@ -51,10 +53,10 @@
 #'
 #'
 #' @return A \code{\link[InteractionSet]{GInteractions}} object that contains
-#' info about genes (location+meta-data) associated with regions of interest.
+#' info about genes (location+meta-data) annotated with regions of interest.
 #' Anchor1 corresponds to the queried genomicRegions location, whereas anchor2
 #' corresponds to gene location.  It additionaly reports whether genomic region
-#' overlapped with promoter or enhancer region of the associated gene, or an
+#' overlapped with promoter or enhancer region of the annotated gene, or an
 #' association was assessed based on the proximity to the gene (possible values
 #' "enhancer","promoter","nearestGene").
 #' 
