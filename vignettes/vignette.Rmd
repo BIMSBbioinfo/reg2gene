@@ -1025,10 +1025,7 @@ to overlap some regulatory regions.
 Additionaly, benchmark datasets can be plotted as well
 ```{r}
                    
- benchmarkData = list(GenomeInteractions[1:3],
-                      GenomeInteractions[4:5],
-                      GenomeInteractions[6])
-    names(benchmarkData) <- c("Bench1","Bench2","Bench3")
+ benchmarkData = list(GenomeInteractions[1:3])
 
   plotGenomeInteractions(interactionData = GenomeInteractions,
                          coloring = "color",
