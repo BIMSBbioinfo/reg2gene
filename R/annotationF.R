@@ -29,6 +29,7 @@
 #' If TRUE, report genomic regions AND corresponding genes;
 #' If FALSE, report regions for which info about gene is missing.
 #' 
+#' @param ... Any parameter in the future
 #' 
 #' @details This function annotates input genomicRegions to the promoter 
 #' regions of genes (and correspondingly to that gene) if only location of genes
@@ -68,6 +69,12 @@
 #' 
 #' library(GenomicRanges)
 #' library(InteractionSet)
+#' library(GenomicInteractions)
+#' library(Gviz)
+#' library(biomaRt)
+#' library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+#' library(GenomicFeatures)
+#' library(reg2gene)
 #' 
 #' genomicRegions <- GRanges(c("chr1:1-2", # 1. overlap prom
 #'                             "chr2:1-2",  # 2. overlap enh
@@ -263,10 +270,32 @@ annotateGenomicRegions <- function(genomicRegions,
                           }
                   
                         if (identified) {
+                          
+                          if (exists("NearestGenePeak")){
+                            
+                            return(c(PromotersPeak,
+                                     EnhancerPeak,
+                                     NearestGenePeak))
+                            
+                          }
                         
+                          if (!exists("NearestGenePeak")){
+                            
+                            if (exists("EnhancerPeak")){
+                            
                               return(c(PromotersPeak,
-                                       EnhancerPeak,
-                                       NearestGenePeak))
+                                     EnhancerPeak))
+                            
+                          }
+                              
+                            
+                            if (!exists("EnhancerPeak")&
+                                exists("PromotersPeak")){
+                              
+                              return(c(PromotersPeak))
+                              
+                            }  
+                            
                               }
                 
                 }
@@ -274,5 +303,5 @@ annotateGenomicRegions <- function(genomicRegions,
               
 }
   
-  
+}
   

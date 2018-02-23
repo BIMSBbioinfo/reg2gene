@@ -15,6 +15,9 @@
 #' @import glmnet
 #' @import IRanges
 #' @import InteractionSet
+#' @import GenomicFeatures
+#' @import Gviz
+#' @import GenomicInteractions
 #' @importFrom data.table data.table
 #' @importFrom parallel mclapply
 #' @importFrom DESeq2 estimateSizeFactorsForMatrix

@@ -37,6 +37,8 @@ two locations is smaller than prediefined distance threshold.)}
 \item{identified}{(default TRUE). 
 If TRUE, report genomic regions AND corresponding genes;
 If FALSE, report regions for which info about gene is missing.}
+
+\item{...}{Any parameter in the future}
 }
 \value{
 A \code{\link[InteractionSet]{GInteractions}} object that contains
@@ -79,6 +81,12 @@ anchor2 is the location of gene/TSS.
 
 library(GenomicRanges)
 library(InteractionSet)
+library(GenomicInteractions)
+library(Gviz)
+library(biomaRt)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+library(GenomicFeatures)
+library(reg2gene)
 
 genomicRegions <- GRanges(c("chr1:1-2", # 1. overlap prom
                             "chr2:1-2",  # 2. overlap enh
