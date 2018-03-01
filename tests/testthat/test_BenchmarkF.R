@@ -30,6 +30,7 @@ library(reg2gene)
 require(GenomicRanges)
 require(InteractionSet)
 require(stringr)
+require(testthat)
 
 
 reg2Gene <- GInteractions(GRReg1_toy,GRReg1_toy$reg)
@@ -64,7 +65,7 @@ test_that("test that benchmark/filter inputs correct GInteractions object
 test_that("test that benchmark/filter inputs correct list of GIs 
           object form", {    
     
-  expect_is(benchDataList,"list","List: not inputed correctly to benchmarkGI")
+  expect_is(benchDataList,"list","List: not inputed correctly to  benchmarkAssociations ")
   expect_failure(expect_is(benchDataList,"GInteractions"))
   expect_equal(length(benchDataList),2)
   expect_equal(sapply(benchDataList, length),c(14,9))
@@ -73,7 +74,7 @@ test_that("test that benchmark/filter inputs correct list of GIs
   
 test_that("test that benchmark outputs correct GIs object form", {
     
-    benchR <-  benchmarkGI(reg2Gene,benchData,binary=TRUE)
+    benchR <-   benchmarkAssociations(reg2Gene,benchData,binary=TRUE)
     
     expect_is(benchR,"GInteractions")
     
@@ -89,19 +90,49 @@ test_that("test that benchmark outputs correct GIs object form", {
                         benchR$anchor1.Bench1Exp)),"counts to binary benchmark")
     
     # binary=F returns not >1 as well
-    benchR <-  benchmarkGI(reg2Gene,benchData,binary=F)
+    benchR <-   benchmarkAssociations (reg2Gene,benchData,binary=F)
         expect_true(all(benchR$Bench==benchR$anchor1.Bench1Exp),"shouldn't be 
                  binary benchmark")
     
     # Checking what happends when anchor1&anchor2 both overlap only one region
-          A1A1A2 <-  benchmarkGI(reg2Gene[1],
+          A1A1A2 <-   benchmarkAssociations (reg2Gene[1],
                     benchData[1]) 
        expect_equal(A1A1A2$Bench,0)
-  })
+  
+    # Check filtering procedure   
+       benchR <-   benchmarkAssociations(reg2Gene,benchData,
+                                         binary=TRUE,
+                                         preFilter = TRUE ) 
+       expect_true(all(as.logical(benchR$Filter)==as.logical(
+         benchR$anchor1.Filter1Exp)),"filter fails")
+       
+        
+       filter2 <- benchmarkAssociations(reg2Gene,reg2Gene,
+                             binary=TRUE,
+                             preFilter = TRUE ) 
+       
+       expect_true(all(as.logical(filter2$Filter)==as.logical(
+         benchR$anchor1.Filter2Exp)),"filter fails")
+
+       # FORCE BY NAME
+       
+       reg2Gene$name <- reg2Gene$anchor1.name
+       benchData$name <- benchData$anchor1.name
+       
+      ForcingName <- benchmarkAssociations(reg2Gene,
+                             benchData,
+                             binary=FALSE,
+                             forceByName = T)
+       
+      expect_equal(ForcingName$Bench,c(1,2,0,2,1,0,3,1,2))
+      
+     
+      
+      })
     
 test_that("test that benchmark outputs correct GIs object for list of GIs",{
     
-    benchRList <-  benchmarkGI(reg2Gene,benchDataList,binary=TRUE)
+    benchRList <-   benchmarkAssociations (reg2Gene,benchDataList,binary=TRUE)
     
     # OUTPUT OK:
     expect_is(benchRList,"GInteractions")
@@ -113,7 +144,7 @@ test_that("test that benchmark outputs correct GIs object for list of GIs",{
     
     # names of the list added ok
         names(benchDataList) <- c("B1","B2")
-        benchRList <-  benchmarkGI(reg2Gene,benchDataList,binary=TRUE)
+        benchRList <-   benchmarkAssociations (reg2Gene,benchDataList,binary=TRUE)
     
     expect_true(all(c("B1","B2")%in%colnames(mcols(benchRList))),
                 "list names adjusted correctly in benchmark f()")
@@ -124,58 +155,11 @@ test_that("test that benchmark outputs correct GIs object for list of GIs",{
     expect_equal(benchRList$B2,rep(1,9))
     
     # testing binary argument
-    benchRList <-  benchmarkGI(reg2Gene,benchDataList,binary=FALSE)
+    benchRList <-   benchmarkAssociations (reg2Gene,benchDataList,binary=FALSE)
     expect_equal(benchRList$B1,c(2,1,0,0,1,2,3,2,2))
     
     })
  
-
-
-##################################################
-# -----------------------------------------------#
-# Filter testing()
-# NOTE: not testing input objects, already tested for benchmark()
-
-test_that("test that filterF() outputs correct GIs object form", {
-  
-  filterR <-  filterPreBenchGI(reg2Gene,benchData)
-  expect_is(filterR,"GInteractions")
-  expect_true("Filter"%in%names(mcols(filterR)),"Filter column not returned")
-  
-  # test functionality:
-  # ------------------
-  expect_true(all(filterR$Filter==filterR$anchor1.Filter1Exp))
-  
-})
-
-test_that("test that filterF() outputs correct GIs object for list of GIs",{
-  
-  filterRList <-  filterPreBenchGI(reg2Gene,benchDataList)
-  
-  # OUTPUT OK:
-  expect_is(filterRList,"GInteractions")
-  
-  #if bench input list, then bench column N should be equal to the length of 
-  # the list
-  expect_equal(length(mcols(reg2Gene))+length(benchDataList),
-               length(mcols(filterRList)))
-  
-  # names of the list added ok
-  names(benchDataList) <- c("F1","F2")
-  benchRList <-  filterPreBenchGI(reg2Gene,benchDataList)
-  
-  expect_true(all(c("F1","F2")%in%colnames(mcols(benchRList))),
-              "list names adjusted correctly in filter f()")
-  
-  # test functionality:
-  # ------------------
-  expect_equal(benchRList$F1,c(1,1,0,1,1,1,1,1,1))
-  expect_equal(benchRList$F2,rep(1,9))
-  expect_failure(expect_equal(benchRList$F1,rep(1,9)))
-  
-})
-
-
 
 
 
