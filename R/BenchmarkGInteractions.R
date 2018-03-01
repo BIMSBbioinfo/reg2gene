@@ -114,7 +114,7 @@
 #'              benchmarkAssociations(reg2Gene,
 #'                       benchData,
 #'                       binary=TRUE,
-#'                       forceByName = T)
+#'                       forceByName = TRUE)
 #'                 
 #' ##################   
 #' # example for list:
@@ -140,7 +140,7 @@
 #' 
 #'   benchmarkAssociations(benchData=benchDataList,
 #'                         reg2Gene = reg2Gene,
-#'                         forceByName = T)
+#'                         forceByName = TRUE)
 #'                             
 #'                             
 #'  # Checking what happends when anchor1&anchor2 both overlap only one region

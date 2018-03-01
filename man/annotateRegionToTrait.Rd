@@ -56,7 +56,7 @@ If DisGeneDB stores info about gene~trait associations as a dataframe
 fetched only based on gene name overlap.
 }
 \examples{
-[to do]
+#[to do]
 
 }
 \author{
