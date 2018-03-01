@@ -47,7 +47,7 @@
 #' 
 #' @author Inga Patarcic
 #' 
-#' @examples [to do]
+#' @examples #[to do]
 #' 
 #' @import GenomicRanges
 #' @import InteractionSet

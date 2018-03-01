@@ -101,10 +101,10 @@
 #' 
 #' annotateGenomicRegions(genomicRegions,
 #'                     annotations =annotations,
-#'                     identified=T)
+#'                     identified=TRUE)
 #' annotateGenomicRegions(genomicRegions,
 #'                     annotations,
-#'                     identified=F)
+#'                     identified=FALSE)
 #' 
 #' @export
 annotateGenomicRegions <- function(genomicRegions,

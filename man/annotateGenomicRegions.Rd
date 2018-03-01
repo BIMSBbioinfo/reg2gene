@@ -113,9 +113,9 @@ annotations = GInteractions(annotationsEnh,annotationsGenes)
 
 annotateGenomicRegions(genomicRegions,
                     annotations =annotations,
-                    identified=T)
+                    identified=TRUE)
 annotateGenomicRegions(genomicRegions,
                     annotations,
-                    identified=F)
+                    identified=FALSE)
 
 }
