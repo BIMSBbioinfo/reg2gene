@@ -124,7 +124,7 @@ benchmarkAssociations(reg2Gene,
              benchmarkAssociations(reg2Gene,
                       benchData,
                       binary=TRUE,
-                      forceByName = T)
+                      forceByName = TRUE)
                 
 ##################   
 # example for list:
@@ -150,7 +150,7 @@ reg2GeneB <- benchmarkAssociations(reg2Gene,
 
   benchmarkAssociations(benchData=benchDataList,
                         reg2Gene = reg2Gene,
-                        forceByName = T)
+                        forceByName = TRUE)
                             
                             
  # Checking what happends when anchor1&anchor2 both overlap only one region
