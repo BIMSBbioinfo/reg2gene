@@ -6,7 +6,7 @@
 \usage{
 plotGenomeInteractions(interactionData, range = NULL, selectGene = NULL,
   selectRegulatoryRegion = NULL, benchmarkData = NULL, statistics = NULL,
-  coloring = NULL)
+  coloring = NULL, benchmarkName = NULL)
 }
 \arguments{
 \item{interactionData}{A GInteractions object with anchor1 corresponding to 
@@ -51,6 +51,9 @@ red. Otherwise, an ID of the column from interactionData object where info
 about color is stored. For example, interactions for different genes can be 
 colored differently, or statistically significant/insignificant interactions
 can be colored differently. User pre-defines this column by itself.}
+
+\item{benchmarkName}{(default NULL) a character vector with names that will be
+used to identify different benchmark datasets}
 }
 \value{
 Nice plot
@@ -72,6 +75,11 @@ Entrez -> hgcn symbol are obtained using biomaRt.
 library(Gviz)
 library(GenomicInteractions)
 library(GenomicFeatures)
+library(GenomicRanges)
+library(InteractionSet)
+library(reg2gene)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+library(biomaRt)
 
 # Creating an example GInteractions set:
 
