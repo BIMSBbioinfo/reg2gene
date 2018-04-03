@@ -73,6 +73,7 @@ regActivityAroundTSS() and for example modelling paths.
 \examples{
 require(stringr)
 
+\dontrun{
 makeIndexTable(pathModels="~/H3K4me1pearsonRoadmap.rds",
 type="ind",method="H3K4me1",algorithm="pearson",cohort="Roadmap")
 
@@ -93,7 +94,7 @@ type="regAct",method="H3K4me1",algorithm="pearson",cohort="Roadmap")
 
 IndexTable <- rbind(IndexTable1,IndexTable2) # IndexTable use downstream  
 
-\dontrun{
+
 algorithm <- c("pearson","spearman","elasticnet","dcor","randomForest")
 cohort=c("Roadmap","Blueprint","CEMT","McGill")
 method=c("H3K4me1","H3K27ac","Methylation","DNase")

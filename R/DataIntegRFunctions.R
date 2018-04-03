@@ -427,7 +427,7 @@ regActivity <- function(regRegions,
 #' 
 #' # force=T, forcing 1-to-1 relationship
 #'  regActivityAroundTSS(regRegion[1:length(geneExpression)],
-#'  geneExpression,upstream=5,downstream=5,force=T)
+#'  geneExpression,upstream=5,downstream=5,force=TRUE)
 #' 
 #' @details only enhancers located within (+/-)upstream/downstream of TSS 
 #' are identified,extracted and reported in output (together with info

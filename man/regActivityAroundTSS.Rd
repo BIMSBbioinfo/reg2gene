@@ -95,6 +95,6 @@ regActivityAroundTSS(regRegion,geneExpression,upstream=5,downstream=5)
 
 # force=T, forcing 1-to-1 relationship
  regActivityAroundTSS(regRegion[1:length(geneExpression)],
- geneExpression,upstream=5,downstream=5,force=T)
+ geneExpression,upstream=5,downstream=5,force=TRUE)
 
 }
