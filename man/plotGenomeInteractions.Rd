@@ -4,20 +4,30 @@
 \alias{plotGenomeInteractions}
 \title{Plots enhancer-promoter interactions}
 \usage{
-plotGenomeInteractions(interactionData, range = NULL, selectGene = NULL,
-  selectRegulatoryRegion = NULL, benchmarkData = NULL, statistics = NULL,
-  coloring = NULL, benchmarkName = NULL)
+plotGenomeInteractions(interactionData, rangeGenes = NULL,
+  selectGene = NULL, selectRegulatoryRegion = NULL, benchmarkData = NULL,
+  statistics = NULL, coloring = NULL,
+  interactionDataName = "Enh~Prom Interactions",
+  benchmarkName = "Benchmark", sizes = 0.3, cex.title = 1,
+  plotEnhancersOne = TRUE)
 }
 \arguments{
-\item{interactionData}{A GInteractions object with anchor1 corresponding to 
-regulatory region, and anchor2 to the TSS of a gene. Minimum meta-data is 
-info about gene names store in column "name2".
-This object can be produced by modelling [ \code{\link{associateReg2Gene}}], 
+\item{interactionData}{A GInteractions object or a list of GInteractions
+objects. Each GInteractions object has an anchor1 which corresponds to 
+regulatory region (enahncer), and anchor2 which should correspond to the TSS 
+of a gene (that info is used to plot promoters, thus please input TSS, not 
+gene coordinated). A minimum necessary info that should be present as 
+meta-data is info about gene names stored in the column "name2". Additionaly,
+statistics (as "pval" column), and colors of the loops (as "color" column) 
+could be added as meta-data. Read more about arguments statistics and 
+coloring.  
+Such object can be produced by modelling [ \code{\link{associateReg2Gene}}], 
 or meta-analysis [\code{\link{metaAssociations}}] or voting functions from 
 reg2gene package.}
 
-\item{range}{(default NULL) this object stores info about gene annotations.
-If default, function retrieves automatically gene annotations based on
+\item{rangeGenes}{(default NULL) this object stores info about gene 
+annotations.
+By default, function retrieves automatically gene annotations based on
 TxDb.Hsapiens.UCSC.hg19.knownGene package.
 Otherwise, this argument corresponds to the range argument from
 \code{\link[Gviz]{GeneRegionTrack}} which handles many different data input
@@ -33,7 +43,12 @@ character vector which stores info about the region of interest which
 user wants to plot (format: "chr16:53112601-53114200"). This region does not
 necessarilly need to be equal to the regulatory regions reported in the 
 interactionData input objects, whereas it only needs to overlap some
-regulatory regions}
+regulatory regions. In addition, to provide the context, a function plots 
+not only regulatory regions queried, but all that other that are associated
+with genes which are in the first place associated with queried regions. 
+Primary interactions (those who overlap with queried region) are plotted red,
+whereas secondary interactions (additional interactions associated with 
+identified genes) are plotted in grey.}
 
 \item{benchmarkData}{(default NULL) A GInteractions object or a list of
 GInteractions objects storing info about interaction regions in the genome 
@@ -43,28 +58,51 @@ conformation capture related methods.}
 \item{statistics}{(default NULL) Column name where info about the heights of 
 loops is stored. If NULL, then all interaction loops have an equal height 
 Otherwise, loops of different height are plotted based on the info stored in
-the corresponding column, eg "pval" or "qval"}
+the corresponding column, eg "pval" or "qval". Height is calculated as 
+-log10(pval).}
 
 \item{coloring}{(default NULL) Information about colors used to plot enhancer
 promoter interactions. If it is NULL, then all interactions will be plotted
-red. Otherwise, an ID of the column from interactionData object where info 
-about color is stored. For example, interactions for different genes can be 
+red. Otherwise, a character, e.g. a name of the column of the interactionData 
+object. In selected column, info about loop color is stored. 
+For example, interactions for different genes can be 
 colored differently, or statistically significant/insignificant interactions
-can be colored differently. User pre-defines this column by itself.}
+can be colored differently. User pre-defines this column by itself.
+In addition, if selectRegulatoryRegion!=NULL, then primary selected 
+interactions are colored red, wheres secondary interactions (additional
+interactions associated with identified genes) are plotted in grey}
 
-\item{benchmarkName}{(default NULL) a character vector with names that will be
-used to identify different benchmark datasets}
+\item{sizes}{(default 0.3) Default size of tracks. In the case that many 
+tracks are plotted this argument should be adjusted (lower height of tracks)
+such that all tracks get plotted.}
+
+\item{cex.title}{(default NULL) Numeric. This argument controls the size of 
+text which describes each track. If, many tracks are plotted, then text might
+disapear, but then cex.title argument should be set to smaller value, until
+text appears again}
+
+\item{plotEnhancersOne}{(default TRUE). To plot a separate track(s)
+for enhancer regions or not}
 }
 \value{
-Nice plot
+Nice plot.
 }
 \description{
 Plots enhancer-promoter interactions
 }
 \details{
-Plots InteractionTrack, GeneRegionTrack, AnnotationTrack, 
-IdeogramTrack and GenomeAxisTrack for requested GInteractions object of
-enhancer-gene associations
+Plots InteractionTrack, GeneRegionTrack, InteractionsTracks,
+AnnotationTrack, IdeogramTrack and GenomeAxisTrack for queried (list of) 
+GInteraction object(s) [which contain info about enhancer-gene associations],
+and (list of) benchmark datasets.
+
+User can select genes or regions of interest, and these regions will be 
+selected from the input GInteractions object. Check description of arguments
+for this function for specific cases (coloring sheme).
+Names of the tracks correspond to the name of the list (in the case that list
+is used as an input), or one can define name for individual objects.
+E track (stands for enhancers) indicates locations of enhancer regions, 
+wereas P track (stands for promoters) plots TSS locations for input genes.
 
 Take a look at the plot :-)
 Gene annotations are retieved from TxDb.Hsapiens.UCSC.hg19.knownGene, and
@@ -83,72 +121,95 @@ library(biomaRt)
 
 # Creating an example GInteractions set:
 
-enhancers <- GRanges(rep("chr16",6),
+ enhancers <- GRanges(rep("chr16",6),
                      IRanges(c(53112601,55531601,53777201,
                                53778801,54084001,53946467),
                              c(53114200,55533250, 53778800,
                                53780400, 54084400 ,53947933)))
 
-genes <- GRanges(rep("chr16",6),
-                 IRanges(c(53737874, 54964773, 54320676,
-                           53737874, 54964773, 54320676),
-                         c(53737874, 54964773, 54320676,
-                           53737874, 54964773, 54320676)))
+ genes <- GRanges(rep("chr16",6),
+                  IRanges(c(53737874, 54964773, 54320676,
+                            53737874, 54964773, 54320676),
+                          c(53737874, 54964773, 54320676,
+                            53737874, 54964773, 54320676)))
 
-GenomeInteractions <- GInteractions(enhancers,genes)
+ GenomeInteractions <- GInteractions(enhancers,genes)
 
-GenomeInteractions$name2 <- c("FTO","IRX5","IRX3")
+ GenomeInteractions$name2 <- c("FTO","IRX5","IRX3")
 
-GenomeInteractions$pval <- c(0.20857403, 0.72856090, 0.03586015,
-                             0.32663439, 0.32534945, 0.03994488)
+ GenomeInteractions$pval <- c(0.20857403, 0.72856090, 0.03586015,
+                              0.32663439, 0.32534945, 0.03994488)
 
-GenomeInteractions$color <- c("red","blue","grey")
+ GenomeInteractions$color <- c("red","blue","grey")
 
-plotGenomeInteractions(interactionData = GenomeInteractions,
-                 statistics ="pval",
-                 coloring = "color")
+ # simplest example
+ # if no info about coloring and height of loops provided, all loops are equal
+ plotGenomeInteractions(interactionData = GenomeInteractions)
 
-# if no info about coloring and height of loops provided, all loops are equal
-plotGenomeInteractions(interactionData = GenomeInteractions)
- 
- # Specific gene can be individually plotted
- 
+
+ # provide info about statistics * height of loops
  plotGenomeInteractions(interactionData = GenomeInteractions,
- selectGene = "FTO")
- 
- # This should be equal to the example where genes are not selected
- 
- plotGenomeInteractions(interactionData = GenomeInteractions,
-                        selectGene = c("FTO","IRX3","IRX5"),
-                        coloring = "color",
-                        statistics = "pval")
-                        
- # if one wants to plot regulatory region                       
- plotGenomeInteractions(interactionData = GenomeInteractions,
-              selectRegulatoryRegion = "chr16:53112601-53114200")
- 
- # and function plots not regulatory regions queried, but all that
- # are present in the interactionData and overlap that region
-                            
- plotGenomeInteractions(interactionData = GenomeInteractions,
-                        selectRegulatoryRegion = "chr16:53112601-53778800",
-                        coloring = "color",
-                        statistics = "pval")
-                        
- # add bemchmark data
- 
- plotGenomeInteractions(interactionData = GenomeInteractions, 
- coloring = "color", statistics = "pval",
- benchmarkData = GenomeInteractions[1:3])
- 
-  # add a list of bemchmark data  
-   benchmarkData = list(GenomeInteractions[1:3],GenomeInteractions[4:5],
-   GenomeInteractions[6])
-   names(benchmarkData) <- c("Bench1","Bench2","Bench3")
+                  statistics ="pval",
+                  coloring = "color")
+
+
+
+  # Specific gene can be individually plotted
+    plotGenomeInteractions(interactionData = GenomeInteractions,
+                           selectGene = "FTO")
+
+  # This should be equal to the example where genes are not selected
+
+  # if one wants to plot regulatory region
   plotGenomeInteractions(interactionData = GenomeInteractions,
-  coloring = "color",
-  statistics = "pval",
-  benchmarkData = benchmarkData)                     
+               selectRegulatoryRegion = "chr16:53112601-53114200")
+  # NOTE: red interactions correspond to the enhancer regions that
+  # overlap queried region, whereas grey interaction is interactions represent
+  # in the dataset and associated with a gene with which the queried regulatory
+  # region interacts (provides info about neighbourhood for queried interaction)
+
+
+  # and function plots not regulatory regions queried, but all that
+  # are present in the interactionData and overlap that region
+
+  plotGenomeInteractions(interactionData = GenomeInteractions,
+                         selectRegulatoryRegion = "chr16:53112601-53778800",
+                         coloring = "color",
+                         statistics = "pval")
+
+  # more than one interaction track can be plotted, if input is list
+  GenomeInteractionsList <- list(GenomeInteractions,GenomeInteractions[1:3])
+  names(GenomeInteractionsList) <- c("EnhP1","EnhP2")
+
+  # names from the list are taken as an argument for Enh&Inter plots
+  plotGenomeInteractions(interactionData = GenomeInteractionsList,
+                         coloring = "color",
+                         statistics = "pval",
+                         interactionDataName = "EP Interactions",
+                         cex.title = 0.4,
+                         sizes = 0.4)
+
+  # additionaly, benchmark data can be plotted as well
+
+  plotGenomeInteractions(interactionData = GenomeInteractions,
+                          coloring = "color",
+                          statistics = "pval",
+                          benchmarkData = GenomeInteractions[1:3])
+
+
+  # add a list of bemchmark data
+    benchmarkData = list(GenomeInteractions[1:3],GenomeInteractions[4:5],
+    GenomeInteractions[6])
+  names(benchmarkData) <- c("HiC","ChIA-PET","GTEx")
+
+
+ plotGenomeInteractions(interactionData = GenomeInteractions,
+                        coloring = "color",
+                        statistics = "pval",
+                        benchmarkData = benchmarkData,
+                        # interactionDataName = "EP Interactions",
+                        cex.title = 0.4,
+                        sizes = 0.4)                  
                                                                       
 }
 \author{

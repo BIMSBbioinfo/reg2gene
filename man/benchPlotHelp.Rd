@@ -4,7 +4,7 @@
 \alias{benchPlotHelp}
 \title{Plots enhancer-promoter interactions}
 \usage{
-benchPlotHelp(name = NULL, benchmarkDataOne, PlotRange, chr)
+benchPlotHelp(name, benchmarkData, PlotRange, chr)
 }
 \description{
 Help function to create benckmark tracks, especilly needed for a list of 

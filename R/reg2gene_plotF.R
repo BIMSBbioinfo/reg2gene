@@ -389,12 +389,14 @@ plotGenomeInteractions <- function(interactionData,
    
 # adjust span
      
-Span <- range(GRanges(sapply(interactionData, function(x){
-                               as.character(range(c(first(x),second(x))))})))
+Span <- range(GRanges(as.vector(sapply(interactionData, function(x){
+                               as.character(range(c(first(x),second(x))))}))),
+              ignore.strand=TRUE)
    
+            
      if (!is.null(rangeGenes)){ Span <- range(c(Span,
                                              rangeGenes),
-                                           ignore.strand=T)}
+                                           ignore.strand=TRUE)}
      if (is.null(rangeGenes)){ 
     
        # obtaining info about genes of interst across list
@@ -477,7 +479,7 @@ PlotRange <- resize(Span,fix = "center",width=width(Span)+10000)
             if (class(benchmarkData)=="GInteractions"){
               
               Benchmark_track <- benchPlotHelp(name=NULL,
-                                               benchmarkDataOne=benchmarkData,
+                                               benchmarkData=benchmarkData,
                                                PlotRange=PlotRange, 
                                                chr=chr)
               
@@ -495,7 +497,7 @@ PlotRange <- resize(Span,fix = "center",width=width(Span)+10000)
                                           
                                           
                       Benchmark_track <-  benchPlotHelp(name=x,
-                                                benchmarkDataOne=benchmarkData,
+                                                benchmarkData=benchmarkData,
                                                 PlotRange=PlotRange,
                                                 chr=chr)
                                         
@@ -554,7 +556,7 @@ PlotRange <- resize(Span,fix = "center",width=width(Span)+10000)
 #' @author IngaPa
 #' @keywords internal
 benchPlotHelp <- function(name,
-                          benchmarkDataOne,
+                          benchmarkData,
                           PlotRange,
                           chr){
   
