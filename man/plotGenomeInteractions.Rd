@@ -5,9 +5,9 @@
 \title{Plots enhancer-promoter interactions}
 \usage{
 plotGenomeInteractions(interactionData, rangeGenes = NULL,
-  selectGene = NULL, selectRegulatoryRegion = NULL, benchmarkData = NULL,
-  statistics = NULL, coloring = NULL,
-  interactionDataName = "Enh~Prom Interactions",
+  selectGene = NULL, selectRegulatoryRegion = NULL,
+  filters = "hgnc_symbol", benchmarkData = NULL, statistics = NULL,
+  coloring = NULL, interactionDataName = "Enh~Prom Interactions",
   benchmarkName = "Benchmark", sizes = 0.3, cex.title = 1,
   plotEnhancersOne = TRUE)
 }
@@ -21,19 +21,20 @@ meta-data is info about gene names stored in the column "name2". Additionaly,
 statistics (as "pval" column), and colors of the loops (as "color" column) 
 could be added as meta-data. Read more about arguments statistics and 
 coloring.  
-Such object can be produced by modelling [ \code{\link{associateReg2Gene}}], 
+Such object can be produced by modelling [\code{\link{associateReg2Gene}}], 
 or meta-analysis [\code{\link{metaAssociations}}] or voting functions from 
 reg2gene package.}
 
-\item{rangeGenes}{(default NULL) this object stores info about gene 
-annotations.
-By default, function retrieves automatically gene annotations based on
-TxDb.Hsapiens.UCSC.hg19.knownGene package.
-Otherwise, this argument corresponds to the range argument from
-\code{\link[Gviz]{GeneRegionTrack}} which handles many different data input
-types:  TxDb, GRanges, GRangesList,data.frame, character scala. In the case
-you want to write your own documentation, for more details about this 
-argument take a look at \code{\link[Gviz]{GeneRegionTrack}}.}
+\item{rangeGenes}{(default NULL) By default, function retrieves 
+automatically gene annotations using TxDb.Hsapiens.UCSC.hg19.knownGene 
+package for genes present in the interactionData object. Importantly,
+hgnc_symbol or ensembl_gene_id are stored as the name2 column in the
+interactionData object.
+However, by using this argument, one can define and import gene annotations 
+in formats such as TxDb, GRanges, GRangesList, data.frame, 
+character.In the case you want to import your own gene annotations, please
+take a look at \code{\link[Gviz]{GeneRegionTrack}} for more details 
+how this object should look like.}
 
 \item{selectGene}{(default NULL) a character vector of gene name symbols 
 (eg "FTO","IRX3", etc.) which user wants to plot.}
@@ -49,6 +50,13 @@ with genes which are in the first place associated with queried regions.
 Primary interactions (those who overlap with queried region) are plotted red,
 whereas secondary interactions (additional interactions associated with 
 identified genes) are plotted in grey.}
+
+\item{filters}{default "hgnc_symbol"; other option "ensembl_gene_id". 
+One should define if the gene id's in the name2 column of the 
+interactionData objects are ensembl gene ids or hgnc symbols.
+In summary, filters define a restriction on the query for
+\code{\link[biomaRt]{getBM}}. This step is necessary when gene annotations 
+are retrieved automatically (default).}
 
 \item{benchmarkData}{(default NULL) A GInteractions object or a list of
 GInteractions objects storing info about interaction regions in the genome 

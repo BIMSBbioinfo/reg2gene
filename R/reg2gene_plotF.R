@@ -10,19 +10,20 @@
 #' statistics (as "pval" column), and colors of the loops (as "color" column) 
 #' could be added as meta-data. Read more about arguments statistics and 
 #' coloring.  
-#' Such object can be produced by modelling [ \code{\link{associateReg2Gene}}], 
+#' Such object can be produced by modelling [\code{\link{associateReg2Gene}}], 
 #' or meta-analysis [\code{\link{metaAssociations}}] or voting functions from 
 #' reg2gene package. 
 #' 
-#' @param  rangeGenes (default NULL) this object stores info about gene 
-#' annotations.
-#' By default, function retrieves automatically gene annotations based on
-#' TxDb.Hsapiens.UCSC.hg19.knownGene package.
-#' Otherwise, this argument corresponds to the range argument from
-#' \code{\link[Gviz]{GeneRegionTrack}} which handles many different data input
-#' types:  TxDb, GRanges, GRangesList,data.frame, character scala. In the case
-#' you want to write your own documentation, for more details about this 
-#' argument take a look at \code{\link[Gviz]{GeneRegionTrack}}.
+#' @param  rangeGenes (default NULL) By default, function retrieves 
+#' automatically gene annotations using TxDb.Hsapiens.UCSC.hg19.knownGene 
+#' package for genes present in the interactionData object. Importantly,
+#' hgnc_symbol or ensembl_gene_id are stored as the name2 column in the
+#' interactionData object.
+#' However, by using this argument, one can define and import gene annotations 
+#' in formats such as TxDb, GRanges, GRangesList, data.frame, 
+#' character.In the case you want to import your own gene annotations, please
+#' take a look at \code{\link[Gviz]{GeneRegionTrack}} for more details 
+#' how this object should look like.
 #' 
 #' @param selectGene (default NULL) a character vector of gene name symbols 
 #' (eg "FTO","IRX3", etc.) which user wants to plot.
@@ -39,6 +40,12 @@
 #' whereas secondary interactions (additional interactions associated with 
 #' identified genes) are plotted in grey. 
 #' 
+#' @param  filters default "hgnc_symbol"; other option "ensembl_gene_id". 
+#' One should define if the gene id's in the name2 column of the 
+#' interactionData objects are ensembl gene ids or hgnc symbols.
+#' In summary, filters define a restriction on the query for
+#' \code{\link[biomaRt]{getBM}}. This step is necessary when gene annotations 
+#' are retrieved automatically (default).
 #' 
 #' @param benchmarkData (default NULL) A GInteractions object or a list of
 #' GInteractions objects storing info about interaction regions in the genome 
@@ -210,6 +217,7 @@ plotGenomeInteractions <- function(interactionData,
                                    rangeGenes=NULL,
                                    selectGene=NULL,
                                    selectRegulatoryRegion=NULL,
+                                   filters="hgnc_symbol",
                                    benchmarkData=NULL,
                                    statistics=NULL,
                                    coloring=NULL,
@@ -404,7 +412,7 @@ Span <- range(GRanges(as.vector(sapply(interactionData, function(x){
                                              function(x)x$name2)))
     
        # getting info about genes from Ensembl
-            rangeGenes <- gettingGeneInfoEnsembl(AllGenes)
+            rangeGenes <- gettingGeneInfoEnsembl(AllGenes,filters)
         
       # Additional,setting ranges for plot based on enhancer
       # & gene span: min&max range 
@@ -561,6 +569,7 @@ benchPlotHelp <- function(name,
                           chr){
   
   if (!is.null(name)) {benchmarkDataOne <- benchmarkData[[name]]}
+  if (is.null(name)) {benchmarkDataOne <- benchmarkData}
   # filter for regions of interest based on ranges of plot
   
   BenchFilter <- DataFrame(findOverlaps(benchmarkDataOne,PlotRange))
@@ -744,9 +753,12 @@ createIntTrack <- function(x,
 #' Help function to get info about exon location for genes of interest from
 #' Ensembl
 #' 
+#' filters <- c("hgnc_symbol","ensembl_gene_id")
+#' 
 #' @author IngaPa
 #' @keywords internal
-gettingGeneInfoEnsembl <- function(GeneList){
+gettingGeneInfoEnsembl <- function(GeneList,
+                                   filters){
   
       require(GenomicFeatures)
       require(TxDb.Hsapiens.UCSC.hg19.knownGene)
@@ -762,10 +774,12 @@ gettingGeneInfoEnsembl <- function(GeneList){
                       dataset="hsapiens_gene_ensembl",
                       host="grch37.ensembl.org")
       
-      EntrezIDs <- getBM(attributes=c("hgnc_symbol","entrezgene"),
-                         filters="hgnc_symbol",
-                         values=GeneList,mart=mart)
       
+      EntrezIDs <- getBM(attributes=c("hgnc_symbol","entrezgene",
+                                      "ensembl_gene_id"),
+                         filters=filters,
+                         values=GeneList,mart=mart)
+  
       # selecting exons of interest      
       GRList <- GRList[names(GRList)%in%EntrezIDs$entrezgene]
       
