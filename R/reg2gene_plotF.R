@@ -793,7 +793,7 @@ gettingGeneInfoEnsembl <- function(GeneList,
       # adding necassary meta-data
       exonGeneObj$symbol <- exonGeneObj$gene <- 
         exonGeneObj$transcript <-   names(exonGeneObj)
-      exonGeneObj$feature= "protein coding"
+      if (length(exonGeneObj)!=0){exonGeneObj$feature= "protein coding"}
 
       return(exonGeneObj)
       

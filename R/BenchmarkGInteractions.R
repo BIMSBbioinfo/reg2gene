@@ -553,7 +553,7 @@ forceByname <- function(benchData,reg2Gene){
       
       tmpbenchData <- second(benchData)
   # matching    
-      tmpbenchData <- second(reg2Gene)[MatchPairs[,2]]
+      tmpbenchData[MatchPairs[,1]] <- second(reg2Gene)[MatchPairs[,2]]
    
       tmpelementsMeta <- elementMetadata(benchData)
   # back to GInteractions object    
