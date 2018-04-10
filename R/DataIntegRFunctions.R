@@ -83,6 +83,8 @@ exonExpressionStrandAdjusted <- function(exonsForQuant,
   
   #exonsForQuant <- exons
   #exonsSplitted <- exons.splitted
+
+  
   if (length(exonsSplitted$`*`)!=0){stop("Strand of exons can be only + or -")}
   
         # detect stranded tracks and unstranded tracks    
@@ -151,11 +153,20 @@ exonExpressionStrandAdjusted <- function(exonsForQuant,
     
     # pool reverse and forward strand together    
     
-    DF_exons <- rbind(exonscoresForwardStrand.df,exonscoresReverseStrand.df)
+    if (any(c(exonsSplitted$`-`$name,exonsSplitted$`+`$name)!=
+            exonsForQuant$name)){break("Exons strand after quantification not correct")}
+    
+    
+    DF_exons <- rbind(exonscoresReverseStrand.df,
+                      exonscoresForwardStrand.df)
         row.names(DF_exons) <- NULL # adjusting for problem of equal row.names
-    values(exonsForQuant) <- cbind(mcols(exonsForQuant),
+        
+        values(exonsForQuant) <- cbind(rbind(mcols(exonsSplitted$`-`),
+                                             mcols(exonsSplitted$`+`)),
                                    DataFrame(DF_exons))
     
+        
+        
     }
   
   if (sum(Unstranded.libraries)!=0){
@@ -191,7 +202,6 @@ exonExpressionStrandAdjusted <- function(exonsForQuant,
   
   return(exonsForQuant)                
 }
-
 
 
 
@@ -646,6 +656,8 @@ regActivityAroundTSS <- function(regActivity,
 #' 
 #' 
 #' @examples #INPUT1 DEFINING .BW FILES:
+#' 
+#' 
 #' test.bw <- system.file("extdata", "test.bw",package = "reg2gene")
 #' test2.bw <- system.file("extdata", "test2.bw",package = "reg2gene")
 #' 
@@ -668,7 +680,7 @@ regActivityAroundTSS <- function(regActivity,
 #' 
 #' # if exons input is GInteractions class object,the same output is obtained
 #' 
-#' require(InteractionSet)
+#' 
 #' exonsGI= GInteractions(exons,exons$reg)
 #'    exonsGI$name=exons$name
 #'    exonsGI$name2=exons$name2
@@ -710,13 +722,18 @@ bwToGeneExp <- function(exons,
   
   if (class(exons)=="GInteractions"){
     
-    exons <- GRanges(first(exons),
-                        reg=second(exons),
+    require(GenomicInteractions)
+    
+    exons <- GRanges(anchorOne(exons),
+                        reg=anchorTwo(exons),
                         name=exons$name,
                         name2=exons$name2)
     
   }
   
+  
+  # order exons such that you wouldn't have problems afterwards with orientation
+  exons <- exons[order(as.character(strand(exons)))]
   
   # separate genes form forward and reverse strand
   exons.splitted <- split(exons,strand(exons))
@@ -728,13 +745,13 @@ bwToGeneExp <- function(exons,
   
   # quantify expression per exon with adjustment to strandness of RNA-Seq 
   # libraries
-  ExonExpression <- exonExpressionStrandAdjusted(exons,
-                                              exons.splitted,
-                                              geneActSignals,
-                                              sampleIDs, 
-                                              libStrand,
-                                              mc.cores,
-                                              summaryOperation)         
+  ExonExpression <- exonExpressionStrandAdjusted(exonsForQuant = exons,
+                                                 exonsSplitted = exons.splitted,
+                                                 geneActSignals = geneActSignals,
+                                                 sampleIDs=sampleIDs, 
+                                                 libStrand=libStrand,
+                                                 mc.cores=mc.cores,
+                                                 summaryOperation=summaryOperation)         
   # quantify expression per gene   
   exonExpressionPerGene <- split(ExonExpression,
                                  as.character(ExonExpression$name))

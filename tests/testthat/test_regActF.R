@@ -14,7 +14,7 @@
 #'      
 #'          
 
-
+library(testthat)
 library(InteractionSet)
 library(stringr)
 library(DESeq2)
