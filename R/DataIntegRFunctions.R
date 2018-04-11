@@ -736,7 +736,7 @@ bwToGeneExp <- function(exons,
   exons <- exons[order(as.character(strand(exons)))]
   
   # separate genes form forward and reverse strand
-  exons.splitted <- split(exons,strand(exons))
+  exons.splitted <- split(exons,as.character(strand(exons)))
   gene.metadata <- length(mcols(exons)) # metadata info about corresponding gene
   
   # arranging a problem of strandness of RNA-Seq libraryies
