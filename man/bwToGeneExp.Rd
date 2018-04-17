@@ -92,6 +92,8 @@ originate from stranded,unstranded or mixed libraries.
 }
 \examples{
 #INPUT1 DEFINING .BW FILES:
+
+
 test.bw <- system.file("extdata", "test.bw",package = "reg2gene")
 test2.bw <- system.file("extdata", "test2.bw",package = "reg2gene")
 
@@ -114,7 +116,7 @@ bwToGeneExp(exons = exons,geneActSignals = c(test.bw,test2.bw),
 
 # if exons input is GInteractions class object,the same output is obtained
 
-require(InteractionSet)
+
 exonsGI= GInteractions(exons,exons$reg)
    exonsGI$name=exons$name
    exonsGI$name2=exons$name2

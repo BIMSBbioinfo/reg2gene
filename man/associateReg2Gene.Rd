@@ -67,6 +67,7 @@ forests.
  require(foreach)
  require(stringr)
  require(qvalue)
+ require(InteractionSet)
  
  ####################################
  # INPUT1: GRanges

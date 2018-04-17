@@ -169,6 +169,7 @@
 #' @importFrom doMC registerDoMC
 #' @importFrom ranger ranger
 #' @import glmnet
+#' @import InteractionSet
 #' @importFrom qvalue qvalue
 #' @importFrom fitdistrplus fitdist
 #' 
@@ -182,6 +183,7 @@
 #'  require(foreach)
 #'  require(stringr)
 #'  require(qvalue)
+#'  require(InteractionSet)
 #'  
 #'  ####################################
 #'  # INPUT1: GRanges
