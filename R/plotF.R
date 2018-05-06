@@ -1,7 +1,7 @@
 #' Plots enhancer-promoter interactions
 #' 
 #' 
-#' @param  interactionData A GInteractions object or a list of GInteractions
+#' @param  interactions A GInteractions object or a list of GInteractions
 #' objects. Each GInteractions object has an anchor1 which corresponds to 
 #' regulatory region (enahncer), and anchor2 which should correspond to the TSS 
 #' of a gene (that info is used to plot promoters, thus please input TSS, not 
@@ -16,9 +16,9 @@
 #' 
 #' @param  rangeGenes (default NULL) By default, function retrieves 
 #' automatically gene annotations using TxDb.Hsapiens.UCSC.hg19.knownGene 
-#' package for genes present in the interactionData object. Importantly,
+#' package for genes present in the interactions object. Importantly,
 #' hgnc_symbol or ensembl_gene_id are stored as the name2 column in the
-#' interactionData object.
+#' interactions object.
 #' However, by using this argument, one can define and import gene annotations 
 #' in formats such as TxDb, GRanges, GRangesList, data.frame, 
 #' character.In the case you want to import your own gene annotations, please
@@ -32,7 +32,7 @@
 #' character vector which stores info about the region of interest which 
 #' user wants to plot (format: "chr16:53112601-53114200"). This region does not
 #' necessarilly need to be equal to the regulatory regions reported in the 
-#' interactionData input objects, whereas it only needs to overlap some
+#' interactions input objects, whereas it only needs to overlap some
 #' regulatory regions. In addition, to provide the context, a function plots 
 #' not only regulatory regions queried, but all that other that are associated
 #' with genes which are in the first place associated with queried regions. 
@@ -42,12 +42,12 @@
 #' 
 #' @param  filters default "hgnc_symbol"; other option "ensembl_gene_id". 
 #' One should define if the gene id's in the name2 column of the 
-#' interactionData objects are ensembl gene ids or hgnc symbols.
+#' interactions objects are ensembl gene ids or hgnc symbols.
 #' In summary, filters define a restriction on the query for
 #' \code{\link[biomaRt]{getBM}}. This step is necessary when gene annotations 
 #' are retrieved automatically (default).
 #' 
-#' @param benchmarkData (default NULL) A GInteractions object or a list of
+#' @param benchInteractions (default NULL) A GInteractions object or a list of
 #' GInteractions objects storing info about interaction regions in the genome 
 #' (for example, regions from the literature obtained using chromatin 
 #' conformation capture related methods.
@@ -60,7 +60,7 @@
 #' 
 #' @param coloring (default NULL) Information about colors used to plot enhancer
 #' promoter interactions. If it is NULL, then all interactions will be plotted
-#' red. Otherwise, a character, e.g. a name of the column of the interactionData 
+#' red. Otherwise, a character, e.g. a name of the column of the interactions 
 #' object. In selected column, info about loop color is stored. 
 #' For example, interactions for different genes can be 
 #' colored differently, or statistically significant/insignificant interactions
@@ -78,8 +78,16 @@
 #' disapear, but then cex.title argument should be set to smaller value, until
 #' text appears again 
 #' 
-#' @param plotEnhancersOne (default TRUE). To plot a separate track(s)
-#' for enhancer regions or not
+#' @param plotAllAnchors1 (default FALSE). If interactions argument is a list
+#' of GInteractions objects, whether to plot all anchor1 or not, eg whether to 
+#' plot separate track(s) for enhancer regions defined in different tracks, or
+#' only in one track 
+#' 
+#' @param interactionsNaming (character string)
+#' Track name for the interaction set
+#' 
+#' @param benchmarkNaming (character string) Track name for the benchmark
+#' interaction set
 #'
 #' @import GenomicFeatures
 #' @import Gviz
@@ -145,35 +153,36 @@
 #' 
 #'  # simplest example
 #'  # if no info about coloring and height of loops provided, all loops are equal
-#'  plotGenomeInteractions(interactionData = GenomeInteractions)
+#'  plotGenomeInteractions(interactions = GenomeInteractions)
 #' 
 #' 
 #'  # provide info about statistics * height of loops
-#'  plotGenomeInteractions(interactionData = GenomeInteractions,
+#'  plotGenomeInteractions(interactions = GenomeInteractions,
 #'                   statistics ="pval",
 #'                   coloring = "color")
 #' 
 #' 
 #' 
 #'   # Specific gene can be individually plotted
-#'     plotGenomeInteractions(interactionData = GenomeInteractions,
+#'     plotGenomeInteractions(interactions = GenomeInteractions,
 #'                            selectGene = "FTO")
 #' 
 #'   # This should be equal to the example where genes are not selected
 #' 
 #'   # if one wants to plot regulatory region
-#'   plotGenomeInteractions(interactionData = GenomeInteractions,
+#'   plotGenomeInteractions(interactions = GenomeInteractions,
 #'                selectRegulatoryRegion = "chr16:53112601-53114200")
 #'   # NOTE: red interactions correspond to the enhancer regions that
-#'   # overlap queried region, whereas grey interaction is interactions represent
-#'   # in the dataset and associated with a gene with which the queried regulatory
-#'   # region interacts (provides info about neighbourhood for queried interaction)
+#'   # overlap queried region, whereas grey interaction is interactions 
+#'   #represent in the dataset and associated with a gene with which the 
+#'   # queried regulatory region interacts (provides info about neighbourhood 
+#'   # for queried interaction)
 #' 
 #' 
 #'   # and function plots not regulatory regions queried, but all that
-#'   # are present in the interactionData and overlap that region
+#'   # are present in the interactions and overlap that region
 #' 
-#'   plotGenomeInteractions(interactionData = GenomeInteractions,
+#'   plotGenomeInteractions(interactions = GenomeInteractions,
 #'                          selectRegulatoryRegion = "chr16:53112601-53778800",
 #'                          coloring = "color",
 #'                          statistics = "pval")
@@ -183,49 +192,49 @@
 #'   names(GenomeInteractionsList) <- c("EnhP1","EnhP2")
 #' 
 #'   # names from the list are taken as an argument for Enh&Inter plots
-#'   plotGenomeInteractions(interactionData = GenomeInteractionsList,
+#'   plotGenomeInteractions(interactions = GenomeInteractionsList,
 #'                          coloring = "color",
 #'                          statistics = "pval",
-#'                          interactionDataName = "EP Interactions",
+#'                          interactionsNaming = "EP Interactions",
 #'                          cex.title = 0.4,
 #'                          sizes = 0.4)
 #' 
 #'   # additionaly, benchmark data can be plotted as well
 #' 
-#'   plotGenomeInteractions(interactionData = GenomeInteractions,
+#'   plotGenomeInteractions(interactions = GenomeInteractions,
 #'                           coloring = "color",
 #'                           statistics = "pval",
-#'                           benchmarkData = GenomeInteractions[1:3])
+#'                           benchInteractions = GenomeInteractions[1:3])
 #' 
 #' 
 #'   # add a list of bemchmark data
-#'     benchmarkData = list(GenomeInteractions[1:3],GenomeInteractions[4:5],
+#'     benchInteractions = list(GenomeInteractions[1:3],GenomeInteractions[4:5],
 #'     GenomeInteractions[6])
-#'   names(benchmarkData) <- c("HiC","ChIA-PET","GTEx")
+#'   names(benchInteractions) <- c("HiC","ChIA-PET","GTEx")
 #' 
 #' 
-#'  plotGenomeInteractions(interactionData = GenomeInteractions,
+#'  plotGenomeInteractions(interactions = GenomeInteractions,
 #'                         coloring = "color",
 #'                         statistics = "pval",
-#'                         benchmarkData = benchmarkData,
-#'                         # interactionDataName = "EP Interactions",
+#'                         benchInteractions = benchInteractions,
+#'                         # interactionsNaming = "EP Interactions",
 #'                         cex.title = 0.4,
 #'                         sizes = 0.4)                  
 #'                                                                       
 #' @export
-plotGenomeInteractions <- function(interactionData,
+plotGenomeInteractions <- function(interactions,
                                    rangeGenes=NULL,
                                    selectGene=NULL,
                                    selectRegulatoryRegion=NULL,
                                    filters="hgnc_symbol",
-                                   benchmarkData=NULL,
+                                   benchInteractions=NULL,
                                    statistics=NULL,
                                    coloring=NULL,
-                                   interactionDataName="Enh~Prom Interactions",
-                                   benchmarkName="Benchmark",
+                                   interactionsNaming="Enh~Prom Interactions",
+                                   benchmarkNaming="Benchmark",
                                    sizes=0.3,
                                    cex.title=1, 
-                                   plotEnhancersOne=TRUE){
+                                   plotAllAnchors1=FALSE){
   
 #######################################
 # setting universal
@@ -259,12 +268,12 @@ plotGenomeInteractions <- function(interactionData,
 # 1. Enhancer tracks            
   
 # selection of regions
-    if (class(interactionData)=="GInteractions"){
+    if (class(interactions)=="GInteractions"){
       
       # select gene
           if (!is.null(selectGene)){
         
-           interactionData <- selectGeneF(x=interactionData,
+           interactions <- selectGeneF(x=interactions,
                                           selectGene=selectGene)
       
       }
@@ -272,26 +281,26 @@ plotGenomeInteractions <- function(interactionData,
       # extracting info about regulatory regions of interest
           if (!is.null(selectRegulatoryRegion)){
         
-            interactionData <- selectRegR(x=interactionData,
+            interactions <- selectRegR(x=interactions,
                                   selectRegulatoryRegion=selectRegulatoryRegion)
             coloring <- "color"
       }
       
       # extracting info about chromosome & genome set to hg19
-          chr <- as.character(unique(seqnames(first(interactionData))))
+          chr <- as.character(unique(seqnames(first(interactions))))
       
       # add info about loop height
-          interactionData <- getStatistics(x=interactionData,statistics)
+          interactions <- getStatistics(x=interactions,statistics)
          
      
       # createIneractionTrack  + adjust plotting parameters   
-          interaction_track <- createIntTrack(interactionData,
-                               interactionDataName=interactionDataName,
+          interaction_track <- createIntTrack(interactions,
+                               interactionsNaming=interactionsNaming,
                                chr=chr,
                                coloring=coloring)
           
           # setting enhancer track
-          enhTrack <- AnnotationTrack(first(interactionData), 
+          enhTrack <- AnnotationTrack(first(interactions), 
                                       genome=gen, 
                                       name="E",
                                       stacking="full",
@@ -300,12 +309,12 @@ plotGenomeInteractions <- function(interactionData,
           displayPars(enhTrack) <- enhParameters
     }
   
-    if (class(interactionData)=="list"){
+    if (class(interactions)=="list"){
      
      # select gene
       if (!is.null(selectGene)){
         
-       interactionData <-  lapply(interactionData,
+       interactions <-  lapply(interactions,
                            selectGeneF,
                           selectGene=selectGene)
       
@@ -314,28 +323,28 @@ plotGenomeInteractions <- function(interactionData,
      # extracting info about regulatory regions of interest
      if (!is.null(selectRegulatoryRegion)){
        
-        interactionData <- lapply(interactionData,
+        interactions <- lapply(interactions,
                                   selectRegR,
                                   selectRegulatoryRegion=selectRegulatoryRegion)
         coloring <- "color"
         }
      
      # extracting info about chromosome & genome set to hg19
-     chr <- as.character(unique(seqnames(first(interactionData[[1]]))))
+     chr <- as.character(unique(seqnames(first(interactions[[1]]))))
      
      
      # add info about loop height removing NA values 
-     interactionData <- lapply(interactionData,
+     interactions <- lapply(interactions,
                                getStatistics,
                                statistics=statistics)
      
      # add info about track names
-     if (is.null(names(interactionData))) {
-       names(interactionData) <- 1:length(interactionData)
+     if (is.null(names(interactions))) {
+       names(interactions) <- 1:length(interactions)
      }
-     interactionData <- lapply(names(interactionData),function(x){
+     interactions <- lapply(names(interactions),function(x){
        
-                   tmp <- interactionData[[x]]
+                   tmp <- interactions[[x]]
                    tmp$listName <-  x
                    
                    return(tmp)
@@ -344,15 +353,15 @@ plotGenomeInteractions <- function(interactionData,
      
             
     # createIneractionTrack  + adjust plotting parameters   
-     interaction_track <- lapply(interactionData,
+     interaction_track <- lapply(interactions,
                                 createIntTrack,
-                                interactionDataName=NULL,
+                                interactionsNaming=NULL,
                                 chr=chr,
                                 coloring=coloring)
      
 
      # setting enhancer track
-     enhTrack <-  lapply(interactionData, function(x){
+     enhTrack <-  lapply(interactions, function(x){
       
             if ("listName"%in%names(mcols(x))){
              
@@ -382,7 +391,7 @@ plotGenomeInteractions <- function(interactionData,
   
   
      # arranging whether you want 1 enh region,or all
-     if (plotEnhancersOne==TRUE) { enhTrack <- enhTrack[[1]]}
+     if (plotAllAnchors1==FALSE) { enhTrack <- enhTrack[[1]]}
      
     }
   
@@ -397,7 +406,7 @@ plotGenomeInteractions <- function(interactionData,
    
 # adjust span
      
-Span <- range(GRanges(as.vector(sapply(interactionData, function(x){
+Span <- range(GRanges(as.vector(sapply(interactions, function(x){
                                as.character(range(c(first(x),second(x))))}))),
               ignore.strand=TRUE)
    
@@ -408,7 +417,7 @@ Span <- range(GRanges(as.vector(sapply(interactionData, function(x){
      if (is.null(rangeGenes)){ 
     
        # obtaining info about genes of interst across list
-            AllGenes <- unique(unlist(sapply(interactionData,
+            AllGenes <- unique(unlist(sapply(interactions,
                                              function(x)x$name2)))
     
        # getting info about genes from Ensembl
@@ -424,7 +433,7 @@ Span <- range(GRanges(as.vector(sapply(interactionData, function(x){
   }
      
           
-    tss <- getTSS(AllGenes,interactionData)
+    tss <- getTSS(AllGenes,interactions)
 
             
 # extend min&max for 10000
@@ -457,7 +466,7 @@ PlotRange <- resize(Span,fix = "center",width=width(Span)+10000)
         promoterTrack <- AnnotationTrack(tss, 
                                          genome=gen, 
                                          name="P",
-                                         #id=unique(interactionData$name2),
+                                         #id=unique(interactions$name2),
                                          stacking="squish")
        
        
@@ -466,7 +475,7 @@ PlotRange <- resize(Span,fix = "center",width=width(Span)+10000)
 #################################
 # 5. Setting benchmark track(s)
   
-        if (is.null(benchmarkData)){ 
+        if (is.null(benchInteractions)){ 
     
                 tracksToPlot <- unlist(list(itrack,
                                      gtrack, 
@@ -482,12 +491,12 @@ PlotRange <- resize(Span,fix = "center",width=width(Span)+10000)
   
   # extra plot for benchmark
   
-       if (!is.null(benchmarkData)){
+       if (!is.null(benchInteractions)){
     
-            if (class(benchmarkData)=="GInteractions"){
+            if (class(benchInteractions)=="GInteractions"){
               
               Benchmark_track <- benchPlotHelp(name=NULL,
-                                               benchmarkData=benchmarkData,
+                                           benchInteractions=benchInteractions,
                                                PlotRange=PlotRange, 
                                                chr=chr)
               
@@ -497,17 +506,17 @@ PlotRange <- resize(Span,fix = "center",width=width(Span)+10000)
               
               }
             
-            if (class(benchmarkData)=="list"){
+            if (class(benchInteractions)=="list"){
               
           
-              Benchmark_track <- lapply(names(benchmarkData),
+              Benchmark_track <- lapply(names(benchInteractions),
                                         function(x){
                                           
                                           
                       Benchmark_track <-  benchPlotHelp(name=x,
-                                                benchmarkData=benchmarkData,
-                                                PlotRange=PlotRange,
-                                                chr=chr)
+                                            benchInteractions=benchInteractions,
+                                            PlotRange=PlotRange,
+                                            chr=chr)
                                         
                           displayPars(Benchmark_track) = benchParameters
                        
@@ -564,32 +573,32 @@ PlotRange <- resize(Span,fix = "center",width=width(Span)+10000)
 #' @author IngaPa
 #' @keywords internal
 benchPlotHelp <- function(name,
-                          benchmarkData,
+                          benchInteractions,
                           PlotRange,
                           chr){
   
-  if (!is.null(name)) {benchmarkDataOne <- benchmarkData[[name]]}
-  if (is.null(name)) {benchmarkDataOne <- benchmarkData}
+  if (!is.null(name)) {benchInteractionsOne <- benchInteractions[[name]]}
+  if (is.null(name)) {benchInteractionsOne <- benchInteractions}
   # filter for regions of interest based on ranges of plot
   
-  BenchFilter <- DataFrame(findOverlaps(benchmarkDataOne,PlotRange))
-  benchmarkDataOne <- benchmarkDataOne[unique(BenchFilter$queryHits)]
+  BenchFilter <- DataFrame(findOverlaps(benchInteractionsOne,PlotRange))
+  benchInteractionsOne <- benchInteractionsOne[unique(BenchFilter$queryHits)]
   
   # creating GenomicInteractions
   
-  if (length(benchmarkDataOne)!=0){   
+  if (length(benchInteractionsOne)!=0){   
     
-    benchmarkDataOne <- GenomicInteractions(first(benchmarkDataOne), 
-                                            second(benchmarkDataOne),
+    benchInteractionsOne <- GenomicInteractions(first(benchInteractionsOne), 
+                                            second(benchInteractionsOne),
                                             counts=1)
     
     
-    Benchmark_track <- InteractionTrack(benchmarkDataOne, 
+    Benchmark_track <- InteractionTrack(benchInteractionsOne, 
                                         name = name, 
                                         chromosome = chr)
     if (is.null(name)) {
       
-      Benchmark_track <- InteractionTrack(benchmarkDataOne, 
+      Benchmark_track <- InteractionTrack(benchInteractionsOne, 
                                           name="Benchmark", 
                                           chromosome = chr)
     }
@@ -631,7 +640,7 @@ selectGeneF <- function(x,
 selectRegR <- function(x,
                        selectRegulatoryRegion){
 
-  #x <- interactionData[[1]]
+  #x <- interactions[[1]]
   regRegion <- GRanges(selectRegulatoryRegion)
   SelectedEPpairs <- DataFrame(findOverlaps(regRegion,x))
   
@@ -704,7 +713,7 @@ setColors <- function(x,
 #' @author IngaPa
 #' @keywords internal
 createIntTrack <- function(x,
-                           interactionDataName,
+                           interactionsNaming,
                            chr,
                            coloring){
   
@@ -715,10 +724,10 @@ createIntTrack <- function(x,
                                                   x$counts)      
 
       # creating interaction track
-      if (!is.null(interactionDataName)){
+      if (!is.null(interactionsNaming)){
         
       interaction_track <- InteractionTrack(EnhPromGInteractions, 
-                                            name =  interactionDataName, 
+                                            name =  interactionsNaming, 
                                             chromosome = chr)
       }
       
@@ -809,11 +818,11 @@ gettingGeneInfoEnsembl <- function(GeneList,
 #' 
 #' @author IngaPa
 #' @keywords internal
-getTSS <- function(AllGenes,interactionData) {
+getTSS <- function(AllGenes,interactions) {
   
   return(do.call(c,do.call(c,lapply(AllGenes,function(x){
     
-    return(unique(sapply(interactionData,function(y){
+    return(unique(sapply(interactions,function(y){
       
       return(unique(second(y)[y$name2==x]))})))}))))
   
