@@ -1,15 +1,15 @@
-# voteAssociations()
+# voteInteractions()
 
-#' Majority vote decision for (regulatory region)-gene associations
+#' Majority vote decision for (regulatory region)-gene interactions
 #'
-#' The function calculates regularatory region to gene associations based on
-#' a majority vote. Multiple associations output by different methods and
-#' data sets can be merged this way, and only the associations that have
+#' The function calculates regularatory region to gene interactions based on
+#' a majority vote. Multiple interactions output by different methods and
+#' data sets can be merged this way, and only the interactions that have
 #' support in \code{vote.threshold} fraction of the datasets will be retained.
 #'
-#' @param associations A list of \code{\link[InteractionSet]{GInteractions}}
+#' @param interactions A list of \code{\link[InteractionSet]{GInteractions}}
 #'  objects outputed from \code{\link{associateReg2Gene}} or
-#' \code{\link{metaAssociations}}.
+#' \code{\link{metainteractions}}.
 #' @param cutoff.stat (character,"pval" is default). Which statistics to 
 #' filter:"qval" or "pval"
 #' @param cutoff.val a numeric cutoff (default 0.05) that will be used to filter 
@@ -30,7 +30,7 @@
 #' (cutoff.val). 
 #'
 #' @return A \code{\link[InteractionSet]{GInteractions}} object that contains 
-#' votes for associations from the voting procedure. The object will contain 
+#' votes for interactions from the voting procedure. The object will contain 
 #' meta-columns for individual votes and vote stastics. The object can be 
 #' further filtered to obtain the desired level of votes using \code{[]} or 
 #' equivalent methods.
@@ -67,17 +67,17 @@
 #'  # INPUT1 a list of GInteraction objects from associateReg2Gene()
 #'  
 #'  
-#'  associations <- list(AssocObject,AssocObject2)
-#'  names(associations) <- c("AssocObject","AssocObject2")
+#'  interactions <- list(AssocObject,AssocObject2)
+#'  names(interactions) <- c("AssocObject","AssocObject2")
 #'  
-#'  # OUTPUT: Run voteAssociations
+#'  # OUTPUT: Run voteInteractions
 #'  
-#'   voteAssociations(associations, 
+#'   voteInteractions(interactions, 
 #'                   cutoff.stat="pval",
 #'                   cutoff.val=0.05,
 #'                   vote.threshold=0.5)
 #'                   
-#'   voteAssociations(associations,
+#'   voteInteractions(interactions,
 #'                   cutoff.stat="pval",
 #'                   cutoff.val=0.05,
 #'                   vote.threshold=0.51)
@@ -99,31 +99,31 @@
 #'  AssocExample2 <- associateReg2Gene(example2)
 #'  AssocExample <- associateReg2Gene(example)
 #'  
-#'  # OUTPUT: Run voteAssociations
+#'  # OUTPUT: Run voteInteractions
 #'  
 #'  # ERROR! both ranges fail at filtering    
-#'  # voteAssociations(list(AssocExample2,AssocExample))
+#'  # voteInteractions(list(AssocExample2,AssocExample))
 #'  
 #'                   
 #'                   
 #' @author Altuna Akalin
 #' @export
-voteAssociations<-function(associations,
+voteInteractions<-function(interactions,
                            cutoff.stat="pval",
                            cutoff.val=0.05,
                            vote.threshold=0.5){
 
   # check the input GRanges structure and if something is wrong return error
-  if(!checkGrlStr(associations)){
+  if(!checkGrlStr(interactions)){
     
-    stop("\ncheck if input 'associations' object has the correct structure:\n",
+    stop("\ncheck if input 'interactions' object has the correct structure:\n",
          "\n a)It must be a list of GInteractions,:\n",
          "\n b) and each GInteractions must have:name,name2,n,coefs,pval,
                qval columns\n")
   }
   
   # create Table from after merge
-  dtl=assocTable2(grlist=associations,
+  dtl=assocTable2(grlist=interactions,
                   cutoff.column=cutoff.stat,
                   qval=cutoff.val)
 
@@ -160,7 +160,7 @@ voteAssociations<-function(associations,
 #' this function creates a table of keys and pvals from
 #' a GRangesList which contains GRanges as the
 #' output of associateReg2Gene or metaAssociate functions.
-#' this is needed to process the associations that
+#' this is needed to process the interactions that
 #' exist in many datasets and merge them into the same table with
 #' stats from the statistical tests
 #' 
@@ -238,11 +238,11 @@ assocTable2<-function(grlist,
 # columns.
 #' @author Altunislav Akalinski
 #' @keywords internal
-checkGrlStr<-function(associations){
+checkGrlStr<-function(interactions){
   
   ExpectedAssResults <- c("name","name2","n","coefs","pval","qval")
   
-  all(c(sapply(associations,function(x){
+  all(c(sapply(interactions,function(x){
     
     is.reg=all(ExpectedAssResults%in%colnames(mcols(x)))
     
@@ -250,7 +250,7 @@ checkGrlStr<-function(associations){
     
     all(is.reg,is.gr)}
     
-  ), (class(associations)=="list") ))
+  ), (class(interactions)=="list") ))
   
 }
 
