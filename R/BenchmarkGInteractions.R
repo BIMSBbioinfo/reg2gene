@@ -2,7 +2,7 @@
 #-----------------Benchmark f()---------------------#
 #####################################################
 
-#' Benchmarks reg2gene models using benchmark data
+#' Benchmarks interactions reg2gene models using benchmark data
 #' 
 #' The function that takes as input results of \code{\link{associateReg2Gene}} 
 #' or any other modelling procedure implemente in \code{reg2gene} package,
@@ -16,11 +16,12 @@
 #' overlapping benchmark dataset at all). 
 #' 
 #' 
-#' @param reg2Gene a \code{\link[InteractionSet]{GInteractions}} object output
-#' from \code{\link{associateReg2Gene}}). Usually, 1st GRanges object, or anchor1
+#' @param interactions a \code{\link[InteractionSet]{GInteractions}} object 
+#' output from \code{\link{associateReg2Gene}}). 
+#' Usually, 1st GRanges object, or anchor1
 #' corresponds to the enahncer location, whereas the other GRanges object 
 #' corresponds to the regulatory region locations. 
-#' @param benchData a \code{\link[InteractionSet]{GInteractions}} object output
+#' @param benchInteractions a \code{\link[InteractionSet]{GInteractions}} object output
 #' from \code{\link{associateReg2Gene}}) or a list of GInteractions object. 
 #' Both regions are used in the benchmarking procedure. 
 #' This object stores benchmarking informations eg interacting region
@@ -29,30 +30,30 @@
 #' the benchmark dataset(s). If TRUE, reports if overlap with benchmark dataset 
 #' is observed at least once).
 #' @param forceByName (def:FALSE) force benchmark data to have an equal gene 
-#' coordinates as reg2gene if gene names overlap. IMPORTANT! Gene coordinates 
-#' are necessarilly a second anchor of the input reg2gene and benchData objects,
-#' and column with gene names needs to be called "name".
+#' coordinates as interactions if gene names overlap. IMPORTANT! Gene
+#' coordinates are necessarilly a second anchor of the input interactions and 
+#' benchInteractions objects,and column with gene names needs to be called "name".
 #' @param mc.cores possible to be runned in parallel. Argument for mclapply f();
 #' how many cores to use.
 #' @param ignore.strand argument to be passed to
 #' \code{\link[IRanges]{findOverlaps}}. When set to TRUE, the strand 
 #' information is ignored in the overlap analysis.
 #' @param preFilter (def:FALSE).  If TRUE, additional columns are added to the
-#' input reg2Gene object (additionally to the Bench column that is reported by 
-#' default) that
+#' input interactions object (additionally to the Bench column that is reported
+#' by default) that
 #' store info whether tested regions have any potential to be benchmarked.
 #' Meaning, if all regulatory region-TSS pairs [anchor1 and anchor2 from
-#' reg2Gene] do not overlap with any benchmark anchor1 or anchor2 location they
-#' will be reported to be 0 (or no potential to be benchmarked at all), 
-#' otherwise it is 1 (possible to be benchmarked).E.g. it selects reg2Gene 
+#' interactions] do not overlap with any benchmark anchor1 or anchor2 location 
+#' they will be reported to be 0 (or no potential to be benchmarked at all), 
+#' otherwise it is 1 (possible to be benchmarked).E.g. it selects interactions 
 #' regions only when both regulatory region and TSS  have overlapping regions 
 #' somewhere in the benchmarking set; across all benchmark anchor pairs, but 
 #' not necessarily overlapping regions of the same benchmark pair.
 #' This info is
 #' important to a priori remove high number of true negatives in 
 #' regulatoryReg-TSS pairs, before running \code{\link{confusionMatrix}} since
-#' TN are very abundant in the reg2gene dataset since benchmark dataset usually
-#' covers much smaller regions of the genome (method limitations)
+#' TN are very abundant in the interactions dataset since benchmark dataset 
+#' usually covers much smaller regions of the genome (method limitations)
 #' @param ... further arguments to methods, not implemented yet
 #' 
 #' @return GInteractions object with added benchmark results metadata [Bench 
@@ -64,7 +65,7 @@
 #' 
 #' @details GInteractions objects - an output of \code{\link{associateReg2Gene}}
 #' [or a list of such objects] and benchmark dataset are overlaped. 
-#' \code{\link[InteractionSet]{linkOverlaps}} between reg2Gene 
+#' \code{\link[InteractionSet]{linkOverlaps}} between interactions 
 #' and benchmark object is performed, and for each input pair it is reported 
 #' whether this pair is benchmarked or not,and how many times (if binary=F).
 #' Criss-cross overlap of interacting regions is performed; thus is anchor1 from
@@ -74,11 +75,12 @@
 #' 
 #' Additionally, details for preFilter option:
 #' All benchmark regions that can be confirmed by any combination of 
-#' enh/gene pairs [anchor1 or anchor2 form reg2Gene object] is obtained. Then
-#' selected unique union of anchor1 or anchor2 form reg2Gene object is used
+#' enh/gene pairs [anchor1 or anchor2 form interactions object] is obtained. 
+#' Then
+#' selected unique union of anchor1 or anchor2 form interactions object is used
 #' as anchor1-anchor2 pairs that can be benchmarked. Reasoning, if present in
-#' this set anchor1 or anchor2 regions form reg2Gene object necessarily need to
-#' have other member of the pair overlapping somewhere in benchmark dataset. 
+#' this set anchor1 or anchor2 regions form interactions object necessarily need
+#' to have other member of the pair overlapping somewhere in benchmark dataset. 
 #' @author Inga Patarcic
 #' 
 #' @import GenomicRanges
@@ -88,31 +90,31 @@
 #' require(GenomicRanges)
 #' require(InteractionSet)
 #'    
-#'    reg2Gene <- GInteractions(GRReg1_toy,GRReg1_toy$reg)
-#'    benchData <- GInteractions(GRReg2_toy,GRReg2_toy$reg)
+#'    interactions <- GInteractions(GRReg1_toy,GRReg1_toy$reg)
+#'    benchInteractions <- GInteractions(GRReg2_toy,GRReg2_toy$reg)
 #'    
-#' benchmarkAssociations(reg2Gene,
-#'             benchData,
+#' benchmarkInteractions(interactions,
+#'             benchInteractions,
 #'             binary=FALSE)
 #'             
-#' benchmarkAssociations(reg2Gene,
-#'             benchData,
+#' benchmarkInteractions(interactions,
+#'             benchInteractions,
 #'             binary=TRUE)             
 #' 
 #' # add prefilter
 #' 
-#' benchmarkAssociations(reg2Gene,
-#'             benchData,
+#' benchmarkInteractions(interactions,
+#'             benchInteractions,
 #'             binary=TRUE,
 #'             preFilter=TRUE) 
 #'             
 #'  # forceByName argument           
 #'            
-#'     reg2Gene$name <- reg2Gene$anchor1.name
-#'     benchData$name <- benchData$anchor1.name
+#'     interactions$name <- interactions$anchor1.name
+#'     benchInteractions$name <- benchInteractions$anchor1.name
 #'  
-#'              benchmarkAssociations(reg2Gene,
-#'                       benchData,
+#'              benchmarkInteractions(interactions,
+#'                       benchInteractions,
 #'                       binary=TRUE,
 #'                       forceByName = TRUE)
 #'                 
@@ -122,44 +124,46 @@
 #' # NOTE: anchor1.Bench1Exp & anchor1.Bench2Exp are expected/precalculated
 #' # values for this benchmark example
 #'  
-#'   benchDataList <- list(benchData,reg2Gene)
-#'   names(benchDataList) <- c("benchData1","benchData2")
+#'   benchInteractionsList <- list(benchInteractions,interactions)
+#'   names(benchInteractionsList) <- c("benchInteractions1",
+#'   "benchInteractions2")
 #' 
 #' 
-#' reg2GeneB <- benchmarkAssociations(reg2Gene,
-#'                         benchDataList,
+#' interactionsB <- benchmarkInteractions(interactions,
+#'                         benchInteractionsList,
 #'                         ignore.strand=TRUE,
 #'                         binary=FALSE,
 #'                         mc.cores = 1)               
 #'     
 #'  # forceByName = T can work for benchmark lists as well
 #'  
-#'             benchDataList <- list(benchData,benchData[1:5])
-#'             names(benchDataList) <- c("BL1","BL2")
+#'             benchInteractionsList <- list(benchInteractions,
+#'             benchInteractions[1:5])
+#'             names(benchInteractionsList) <- c("BL1","BL2")
 #' 
 #' 
-#'   benchmarkAssociations(benchData=benchDataList,
-#'                         reg2Gene = reg2Gene,
+#'   benchmarkInteractions(benchInteractions=benchInteractionsList,
+#'                         interactions = interactions,
 #'                         forceByName = TRUE)
 #'                             
 #'                             
 #'  # Checking what happends when anchor1&anchor2 both overlap only one region
 #'  # in benchmark dataset?  OK, They are not benchmarked...
 #'  
-#'    benchmarkAssociations(reg2Gene[1],
-#'                benchData[1])      
+#'    benchmarkInteractions(interactions[1],
+#'                benchInteractions[1])      
 #'
 #'  # WARNING! 
 #'  # However, one need to be careful when benchmarking anchors that overlap 
 #'  # within test set (eg enhancer overlaps gene region), 
 #'  # because these regions will be benchmarked.
 #'    
-#'    benchmarkAssociations(reg2Gene[5],
-#'                benchData)           
+#'    benchmarkInteractions(interactions[5],
+#'                benchInteractions)           
 #'                                     
 #' @export      
-benchmarkAssociations <- function(reg2Gene,
-                        benchData,
+benchmarkInteractions <- function(interactions,
+                        benchInteractions,
                         preFilter=FALSE,
                         binary=FALSE,
                         forceByName=FALSE,
@@ -169,17 +173,18 @@ benchmarkAssociations <- function(reg2Gene,
   
   
   
-  if (class(benchData)=="GInteractions"){
+  if (class(benchInteractions)=="GInteractions"){
     
     if (forceByName==T){
       
-      # force benchData to have equal gene coordinates as reg2gene 
-        benchData <- forceByname(benchData = benchData,reg2Gene=reg2Gene)
+      # force benchInteractions to have equal gene coordinates as interactions 
+        benchInteractions <- forceByname(benchInteractions = benchInteractions,
+                                 interactions=interactions)
       
     }
     
-    BenchmarkRes <- benchmarkAssociationssimple(reg2Gene=reg2Gene,
-                                      benchData=benchData,
+    BenchmarkRes <- benchmarkInteractionssimple(interactions=interactions,
+                                      benchInteractions=benchInteractions,
                                       binary=binary,
                                       ignore.strand=ignore.strand)
     
@@ -188,8 +193,8 @@ benchmarkAssociations <- function(reg2Gene,
       
       # add info about filtering procedure
       
-            filterRes <- filterPreBenchGIsimple(reg2Gene=reg2Gene,
-                                          benchData=benchData,
+            filterRes <- filterPreBenchGIsimple(interactions=interactions,
+                                          benchInteractions=benchInteractions,
                                           ignore.strand=ignore.strand)
       
             BenchmarkRes$Filter <- filterRes$Filter
@@ -201,24 +206,24 @@ benchmarkAssociations <- function(reg2Gene,
   
   
   
-  if (class(benchData)=="list"){
+  if (class(benchInteractions)=="list"){
     
     
     if (forceByName==T){
       
-      # force benchData to have equal gene coordinates as reg2gene 
-      benchData <- lapply(benchDataList, function(x){
-                            return(forceByname(benchData=x,
-                                        reg2Gene=reg2Gene))
+      # force benchInteractions to have equal gene coordinates as interactions 
+      benchInteractions <- lapply(benchInteractionsList, function(x){
+                            return(forceByname(benchInteractions=x,
+                                        interactions=interactions))
                           })
       
     }
     
     
-    BenchmarkRes <- parallel::mclapply(benchData, function(x) {
+    BenchmarkRes <- parallel::mclapply(benchInteractions, function(x) {
       
-      benchmarkAssociationssimple(reg2Gene=reg2Gene,
-                        benchData=x,
+      benchmarkInteractionssimple(interactions=interactions,
+                        benchInteractions=x,
                         binary=binary,
                         ignore.strand=ignore.strand)},
       
@@ -228,15 +233,15 @@ benchmarkAssociations <- function(reg2Gene,
     
     BenchResults <- DataFrame(lapply(BenchmarkRes,function(x) x$Bench))
     
-    mcols(reg2Gene) <- c(mcols(reg2Gene),BenchResults)
+    mcols(interactions) <- c(mcols(interactions),BenchResults)
     
     
     if (preFilter==TRUE){
       # add info about filtering if requested
-        filterRes <- parallel::mclapply(benchData, function(x) {
+        filterRes <- parallel::mclapply(benchInteractions, function(x) {
         
-        filterPreBenchGIsimple(reg2Gene=reg2Gene,
-                               benchData=x,
+        filterPreBenchGIsimple(interactions=interactions,
+                               benchInteractions=x,
                                ignore.strand=ignore.strand)},
         
         mc.cores = mc.cores)
@@ -248,12 +253,12 @@ benchmarkAssociations <- function(reg2Gene,
       # adjusting names for filtering
       names(filterResults) <- paste0("Filter_",names(filterResults))
       
-      mcols(reg2Gene) <- c(mcols(reg2Gene),filterResults)
+      mcols(interactions) <- c(mcols(interactions),filterResults)
       
     }
     
     
-    return(reg2Gene)
+    return(interactions)
     
     
     
@@ -266,22 +271,22 @@ benchmarkAssociations <- function(reg2Gene,
 
 #' Benchmarks help function 
 #' 
-#' Benchmark reg2gene models using benchmark data but for only one GInteraction
-#' object [not lists]
+#' Benchmark interactions models using benchmark data but for only one 
+#' GInteraction object [not lists]
 #' 
-#' Read description for \code{benchmarkAssociations}
+#' Read description for \code{benchmarkInteractions}
 #' 
 #' @author Inga Patarcic
 #' @keywords internal
-benchmarkAssociationssimple <- function(reg2Gene,
-                              benchData,
+benchmarkInteractionssimple <- function(interactions,
+                              benchInteractions,
                               ignore.strand,
                               binary) {
   
   # perform Overlaps 
-  OverlapGI <- linkOverlaps(reg2Gene,
-                            first(benchData),
-                            second(benchData),
+  OverlapGI <- linkOverlaps(interactions,
+                            first(benchInteractions),
+                            second(benchInteractions),
                             ignore.strand=ignore.strand)
   
   
@@ -291,18 +296,18 @@ benchmarkAssociationssimple <- function(reg2Gene,
   
   # reporting benchmark results
   
-  reg2Gene$Bench <- rep(0,length(reg2Gene))
+  interactions$Bench <- rep(0,length(interactions))
   
-  if (binary==TRUE){ reg2Gene$Bench[unique(benchRow)] <- 1}
+  if (binary==TRUE){ interactions$Bench[unique(benchRow)] <- 1}
   
   if (binary==FALSE){ 
     # add counts   
-    reg2Gene$Bench[as.integer(names(table(benchRow)))] <- table(benchRow)
+    interactions$Bench[as.integer(names(table(benchRow)))] <- table(benchRow)
     
   }
   
   
-  return(reg2Gene)
+  return(interactions)
   
 }
 
@@ -311,32 +316,32 @@ benchmarkAssociationssimple <- function(reg2Gene,
 
 #' Filtering help function 
 #' 
-#' Filter reg2gene models using benchmark data but for only one GInteraction
+#' Filter interactions models using benchmark data but for only one GInteraction
 #' object [not lists]
 #' 
 #' Read description for \code{filterPreBenchGI}
 #' 
 #' @author Inga Patarcic
 #' @keywords internal 
-filterPreBenchGIsimple <- function(reg2Gene,
-                          benchData,
+filterPreBenchGIsimple <- function(interactions,
+                          benchInteractions,
                           ignore.strand=FALSE){
 
 
-         BenchCovered <- linkOverlaps(benchData,
-                                     first(reg2Gene),
-                                     second(reg2Gene),
+         BenchCovered <- linkOverlaps(benchInteractions,
+                                     first(interactions),
+                                     second(interactions),
                                      ignore.strand=ignore.strand)
                  
          
          filterRow <- unique(c(BenchCovered$subject1,
                              BenchCovered$subject2))
          
-         reg2Gene$Filter <- rep(0,length(reg2Gene))
+         interactions$Filter <- rep(0,length(interactions))
          
-         reg2Gene$Filter[filterRow] <- 1
+         interactions$Filter[filterRow] <- 1
          
-  return(reg2Gene)
+  return(interactions)
          
          
          }
@@ -349,19 +354,20 @@ filterPreBenchGIsimple <- function(reg2Gene,
 #####################################################
 
 
-#' ConfusionTable statistics for the benchmarked reg2Gene object
+#' ConfusionTable statistics for the benchmarked interactions object
 #' 
-#' A function takes as an benchmarked reg2gene object and outputs
+#' A function takes as an benchmarked interactions object and outputs
 #' confusion table statistics.
 #' 
 #' 
-#' @param reg2GeneBench GInteractions object with added benchmark 
-#' \code{benchmarkAssociations} and OPTIONAL  \code{filterPreBenchGI} 
+#' @param interactionsBench GInteractions object with added benchmark 
+#' \code{benchmarkInteractions} and OPTIONAL  \code{filterPreBenchGI} 
 #' metadata. However,prior this analysis, it is advised to reduce the number of
-#' true negatives by including only reg2gene entries that could be potentially
+#' true negatives by including only interactions entries that could be 
+#' potentially
 #' benchmarked.To get that info run \code{filterPreBenchGI} and add filter 
-#' column with metadata from this function to reg2GeneBench GInteractions 
-#' object prior running \code{benchmarkAssociations})
+#' column with metadata from this function to interactionsBench GInteractions 
+#' object prior running \code{benchmarkInteractions})
 #' 
 #' @param benchCol character (default "Bench"), results of benchmarking 
 #' procedure; eg a column name of the metadata which indicates the column where 
@@ -385,22 +391,22 @@ filterPreBenchGIsimple <- function(reg2Gene,
 #' "ConfusionMatrix" or "PPV" are options. 
 #' 
 #' @return integer vector or a list. If "ConfusionMatrix" is requested then the
-#' output is list with following elements:TP,FP,TN,FN,Specificity, Accuracy, PPV,
+#' output is list with following elements:TP,FP,TN,FN,Specificity, Accuracy,PPV,
 #' NPV,F1. Otherwise only PPV is reported.
 #' 
 #' 
 #' @details Reports statistics based on the confusion matrix. 
 #' There are four different categories in the confusion matrix: 
-#' TP = (number of) true positive: reg2gene entry that was reported to be 
+#' TP = (number of) true positive: interactions entry that was reported to be 
 #' associated (reported gene-enhancer statistics lower than a predefined
 #' threshold) and was benchmarked. 
-#' FP = (number of) false positive: reg2gene entry that was reported to be
+#' FP = (number of) false positive: interactions entry that was reported to be
 #' associated (reported gene-enhancer statistics lower than a predefined 
 #' threshold) BUT was not overlapped with benchmark dataset
-#' FN = (number of) false negative: reg2gene entry that was NOT reported to
+#' FN = (number of) false negative: interactions entry that was NOT reported to
 #' be associated (reported gene-enhancer statistics NOT lower than a predefined 
 #' threshold) BUT is benchmarked
-#' TN = (number of) true negative: reg2gene entry 
+#' TN = (number of) true negative: interactions entry 
 #' that was NOT reported to be associated (reported gene-enhancer
 #' statistics NOT lower than a predefined threshold) AND is NOT benchmarked.
 #' If no benchmark and no statistically significant data is entered, then 0 is 
@@ -416,18 +422,18 @@ filterPreBenchGIsimple <- function(reg2Gene,
 #' @examples require(GenomicRanges)
 #' require(InteractionSet)
 #'    
-#'    reg2GeneBench <- GInteractions(GRReg1_toy,GRReg1_toy$reg)
-#'    reg2GeneBench$PValue <- seq(0, 1,length.out = length(GRReg1_toy))
+#'    interactionsBench <- GInteractions(GRReg1_toy,GRReg1_toy$reg)
+#'    interactionsBench$PValue <- seq(0, 1,length.out = length(GRReg1_toy))
 #' 
 #'
-#' confusionMatrix(reg2GeneBench,
+#' confusionMatrix(interactionsBench,
 #'                 thresholdID = "PValue",
 #'                 thresholdValue = 0.05,
 #'                 benchCol = "anchor1.Bench1Exp",
 #'                 prefilterCol = "anchor1.Filter1Exp",
 #'                 statistics = "ConfusionMatrix")
 #'                 
-#' confusionMatrix(reg2GeneBench,
+#' confusionMatrix(interactionsBench,
 #'                 thresholdID = "PValue", 
 #'                 thresholdValue = 0.05,
 #'                 benchCol = "anchor1.Bench1Exp",
@@ -437,7 +443,7 @@ filterPreBenchGIsimple <- function(reg2Gene,
 #'                
 #'      
 #' @export
-confusionMatrix <- function(reg2GeneBench,
+confusionMatrix <- function(interactionsBench,
                             benchCol="Bench",
                             prefilterCol=NULL,
                             thresholdID=NULL,
@@ -451,7 +457,7 @@ confusionMatrix <- function(reg2GeneBench,
               
               }
   
-           if (!any(stringr::str_detect(colnames(mcols(reg2GeneBench)),
+           if (!any(stringr::str_detect(colnames(mcols(interactionsBench)),
                                          thresholdID))){
               
               stop("thresholdID column not identified")
@@ -459,7 +465,7 @@ confusionMatrix <- function(reg2GeneBench,
            }
   
   
-          if (!any(stringr::str_detect(colnames(mcols(reg2GeneBench)),
+          if (!any(stringr::str_detect(colnames(mcols(interactionsBench)),
                                        benchCol))){
             
               stop("benchCol column not detected")
@@ -472,20 +478,20 @@ confusionMatrix <- function(reg2GeneBench,
   
           if (!is.null(prefilterCol)){ 
             
-            rows.filt <- as.logical(mcols(reg2GeneBench)[,prefilterCol])
+            rows.filt <- as.logical(mcols(interactionsBench)[,prefilterCol])
             
-            reg2GeneBench <- reg2GeneBench[rows.filt]
+            interactionsBench <- interactionsBench[rows.filt]
           
             }
   
   
   ##################################
-  # thresholding reg2GeneBench object
+  # thresholding interactionsBench object
   
   
-  predictedEntries <- mcols(reg2GeneBench)[,thresholdID] <= thresholdValue
+  predictedEntries <- mcols(interactionsBench)[,thresholdID] <= thresholdValue
   
-  benchmarkedEntries <- as.logical(mcols(reg2GeneBench)[,benchCol])
+  benchmarkedEntries <- as.logical(mcols(interactionsBench)[,benchCol])
   
   
   
@@ -530,37 +536,39 @@ confusionMatrix <- function(reg2GeneBench,
  
 #' Benchmarks help function - forceByName
 #' 
-#' Forces benchmark input object to use gene coordinates of reg2Gene object if
-#' gene names overlap. It is crucial that benchData & reg2Gene both contain
+#' Forces benchmark input object to use gene coordinates of interactions object 
+#' if
+#' gene names overlap. It is crucial that benchInteractions 
+#' & interactions both contain
 #' meta-data named "name" -> where gene names are stored, 
 #' and that anchor2 in both objects corresponds to gene object. 
 #' 
-#' Read description for \code{benchmarkAssociations}
+#' Read description for \code{benchmarkInteractions}
 #' 
 #' @author Inga Patarcic
 #' @keywords internal
-forceByname <- function(benchData,reg2Gene){
+forceByname <- function(benchInteractions,interactions){
   
   # identifying gene names present in benchmark object and object used to 
   # benchmark
   
-      MatchPairs <- match(benchData$name,reg2Gene$name)
+      MatchPairs <- match(benchInteractions$name,interactions$name)
       
       MatchPairs <- cbind(which(complete.cases(MatchPairs)),
                           MatchPairs[complete.cases(MatchPairs)])
       
   # extracting gene GRanges object
       
-      tmpbenchData <- second(benchData)
+      tmpbenchInteractions <- second(benchInteractions)
   # matching    
-      tmpbenchData[MatchPairs[,1]] <- second(reg2Gene)[MatchPairs[,2]]
+      tmpbenchInteractions[MatchPairs[,1]] <- second(interactions)[MatchPairs[,2]]
    
-      tmpelementsMeta <- elementMetadata(benchData)
+      tmpelementsMeta <- elementMetadata(benchInteractions)
   # back to GInteractions object    
-      benchData <- GInteractions(first(benchData),
-                                 tmpbenchData)
+      benchInteractions <- GInteractions(first(benchInteractions),
+                                 tmpbenchInteractions)
       
-      elementMetadata(benchData) <- tmpelementsMeta
+      elementMetadata(benchInteractions) <- tmpelementsMeta
 
-      return(benchData)
+      return(benchInteractions)
 }
