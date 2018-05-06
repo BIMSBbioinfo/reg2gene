@@ -1,6 +1,6 @@
 # functions for meta analysis
 
-#' meta-analysis for regulatory region and gene associations
+#' meta-analysis for regulatory region and gene interactions
 #'
 #' The function combines association P-values and coefficients from different 
 #' data sets using Fisher's method and weigthed averaging respectively. 
@@ -15,7 +15,7 @@
 #' produce more robust and reproducible results. After,combining P-values, 
 #' q-values are calculated using the \code{\link[qvalue]{qvalue}} function.
 #'
-#' @param associations A list of \code{\link[InteractionSet]{GInteractions}}
+#' @param interactions A list of \code{\link[InteractionSet]{GInteractions}}
 #'  objects outputed from \code{\link{associateReg2Gene}} function.
 #'
 #'
@@ -52,12 +52,12 @@
 #'  
 #'  # input for meta-analysis is list of such objects
 #'  
-#'  associations <- list(AssocObject,AssocObject2)
-#'  names(associations) <- c("AssocObject","AssocObject2")
+#'  interactions <- list(AssocObject,AssocObject2)
+#'  names(interactions) <- c("AssocObject","AssocObject2")
 #'  
 #'  # OUTPUT: Run metaA
 #'  
-#'  metaAssociations(associations)
+#'  metaInteractions(interactions)
 #'
 #' @importFrom  data.table data.table
 #' @importFrom  stats pchisq
@@ -66,13 +66,13 @@
 #' @author Altunislav Akalinski
 #' 
 #' @export
-metaAssociations <- function(associations){
+metaInteractions <- function(interactions){
 
   # check the input GRanges structure and if something is wrong return error
   
-  if(!checkGrlStrMeta(associations)){
+  if(!checkGrlStrMeta(interactions)){
     
-    stop("\ncheck if input 'associations' object has the correct structure:\n",
+    stop("\ncheck if input 'interactions' object has the correct structure:\n",
          "\n a)It must be a list of GInteractions,:\n",
          "\n b) and each GInteractions must have:name,name2,n,coefs,pval,pval2,
                qval,qval2 columns\n")
@@ -81,13 +81,13 @@ metaAssociations <- function(associations){
   # create an key-stats table where each key is an association
   # and stats are the association statistics for each data set in the input
   # object
-  # for associations, using this table we will create intermediate
+  # for interactions, using this table we will create intermediate
   # tables to do meta-analysis
   # this is needed because we can't assume each GRanges object will
   # have the same order or same number of elements, there has to be
   # a merge operation
   
-  aTbl = assocTable(associations)
+  aTbl = assocTable(interactions)
   
   if (nrow(aTbl)!=0) {
 
@@ -141,8 +141,8 @@ metaAssociations <- function(associations){
 
 # this function creates a table of keys and stats from
 # a list which contains GInteractions  as the
-# output of associateReg2Gene or metaAssociate functions.
-# this is needed to process the associations that
+# output of associateReg2Gene or metaInteractions functions.
+# this is needed to process the interactions that
 # exist in many datasets and merge them into the same table with
 # stats from the statistical tests
 #' @author Altunislav Akalinski
@@ -177,11 +177,11 @@ assocTable<-function(grlist){
 # columns.
 #' @author Altunislav Akalinski
 #' @keywords internal
-checkGrlStrMeta <- function(associations){
+checkGrlStrMeta <- function(interactions){
 
   ExpectedAssResults <- c("name","name2","n","coefs","pval","qval")
  
-  all(c(sapply(associations,function(x){
+  all(c(sapply(interactions,function(x){
  
        is.reg=all(ExpectedAssResults%in%colnames(mcols(x)))
     
@@ -189,7 +189,7 @@ checkGrlStrMeta <- function(associations){
     
     all(is.reg,is.gr)}
     
-  ), (class(associations)=="list") ))
+  ), (class(interactions)=="list") ))
 
   }
 
