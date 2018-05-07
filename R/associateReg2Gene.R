@@ -112,6 +112,8 @@
   # remove all input files
   if (remove.chunks==T){lapply(GeneChunks,function(x){system(paste0("rm ",x))})}
   
+  saveRDS(GeneEnhancerResults,paste0(out.dir,saveTag,".rds"))
+  
   return(GeneEnhancerResults)
   
   sink()
