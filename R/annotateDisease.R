@@ -6,18 +6,16 @@
 #' based on gene symbol overlap or or based on variant-genomic region overlap in
 #' addition to the gene symbol overlap.
 #' 
-#' @param  interactionData A GInteractions object. It can be produced by 
-#' modelling [ \code{\link{associateReg2Gene}}], or
-#' meta-analysis [\code{\link{metaAssociations}}] or voting functions from 
-#' reg2gene. It can be GInteractions object with only gene symbols as an 
-#' additional meta-data. Important is that the
-#' first element of input associating pair corresponds to regulatory region, 
-#' whereas the second memeber corresponds to TSS/gene region. 
+#' @param  interactions A GInteractions or GRanges object with gene names as a
+#' minimal metadata info. If GInteractions is inputed, the first
+#' element corresponds to regulatory region, whereas the 
+#' anchor anchor corresponds to TSS/gene region. 
 #' 
-#' @param  DisGeneDB a data-table or GRanges object which stores info about 
-#' gene-disease associations (in data table format) or variant-gene-disease 
-#' associations (as a GRanges object where ranges correspond to variant 
-#' location). For example DISGENET db or GWAS Catalog db can be used as an 
+#' @param  disGeneDB A GInteractions or GRanges object which stores info about 
+#' gene-disease associations (GRanges object type) or variant-gene-disease 
+#' associations (as a GInteractions object where anchor1 correspond to the 
+#' variant location and anchor2 to gene location). 
+#' For example, DISGENET db or GWAS Catalog db can be used as an 
 #' input for this function. 
 #' 
 #' @param geneIDs character vector of length 2 which stores information
@@ -25,97 +23,146 @@
 #' By default c("name2","GeneName")
 #' 
 #' 
-#' @return A GInteractions object (interactionData) with added meta-data
-#' from the DisGeneDB object. Added info is presumably info about traits
-#' associated with given genes or both variant-genes combination.
+#' @return A GInteractions object (interactions) with added meta-data
+#' from the disGeneDB object. Added info is presumably info about traits
+#' associated with provided gene names or variant-gene combination.
 #' 
-#' @details  Function works with DisGeneDB object that can be either a
-#' Granges object or dataframe storing info about gene~trait or
+#' @details  Function works with disGeneDB object that can be either a
+#' Granges or GInteractions object which stores info about gene~trait or
 #' variant~gene~trait associations.
-#' If input object is GRanges, then only variant (not gene) location should
-#' be stored as a genomic ranges. In that case, function finds overlaps 
-#' between anchor1 from GInteraction object and DisGeneDB genomic ranges
+#' If input object is GInteractions, then function finds overlaps 
+#' between anchor1 from GInteraction object and anchor1 of disGeneDB 
 #' (presumably overlap between variant and regulatory regions), and in 
 #' addition it identifies overlaps between genes from these two objects
 #' based on gene symbols (stored in columns "name2","GeneName"). Thus,
 #' only if gene symbols and genomic locations from both objects overlap
 #' the function will return these entries.
 #' 
-#' If DisGeneDB stores info about gene~trait associations as a dataframe
+#' If disGeneDB stores info about gene~trait associations as a GRanges object
 #' (no info about variant location), then info about associated trait is
-#' fetched only based on gene name overlap.
+#' obtained only based on gene name overlap.
 #' 
 #' @author Inga Patarcic
 #' 
-#' @examples #[to do]
+#' @examples 
+#' library(InteractionSet)
+#' library(GenomicRanges)
+#' library(reg2gene)
 #' 
+#' # 1. get disease-gene DB example:
+#' 
+#' GRReg2_toyDisease <- GRReg2_toy
+#' GRReg2_toyDisease$disease <- paste0("dis",1:length(GRReg2_toy))
+#' 
+#' # 1.a get disease-gene DB example as GInteractions
+#'  disGeneDB <- GInteractions(GRReg2_toyDisease,GRReg2_toyDisease$reg)
+#'  mcols(disGeneDB) <- mcols(GRReg2_toyDisease)
+#' 
+#' 
+#' # 1. get enhancer-gene:GInteractions 
+#' 
+#' GRReg1_toyGI <- GInteractions(anchor1 = GRReg1_toy,
+#'                               anchor2 = GRReg1_toy$reg,
+#'                               gene=GRReg1_toy$name)
+#' 
+#' mcols(GRReg1_toyGI) <- mcols(GRReg1_toyGI)[c("gene")]
+#' 
+#' 
+#' 
+#' # run reg2trait; version geneDisease
+#' 
+#'  reg2trait(interactions = GRReg1_toyGI,
+#'                  disGeneDB = GRReg2_toyDisease,
+#'                  geneIDs = c("gene","name"))
+#'                  
+#'                  
+#'  # run reg2trait; version SNPgeneDisease       
+#'           
+#'  reg2trait(interactions = GRReg1_toyGI,
+#'                  disGeneDB = disGeneDB,
+#'                  geneIDs = c("gene","name"))                
+#' 
+#'  
 #' @import GenomicRanges
 #' @import InteractionSet
 #' 
 #' @keywords internal
-annotateRegionToTrait <- function(interactionData,
-                                  DisGeneDB,
-                                  geneIDs=c("name2","GeneName"),
+reg2trait <- function(interactions,
+                      disGeneDB,
+                      geneIDs=c("name2","GeneName"),
                                   ...){
   
   # Finding info about genes when variant-gene-disease
   # association info available
   
-  if (class(DisGeneDB)=="GRanges"){
-    # expect GRanges or data-frame
+  if (class(disGeneDB)=="GInteractions"){
+    # expect GRanges or GInteractions
     
-    OverlapGI <-  DataFrame(findOverlaps(first(interactionData),
-                                         DisGeneDB))
+    if (class(interactions)=="GInteractions"){
+      
+    OverlapGI <-  DataFrame(findOverlaps(first(interactions),
+                                         first(disGeneDB)))}
+    
+    if (class(interactions)=="GRanges"){
+      
+      OverlapGI <-  DataFrame(findOverlaps(interactions,
+                                           first(disGeneDB)))
+    }
+    
     
     # interactions for which overlap in disease-gene-variant 
     # database is identified
-    interactionData <- interactionData[OverlapGI$queryHits]
+    interactions <- interactions[OverlapGI$queryHits]
     # interactions for which overlap in disease-gene-variant 
     # database is identified
-    DisGeneDB <- DisGeneDB[OverlapGI$subjectHits]
+    disGeneDB <- disGeneDB[OverlapGI$subjectHits]
     
-    mcols(interactionData) <- DataFrame(mcols(interactionData),
-                                        DisGeneDB)
+    }
     
-    equalGenes <-  which(unlist(mcols(interactionData)[geneIDs[1]]==
-                                  mcols(interactionData)[geneIDs[2]]))
-    
-    interactionData <- interactionData[equalGenes] 
-    
-    return(interactionData)
-    
-    
-    
-  }
   
-  if (class(DisGeneDB)!="GRanges"){
-    # expect GRanges or data-frame
+  if (class(disGeneDB)=="GRanges"){
+    # expect GRanges or GInteractions
     
-    NameMatch <- unlist(match(mcols(interactionData)[geneIDs[1]],
-                              DisGeneDB[geneIDs[2]]))
+    NameMatch <- unlist(match(mcols(interactions)[geneIDs[1]],
+                              mcols(disGeneDB)[geneIDs[2]]))
     
     if (!all(is.na(NameMatch))) {  # if any match identified
       
       # identify appropriate diseases 
-      DisGeneDB <- DisGeneDB[NameMatch[complete.cases(NameMatch)],]
+      disGeneDB <- disGeneDB[NameMatch[complete.cases(NameMatch)]]
       
       # identify appropriate interactions objects which have available 
       # info about traits
-      IndexForInterObj <- (1:length(interactionData))[complete.cases(NameMatch)]
+      IndexForInterObj <- (1:length(interactions))[complete.cases(NameMatch)]
       
-      interactionData <- interactionData[IndexForInterObj]
-      mcols(interactionData) <- c(mcols(interactionData),
-                                  DisGeneDB )
+      interactions <- interactions[IndexForInterObj]
+      mcols(interactions) <- c(mcols(interactions),
+                               mcols(disGeneDB) )
     }
     
     
-    return(interactionData)
+    return(interactions)
     
     
     
   }
+     equalGenes <-  which(unlist(mcols(interactions)[geneIDs[1]]==
+                                  mcols(disGeneDB)[geneIDs[2]]))
+    
+    
+    mcols(interactions) <- DataFrame(mcols(interactions),
+                                        disGeneDB)
+    
+    interactions <- interactions[equalGenes] 
+    # remove X column
+    mcols(interactions) <- mcols(interactions)[
+      colnames(mcols(interactions))!="X"]
+    return(interactions)
+    
+    
+  }
+
   
-}
 
 
 #' Compare two objects of genomic region~gene~trait associations
@@ -124,14 +171,14 @@ annotateRegionToTrait <- function(interactionData,
 #' This function reports per trait number of reported 
 #' genomic region~gene~trait from two different objects.
 #' 
-#' @param  reg2Trait A GInteractions object, likely produced by 
-#' [\code{\link{annotateRegionToTrait}}]. This object stores info about
+#' @param  interactionsTraits A GInteractions object, likely produced by 
+#' [\code{\link{reg2trait}}]. This object stores info about
 #' genomic region~gene~trait associations, as follows: anchor1 corresponds
 #' to genomic region (likely SNP location), anchor2 corresponds to gene 
 #' location, and gene symbol and associated disease is stored as a meta-data.
 #' 
-#' @param   reg2Trait2 A GInteractions object, likely produced by 
-#' [\code{\link{annotateRegionToTrait}}]. This object stores info about
+#' @param   interactionsTraits2 A GInteractions object, likely produced by 
+#' [\code{\link{reg2trait}}]. This object stores info about
 #' genomic region~gene~trait associations, as follows: anchor1 corresponds
 #' to genomic region (likely SNP location), anchor2 corresponds to gene 
 #' 
@@ -139,13 +186,15 @@ annotateRegionToTrait <- function(interactionData,
 #' about column names where trait info are stored for both input objects. 
 #' By default c("Trait","Trait")
 #' 
+#' @param naming a character vector (default: c("Traits1,"Trait2").
+#' Column names in the output object.
 #' 
-#' @return a dataframe with rows corresponding to traits, and two columns with
+#' @return a matrix with rows corresponding to traits, and two columns with
 #' info about gene counts for these traits. Each column gathers info from one 
-#' reg2Trait GInteractions object (variant~gene interactions + trait 
+#' interactionsTraits GInteractions object (variant~gene interactions + trait 
 #' association stored as meta-data).
 #'  
-#' @details For each trait that is present in at least one of the reg2Trait 
+#' @details For each trait that is present in at least one of the interactionsTraits 
 #' GInteractions objects report how many associated genes is present in the 
 #' first GInteractions object, and how many is present in the 2nd 
 #' GInteractions object. It allows an easy identification of traits for which
@@ -154,98 +203,54 @@ annotateRegionToTrait <- function(interactionData,
 #' 
 #' @author Inga Patarcic
 #' 
-#' @examples #[TO do]
+#' @examples library(GenomicRanges)
+#' library(InteractionSet)
 #' 
+#' # 1. creating interaction object 1 with added diseases 
+#' 
+#' GRReg1_toyDisease <- GRReg1_toy
+#' GRReg1_toyDisease$disease <- paste0("dis",c(1,1,3:(length(GRReg1_toy))))
+#' 
+#'  
+#' # 2. creating interaction object 2 with added diseases 
+#' GRReg2_toyDisease <- GRReg2_toy
+#' GRReg2_toyDisease$disease <- paste0("dis",1:length(GRReg2_toy))
+#' 
+#' 
+#' # comparing them with compareReg2Traits
+#' compareReg2Traits(interactionsTraits=GRReg1_toyDisease,
+#'                   interactionsTraits2=GRReg2_toyDisease,
+#'                   traitID=c("disease","disease"),
+#'                   naming=c("Trait1","Trait2"))
+#'  
 #' @import GenomicRanges
 #' @import InteractionSet
 #' 
 #' @keywords internal
-compareReg2Traits <- function(reg2Trait,
-                              reg2Trait2,
-                              traitID=c("Trait","Trait")){
+compareReg2Traits <- function(interactionsTraits,
+                              interactionsTraits2,
+                              traitID=c("Trait","Trait"),
+                              naming=c("Trait1","Trait2")){
   
   # obtain per disease statistics
-  reg2t.table <- table(mcols(reg2Trait)[traitID[1]])
-  reg2t2.table <- table(mcols(reg2Trait2)[traitID[2]])
+  reg2t.table <- table(mcols(interactionsTraits)[traitID[1]])
+  reg2t2.table <- table(mcols(interactionsTraits2)[traitID[2]])
   
   # select diseases present in both datasets  
   Diseases <- names(reg2t.table)[names(reg2t.table)%in%names(reg2t2.table)]
   
   Compare2datasets <- cbind(reg2t.table[Diseases],reg2t2.table[Diseases])
   
-  colnames(Compare2datasets) <- c("reg2Trait","reg2Trait2")
+  colnames(Compare2datasets) <- c("interactionsTraits","interactionsTraits2")
   
   # filtering when both entries have diseases with 0 gene counts
   
   Compare2datasets <- Compare2datasets[apply(Compare2datasets,1,
                                              function(x){return(!all(x==0))}),]
   
+  colnames(Compare2datasets) <- naming
+  
   return(Compare2datasets)
 }
 
 
-
-
-# reg2Trait <- annotateRegionToTrait(interactionData,DisGeneDB) 
-# reg2Trait2 <-annotateRegionToTrait(interactionData,data.frame(DisGeneDB))
-# 
-# compareReg2Traits(reg2Trait,reg2Trait2)
-# 
-# 
-# 
-# 
-# 
-# gda <- read.delim("D:/Projects_Helping/PhD/reg2gene/dATA/curated_variant_disease_associations.tsv")
-# 
-# 
-# 
-# 
-# # annotateRegionToDisease
-# 
-# 
-# "diseaseName"
-# "geneSymbol"
-# 
-# interactionData <- readRDS("D:/Projects_Helping/PhD/reg2gene/ModelResult.rds")
-# 
-# DisGeneDB <- read.delim("D:/Projects_Helping/PhD/reg2gene/dATA/curated_gene_disease_associations.tsv")
-# 
-# #1. GI-GI OVERLAP
-# library(traseR)
-# data("taSNP")
-# DisGeneDB <- taSNP
-# DisGeneDB$GeneName <- taSNP$GENE_NAME
-# 
-# 
-# geneIDs=c("name2","GeneName")
-
-
-
-
-
-# Finding info about genes when variant-gene-disease
-# association info available
-
-# if (class(DisGeneDB)=="GInteractions"){
-# 
-#  
-#     OverlapGI <-  linkOverlaps(interactionData,
-#                                first(DisGeneDB),
-#                                second(DisGeneDB))
-#     
-#     # if subject1 overlaps subject1 then interaction is confirmed
-#     benchRow <- which(OverlapGI$subject1==OverlapGI$subject2)
-#      
-#     # interactions for which overlap in disease-gene-variant 
-#     # database is identified
-#     interactionData <- interactionData[OverlapGI$query[benchRow]]
-#     # interactions for which overlap in disease-gene-variant 
-#     # database is identified
-#     DisGeneDB <- DisGeneDB[OverlapGI$subject1[benchRow]]
-#    
-#    mcols(interactionData) <- DataFrame(mcols(interactionData),
-#                                           DisGeneDB)
-#  
-#      return(interactionData)
-#      
-# }
