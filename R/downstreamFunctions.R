@@ -195,7 +195,7 @@ makeIndexTable <- function(pathModels,
 #' returns a \code{\link[InteractionSet]{GInteractions}} object filtered 
 #' for N (or retained all) enhancer-promoter interactions. Corresponding 
 #' statistics from either modelling analysis \code{\link{associateReg2Gene}} or 
-#' meta-analysis \code{\link{metaAssociations}} is retained. 
+#' meta-analysis \code{\link{metaInteractions}} is retained. 
 #' 
 #' @details  
 #' This function allows easy export of TOPN gene~enhancer pairs per method,
@@ -438,7 +438,7 @@ votedEP <- function(indexTable,
 #' 
 #' @param enhPromPairs A GInteractions object of length 16 with the 
 #' corresponding statistics as a results of either reg2gene modelling 
-#' \code{\link{associateReg2Gene}}, meta-analysis \code{\link{metaAssociations}}
+#' \code{\link{associateReg2Gene}}, meta-analysis \code{\link{metaInteractions}}
 #' or their pre-filtered versions \code{\link{selectEP}}. 
 #' It requires information about statistics 
 #' ("coef") and corresonding testing results ("pval"). In the future it could 

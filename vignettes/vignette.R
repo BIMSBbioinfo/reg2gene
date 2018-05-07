@@ -36,7 +36,7 @@ regTSS_toy$name2 <- regTSS_toy$name <- paste0("TEST_Reg",
                                         c(1,1,3,5,5,5))
                                         
 # run quntification f()                                        
- bwToGeneExp(exons = regTSS_toy,geneActSignals = c(test.bw,test2.bw))
+ bwToGeneExp(exons = regTSS_toy,target = c(test.bw,test2.bw))
 
 
 
@@ -54,7 +54,7 @@ regTSS_toy$reg <-  regTSS_toy[c(1,1,3:6)]
 regTSS_toy$name2 <- regTSS_toy$name <- paste0("TEST_Reg",
                                         c(1,1,3:length(regTSS_toy)))
 # run quantification of enhance activity
-regActivity(regRegions = regTSS_toy,activitySignals = c(test.bw,test2.bw))   
+regActivity(windows = regTSS_toy,target = c(test.bw,test2.bw))   
 
 
 ## ------------------------------------------------------------------------
@@ -72,7 +72,7 @@ regReg_toy <- GRReg2_toy
 
 # combine these object into per gene GRangesList
    
-regActivityAroundTSS(regActivity = regReg_toy,tss = regTSS_toy, 
+regActivityAroundTSS(regActivity = regReg_toy,geneExpression = regTSS_toy, 
                      upstream=1,downstream=1)
 
 
@@ -175,13 +175,13 @@ gr2 <- gr <- GRanges(seqnames=rep("chr1",3),IRanges(1:3,3:5))
  
  # input for meta-analysis is list of such objects
  
- associations <- list(AssocObject,AssocObject2)
- names(associations) <- c("H3K4me1","H327ac")
+ interactions <- list(AssocObject,AssocObject2)
+ names(interactions) <- c("H3K4me1","H327ac")
  
- # Run voteAssociations
+ # Run voteInteractions
 
  
- voteAssociations( associations, 
+ voteInteractions( interactions, 
                   cutoff.stat="pval",
                   cutoff.val=0.05,
                   vote.threshold=0.5)
@@ -221,13 +221,13 @@ gr2 <- gr <- GRanges(seqnames=rep("chr1",3),IRanges(1:3,3:5))
  
  # input for meta-analysis is list of such objects
  
- associations <- list(AssocObject,AssocObject2)
- names(associations) <- c("Roadmap","Blueprint")
+ interactions <- list(AssocObject,AssocObject2)
+ names(interactions) <- c("Roadmap","Blueprint")
  
 
  
  # Run metaA
- metaAssociations( associations)
+ metaInteractions( interactions=interactions)
  
 
 ## ---- fig.height = 10, fig.width = 10, fig.align = "center",echo=FALSE----
@@ -244,43 +244,49 @@ knitr::include_graphics("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/vignett
 
 ## ------------------------------------------------------------------------
 
-   reg2Gene <- GInteractions(GRReg1_toy,GRReg1_toy$reg)[2]
-   benchData <- GInteractions(GRReg2_toy,GRReg2_toy$reg)
+   interactions <- GInteractions(GRReg1_toy,GRReg1_toy$reg)[2]
+   benchInteractions <- GInteractions(GRReg2_toy,GRReg2_toy$reg)
    
    # removing confusing meta-data
-   mcols(reg2Gene) <- NULL
+   mcols(interactions) <- NULL
    
-benchmarkAssociations(reg2Gene = reg2Gene,
-              benchData = benchData, 
+benchmarkInteractions(interactions = interactions,
+              benchInteractions = benchInteractions, 
               preFilter = T,
               binary=TRUE) 
 
+## ----fig6, fig.height = 5, fig.width = 5, fig.align = "center",echo=FALSE----
+#knitr::include_graphics("https://github.com/BIMSBbioinfo/reg2gene/master/vignettes/Figures/benchmarkF.png")
+
+knitr::include_graphics("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/vignettes/Figures/benchmarkF.png")
+
+
 ## ---- echo=FALSE---------------------------------------------------------
-reg2GeneBench <- GInteractions(GRReg1_toy,GRReg1_toy$reg)
+interactionsBench <- GInteractions(GRReg1_toy,GRReg1_toy$reg)
 
-Bench <- reg2GeneBench$anchor1.Bench1Exp
-Filter <- reg2GeneBench$anchor1.Filter1Exp
-      mcols(reg2GeneBench) <- NULL
+Bench <- interactionsBench$anchor1.Bench1Exp
+Filter <- interactionsBench$anchor1.Filter1Exp
+      mcols(interactionsBench) <- NULL
 
-   reg2GeneBench$Pval <- seq(0, 1, length.out = length(GRReg1_toy))
-   reg2GeneBench$Bench <- Bench
-   reg2GeneBench$Filter <- Filter
+   interactionsBench$Pval <- seq(0, 1, length.out = length(GRReg1_toy))
+   interactionsBench$Bench <- Bench
+   interactionsBench$Filter <- Filter
   
-  reg2GeneBench
+  interactionsBench
 
 
 ## ---- echo=FALSE---------------------------------------------------------
-reg2GeneBench <- GInteractions(GRReg1_toy,GRReg1_toy$reg)
+interactionsBench <- GInteractions(GRReg1_toy,GRReg1_toy$reg)
 
-Bench <- reg2GeneBench$anchor1.Bench1Exp
-Filter <- reg2GeneBench$anchor1.Filter1Exp
-      mcols(reg2GeneBench) <- NULL
+Bench <- interactionsBench$anchor1.Bench1Exp
+Filter <- interactionsBench$anchor1.Filter1Exp
+      mcols(interactionsBench) <- NULL
 
-   reg2GeneBench$Pval <- seq(0, 1, length.out = length(GRReg1_toy))
-   reg2GeneBench$Bench <- Bench
-   reg2GeneBench$Filter <- Filter
+   interactionsBench$Pval <- seq(0, 1, length.out = length(GRReg1_toy))
+   interactionsBench$Bench <- Bench
+   interactionsBench$Filter <- Filter
 
-confusionMatrix(reg2GeneBench,
+confusionMatrix(interactionsBench,
                 thresholdID = "Pval",
                 thresholdValue = 0.05,
                 benchCol = "Bench",
@@ -311,64 +317,101 @@ GenomeInteractions$pval <- c(0.20857403, 0.72856090, 0.03586015,
 GenomeInteractions$color <- c("red","blue","grey")
  
 
- plotGenomeInteractions(interactionData = GenomeInteractions,
+ plotInteractions(interactions = GenomeInteractions,
                   statistics ="pval",
                   coloring = "color")
 
 
 ## ------------------------------------------------------------------------
- plotGenomeInteractions(interactionData = GenomeInteractions,
+ plotInteractions(interactions = GenomeInteractions,
                         selectGene="FTO")
                   
 
 ## ------------------------------------------------------------------------
                    
-  plotGenomeInteractions(interactionData = GenomeInteractions,
+  plotInteractions(interactions = GenomeInteractions,
                selectRegulatoryRegion = "chr16:53112601-53114200")
 
 ## ------------------------------------------------------------------------
                    
- benchmarkData = list(GenomeInteractions[1:3])
+ benchInteractions = list(GenomeInteractions[1:3])
 
-  plotGenomeInteractions(interactionData = GenomeInteractions,
+  plotInteractions(interactions = GenomeInteractions,
                          coloring = "color",
                          statistics = "pval",
-                         benchmarkData = benchmarkData)
+                         benchInteractions = benchInteractions)
+
+## ----echo=FALSE----------------------------------------------------------
+
+# creating toy example
+# 1. windows of interest
+   windows <- GRanges(c("chr1:1-2", # 1. overlap prom
+                                 "chr2:1-2",  # 2. overlap enh
+                                 "chr3:1-2", # 3. overlap tss +/- 1,000,000
+                                 "chr4:1-2")) # 4. do not overlap tss +/- 1Mb
+    
+     annotationsEnh <- GRanges(c("chr1:1-2",
+                                 "chr2:1-2",
+                                 "chr3:100000-100002",
+                                 "chr4:10000001-10000002"))
+    
+     annotationsGenes <- GRanges(c("chr1:1-2",
+                                   "chr2:100000-100002",
+                                   "chr3:99999-100002",
+                                   "chr4:10000001-10000002"))
+    
+     seqlengths(annotationsEnh) <- seqlengths(annotationsGenes) <- rep(10000002,
+                                                                       4)
+  # example of interactions
+         interactions = GInteractions(annotationsEnh,annotationsGenes,
+                                 name=c("gen1","gen2","gen3","gen4"))
+     
+  # example of geneAnnotations   
+     geneAnnotations=second(interactions)
+     mcols(geneAnnotations) <- mcols(interactions) 
+ 
+     print("windows of interest")
+     windows
+      print("toy example of interactions object")
+     interactions
+      print("toy example of geneAnnotations object")
+     geneAnnotations
+     
+     
 
 ## ------------------------------------------------------------------------
-
- genomicRegions <- GRanges(c("chr1:1-2", # 1. overlap prom
-                             "chr2:1-2",  # 2. overlap enh
-                             "chr3:1-2", # 3. overlap tss +/- 1,000,000
-                             "chr4:1-2")) # 4. do not overlap tss +/- 1,000,000
+     
+  # run annotation function: 
+ reg2gene(windows=windows,
+          interactions=interactions, 
+          geneAnnotations = geneAnnotations)
  
- # CREATE GInteractions test object
- annotationsEnh <- GRanges(c("chr1:1-2",
-                             "chr2:1-2",
-                             "chr3:100000-100002",
-                             "chr4:10000001-10000002"))
+ # which regions are not identified
  
- annotationsGenes <- GRanges(c("chr1:1-2",
-                               "chr2:100000-100002",
-                               "chr3:99999-100002",
-                               "chr4:10000001-10000002"))
+ reg2gene(windows=windows,
+          interactions=interactions, 
+          geneAnnotations = geneAnnotations,
+          identified=FALSE)
  
- annotationsGenes$name=c("gen1","gen2","gen3","gen4")
- seqlengths(annotationsEnh) <- seqlengths(annotationsGenes) <- rep(10000002,4)
- 
- 
- annotations = GInteractions(annotationsEnh,annotationsGenes)
-
-  annotateGenomicRegions(genomicRegions,
-                     annotations =annotations,
-                     identified=T)
+ # if interactions are not available, assign interactions based solely on the 
+ # proximity to promoters
+ reg2gene(windows = windows,
+                 interactions=NULL,
+                 geneAnnotations = geneAnnotations)
   
 
+## ----fig4, fig.height = 5, fig.width = 5, fig.align = "center",echo=FALSE----
+#knitr::include_graphics("https://github.com/BIMSBbioinfo/reg2gene/master/vignettes/Figures/annotatExample.png")
+
+knitr::include_graphics("/data/akalin/Projects/AAkalin_reg2gene/reg2gene/vignettes/Figures/annotatExample.png")
+
+
 ## ------------------------------------------------------------------------
  
- annotateGenomicRegions(genomicRegions,
-                     annotations,
-                     identified=F)
+ reg2gene(windows,
+          geneAnnotations=geneAnnotations,
+          interactions,
+          identified=F)
 
 
   

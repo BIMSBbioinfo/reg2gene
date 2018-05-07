@@ -15,14 +15,16 @@
 #' @param geneAnnotations GRanges which contains info about TSS for genes of 
 #' interest, or ideally TSS for all genes in the genome, since nearest gene 
 #' annotation methods (step 1 TSS+/-1000bp & step 3 TSS +/- 1Mb) is based
-#' on the gene TSS coordinates from this object. 
+#' on the gene TSS coordinates from this object. Necessary meta-data is a
+#' column with gene names - "name"
 #' @param annotateInteractions (default FALSE) This argument is useful in the 
 #' case when interaction dataset does not store info about genes, whereas it 
 #' provides only an info about interacting locations in the genome (not
 #' necessarilly regulatory region - promoter interactions). If FALSE, no 
 #' additional action done. If TRUE, interactions are firstly annotated
 #' to the genes (unannotated interactions are removed from the dataset),
-#' and then windows are annotated using annotated interaction object.
+#' windows are subsequently annotated to genes using annotated interactions 
+#' object
 #' @param upstream number of basepairs upstream from TSS to look for
 #' input windows. default 1000
 #' @param downstream number of basepairs downstream from TSS to look for 
@@ -87,13 +89,12 @@
 #' library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 #' library(GenomicFeatures)
 #' library(reg2gene)
+#'  
+#' windows <- GRanges(c("chr1:1-2", # 1. overlap prom
+#'                      "chr2:1-2",  # 2. overlap enh
+#'                      "chr3:1-2", # 3. overlap tss +/- 1,000,000
+#'                      "chr4:1-2")) # 4. do not overlap tss +/- 1Mb
 #' 
-#' genomicRegions <- GRanges(c("chr1:1-2", # 1. overlap prom
-#'                             "chr2:1-2",  # 2. overlap enh
-#'                             "chr3:1-2", # 3. overlap tss +/- 1,000,000
-#'                             "chr4:1-2")) # 4. do not overlap tss +/- 1,000,000
-#' 
-#' # CREATE GInteractions test object
 #' annotationsEnh <- GRanges(c("chr1:1-2",
 #'                             "chr2:1-2",
 #'                             "chr3:100000-100002",
@@ -103,21 +104,33 @@
 #'                               "chr2:100000-100002",
 #'                               "chr3:99999-100002",
 #'                               "chr4:10000001-10000002"))
-#' annotationsGenes$name=c("gen1","gen2","gen3","gen4")
+#' 
 #' seqlengths(annotationsEnh) <- seqlengths(annotationsGenes) <- rep(10000002,
 #'                                                                   4)
+#' interactions = GInteractions(annotationsEnh,annotationsGenes,
+#'                              name=c("gen1","gen2","gen3","gen4"))
 #' 
 #' 
-#' annotations = GInteractions(annotationsEnh,annotationsGenes)
+#' geneAnnotations=second(interactions)
+#' mcols(geneAnnotations) <- mcols(interactions) 
 #' 
+#'  reg2gene(windows=windows,
+#' interactions=interactions, 
+#' geneAnnotations = geneAnnotations)
 #' 
-#' reg2gene(windows=genomicRegions,
-#'                     annotations =annotations,
-#'                     identified=TRUE)
-#' reg2gene(windows=genomicRegions,
-#'                     annotations,
-#'                     identified=FALSE)
+#' # which regions are not identified
 #' 
+#' reg2gene(windows=windows,
+#'          interactions=interactions, 
+#'          geneAnnotations = geneAnnotations,
+#'          identified=FALSE)
+#' 
+#' # if interactions are not available, assign interactions based solely on the 
+#' # proximity to promoters
+#' reg2gene(windows = windows,
+#'          interactions=NULL,
+#'          geneAnnotations = geneAnnotations)
+#'  
 #' @export
 reg2gene <- function(windows,
                     geneAnnotations,

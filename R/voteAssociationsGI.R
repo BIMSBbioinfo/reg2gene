@@ -9,7 +9,7 @@
 #'
 #' @param interactions A list of \code{\link[InteractionSet]{GInteractions}}
 #'  objects outputed from \code{\link{associateReg2Gene}} or
-#' \code{\link{metainteractions}}.
+#' \code{\link{metaInteractions}}.
 #' @param cutoff.stat (character,"pval" is default). Which statistics to 
 #' filter:"qval" or "pval"
 #' @param cutoff.val a numeric cutoff (default 0.05) that will be used to filter 

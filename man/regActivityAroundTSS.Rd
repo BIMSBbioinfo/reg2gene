@@ -4,14 +4,14 @@
 \alias{regActivityAroundTSS}
 \title{Identify regulatory regions around provided TSSes}
 \usage{
-regActivityAroundTSS(regActivity, tss, upstream = 5e+05, downstream = 5e+05,
-  mc.cores = 1, force = FALSE)
+regActivityAroundTSS(regActivity, geneExpression, upstream = 5e+05,
+  downstream = 5e+05, mc.cores = 1, force = FALSE)
 }
 \arguments{
 \item{regActivity}{a GRanges object output from \code{regActivity}
 function}
 
-\item{tss}{a GRanges object output from \code{bwToGeneExp} that
+\item{geneExpression}{a GRanges object output from \code{targetneExp} that
 contains the TSS location and associated gene expression values 
 per cell type or condition as meta data. Each row should have a
 "name" and "name2" columns for unique id or name/symbol for the
@@ -35,7 +35,7 @@ least two cores.}
 and genes in 1-to-1 manner. Meaning,a gene expression of gene1 is modelled 
 using enhancer1 enhancer activity, gene2 gene expression is modelled with
 enhancer2 enhancer activity, etc. Thus, input gene expression GRanges object
-(tss) needs to have equal length as enhancer activity GRanges object 
+(geneExpression) needs to have equal length as enhancer activity GRanges object 
 (regActivity). It overwrites upstream and downstream arguments since 1-to-1
 relationship is tested.}
 }
@@ -86,7 +86,7 @@ regRegion <- GRReg2_toy
 
 # Overlapping quantified enhancer activity and gene expression:
 # OUTPUT  regActivityAroundTSS():
-regActivityAroundTSS(regActivity=regRegion, tss=geneExpression,
+regActivityAroundTSS(regActivity=regRegion, geneExpression=geneExpression,
 upstream=1,downstream=1)
 
 # when different upstream/downstream argument is used:

@@ -198,7 +198,7 @@ reg2trait <- function(interactions,
 #' GInteractions objects report how many associated genes is present in the 
 #' first GInteractions object, and how many is present in the 2nd 
 #' GInteractions object. It allows an easy identification of traits for which
-#' [\code{\link{annotateGenomicRegions}}] analysis improved number of disease
+#' [\code{\link{reg2gene}}] analysis improved number of disease
 #' associated genes.
 #' 
 #' @author Inga Patarcic

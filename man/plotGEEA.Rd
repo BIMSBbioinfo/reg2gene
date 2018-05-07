@@ -10,7 +10,7 @@ plotGEEA(enhPromPairs, indexTable, method = "H3K4me1", algorithm = "dcor",
 \arguments{
 \item{enhPromPairs}{A GInteractions object of length 16 with the 
 corresponding statistics as a results of either reg2gene modelling 
-\code{\link{associateReg2Gene}}, meta-analysis \code{\link{metaAssociations}}
+\code{\link{associateReg2Gene}}, meta-analysis \code{\link{metaInteractions}}
 or their pre-filtered versions \code{\link{selectEP}}. 
 It requires information about statistics 
 ("coef") and corresonding testing results ("pval"). In the future it could 

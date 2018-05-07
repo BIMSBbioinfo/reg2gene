@@ -58,7 +58,7 @@ meta-analysis or not. This argument overwrites cohort argument.}
 returns a \code{\link[InteractionSet]{GInteractions}} object filtered 
 for N (or retained all) enhancer-promoter interactions. Corresponding 
 statistics from either modelling analysis \code{\link{associateReg2Gene}} or 
-meta-analysis \code{\link{metaAssociations}} is retained.
+meta-analysis \code{\link{metaInteractions}} is retained.
 }
 \description{
 The function returns GInteractions object with selected N TOP/BOTTOM/RANDOM 

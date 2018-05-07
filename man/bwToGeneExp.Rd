@@ -4,7 +4,7 @@
 \alias{bwToGeneExp}
 \title{Quantifies gene expression measured by RNA-Seq}
 \usage{
-bwToGeneExp(exons, geneActSignals, sampleIDs = NULL, libStrand = NULL,
+bwToGeneExp(exons, target, sampleIDs = NULL, libStrand = NULL,
   summaryOperation = "mean", mc.cores = 1, normalize = NULL)
 }
 \arguments{
@@ -23,7 +23,7 @@ It is strongly suggested to adjust seqlengths of this object to be equal to
 the seqlenghts Hsapiens from the appropriate package 
 (BSgenome.Hsapiens.UCSC.hg19 or whatever needed version).}
 
-\item{geneActSignals}{a named list of RNA-Seq BigWig files. Names correspond 
+\item{target}{a named list of RNA-Seq BigWig files. Names correspond 
 to the unique sample ids/names. Stranded and unstranded libraries allowed.
  BUT!!! It is crucial that forward and reverse RNA-Seq libraries are listed
 in a row (eg one on top of each other)}
@@ -103,15 +103,15 @@ exons <- GRanges(c(rep("chr1",2),"chr2",rep("chr1",3)),
                                             c(rep("+",3),rep("-",3)))
  exons$reg <-  exons[c(1,1,3,5,5,5)]
  exons$name2 <- exons$name <- paste0("TEST_Reg",c(1,1,3,5,5,5))
- bwToGeneExp(exons = exons,geneActSignals = c(test.bw,test2.bw),
+ bwToGeneExp(exons = exons,target = c(test.bw,test2.bw),
          sampleIDs=c("CellType1","CellType2"))
  
  # OUTPUT bwToGeneExp():                                                                                                                       
-bwToGeneExp(exons = exons,geneActSignals = c(test.bw,test2.bw))
+bwToGeneExp(exons = exons,target = c(test.bw,test2.bw))
 
 # adding different sample IDs
 
-bwToGeneExp(exons = exons,geneActSignals = c(test.bw,test2.bw),
+bwToGeneExp(exons = exons,target = c(test.bw,test2.bw),
             sampleIDs=c("CellType1","CellType2"))
 
 # if exons input is GInteractions class object,the same output is obtained
@@ -121,6 +121,6 @@ exonsGI= GInteractions(exons,exons$reg)
    exonsGI$name=exons$name
    exonsGI$name2=exons$name2
    
-bwToGeneExp(exons = exonsGI,geneActSignals = c(test.bw,test2.bw))
+bwToGeneExp(exons = exonsGI,target = c(test.bw,test2.bw))
 
 }

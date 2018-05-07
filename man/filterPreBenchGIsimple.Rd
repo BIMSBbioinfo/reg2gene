@@ -4,10 +4,10 @@
 \alias{filterPreBenchGIsimple}
 \title{Filtering help function}
 \usage{
-filterPreBenchGIsimple(reg2Gene, benchData, ignore.strand = FALSE)
+filterPreBenchGIsimple(interactions, benchInteractions, ignore.strand = FALSE)
 }
 \description{
-Filter reg2gene models using benchmark data but for only one GInteraction
+Filter interactions models using benchmark data but for only one GInteraction
 object [not lists]
 }
 \details{

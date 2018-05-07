@@ -4,28 +4,32 @@
 \alias{compareReg2Traits}
 \title{Compare two objects of genomic region~gene~trait associations}
 \usage{
-compareReg2Traits(reg2Trait, reg2Trait2, traitID = c("Trait", "Trait"))
+compareReg2Traits(interactionsTraits, interactionsTraits2,
+  traitID = c("Trait", "Trait"), naming = c("Trait1", "Trait2"))
 }
 \arguments{
-\item{reg2Trait}{A GInteractions object, likely produced by 
-[\code{\link{annotateRegionToTrait}}]. This object stores info about
+\item{interactionsTraits}{A GInteractions object, likely produced by 
+[\code{\link{reg2trait}}]. This object stores info about
 genomic region~gene~trait associations, as follows: anchor1 corresponds
 to genomic region (likely SNP location), anchor2 corresponds to gene 
 location, and gene symbol and associated disease is stored as a meta-data.}
 
-\item{reg2Trait2}{A GInteractions object, likely produced by 
-[\code{\link{annotateRegionToTrait}}]. This object stores info about
+\item{interactionsTraits2}{A GInteractions object, likely produced by 
+[\code{\link{reg2trait}}]. This object stores info about
 genomic region~gene~trait associations, as follows: anchor1 corresponds
 to genomic region (likely SNP location), anchor2 corresponds to gene}
 
 \item{traitID}{character vector of length 2 which stores information
 about column names where trait info are stored for both input objects. 
 By default c("Trait","Trait")}
+
+\item{naming}{a character vector (default: c("Traits1,"Trait2").
+Column names in the output object.}
 }
 \value{
-a dataframe with rows corresponding to traits, and two columns with
+a matrix with rows corresponding to traits, and two columns with
 info about gene counts for these traits. Each column gathers info from one 
-reg2Trait GInteractions object (variant~gene interactions + trait 
+interactionsTraits GInteractions object (variant~gene interactions + trait 
 association stored as meta-data).
 }
 \description{
@@ -33,16 +37,34 @@ This function reports per trait number of reported
 genomic region~gene~trait from two different objects.
 }
 \details{
-For each trait that is present in at least one of the reg2Trait 
+For each trait that is present in at least one of the interactionsTraits 
 GInteractions objects report how many associated genes is present in the 
 first GInteractions object, and how many is present in the 2nd 
 GInteractions object. It allows an easy identification of traits for which
-[\code{\link{annotateGenomicRegions}}] analysis improved number of disease
+[\code{\link{reg2gene}}] analysis improved number of disease
 associated genes.
 }
 \examples{
-#[TO do]
+library(GenomicRanges)
+library(InteractionSet)
 
+# 1. creating interaction object 1 with added diseases 
+
+GRReg1_toyDisease <- GRReg1_toy
+GRReg1_toyDisease$disease <- paste0("dis",c(1,1,3:(length(GRReg1_toy))))
+
+ 
+# 2. creating interaction object 2 with added diseases 
+GRReg2_toyDisease <- GRReg2_toy
+GRReg2_toyDisease$disease <- paste0("dis",1:length(GRReg2_toy))
+
+
+# comparing them with compareReg2Traits
+compareReg2Traits(interactionsTraits=GRReg1_toyDisease,
+                  interactionsTraits2=GRReg2_toyDisease,
+                  traitID=c("disease","disease"),
+                  naming=c("Trait1","Trait2"))
+ 
 }
 \author{
 Inga Patarcic

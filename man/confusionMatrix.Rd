@@ -2,19 +2,20 @@
 % Please edit documentation in R/BenchmarkGInteractions.R
 \name{confusionMatrix}
 \alias{confusionMatrix}
-\title{ConfusionTable statistics for the benchmarked reg2Gene object}
+\title{ConfusionTable statistics for the benchmarked interactions object}
 \usage{
-confusionMatrix(reg2GeneBench, benchCol = "Bench", prefilterCol = NULL,
+confusionMatrix(interactionsBench, benchCol = "Bench", prefilterCol = NULL,
   thresholdID = NULL, thresholdValue = 0.05, statistics = "PPV")
 }
 \arguments{
-\item{reg2GeneBench}{GInteractions object with added benchmark 
-\code{benchmarkAssociations} and OPTIONAL  \code{filterPreBenchGI} 
+\item{interactionsBench}{GInteractions object with added benchmark 
+\code{benchmarkInteractions} and OPTIONAL  \code{filterPreBenchGI} 
 metadata. However,prior this analysis, it is advised to reduce the number of
-true negatives by including only reg2gene entries that could be potentially
+true negatives by including only interactions entries that could be 
+potentially
 benchmarked.To get that info run \code{filterPreBenchGI} and add filter 
-column with metadata from this function to reg2GeneBench GInteractions 
-object prior running \code{benchmarkAssociations})}
+column with metadata from this function to interactionsBench GInteractions 
+object prior running \code{benchmarkInteractions})}
 
 \item{benchCol}{character (default "Bench"), results of benchmarking 
 procedure; eg a column name of the metadata which indicates the column where 
@@ -39,26 +40,26 @@ threshold is 0".}
 }
 \value{
 integer vector or a list. If "ConfusionMatrix" is requested then the
-output is list with following elements:TP,FP,TN,FN,Specificity, Accuracy, PPV,
+output is list with following elements:TP,FP,TN,FN,Specificity, Accuracy,PPV,
 NPV,F1. Otherwise only PPV is reported.
 }
 \description{
-A function takes as an benchmarked reg2gene object and outputs
+A function takes as an benchmarked interactions object and outputs
 confusion table statistics.
 }
 \details{
 Reports statistics based on the confusion matrix. 
 There are four different categories in the confusion matrix: 
-TP = (number of) true positive: reg2gene entry that was reported to be 
+TP = (number of) true positive: interactions entry that was reported to be 
 associated (reported gene-enhancer statistics lower than a predefined
 threshold) and was benchmarked. 
-FP = (number of) false positive: reg2gene entry that was reported to be
+FP = (number of) false positive: interactions entry that was reported to be
 associated (reported gene-enhancer statistics lower than a predefined 
 threshold) BUT was not overlapped with benchmark dataset
-FN = (number of) false negative: reg2gene entry that was NOT reported to
+FN = (number of) false negative: interactions entry that was NOT reported to
 be associated (reported gene-enhancer statistics NOT lower than a predefined 
 threshold) BUT is benchmarked
-TN = (number of) true negative: reg2gene entry 
+TN = (number of) true negative: interactions entry 
 that was NOT reported to be associated (reported gene-enhancer
 statistics NOT lower than a predefined threshold) AND is NOT benchmarked.
 If no benchmark and no statistically significant data is entered, then 0 is 
@@ -75,18 +76,18 @@ The formulas used in this function are: \deqn{Sensitivity = TP/(TP+FN)}
 require(GenomicRanges)
 require(InteractionSet)
    
-   reg2GeneBench <- GInteractions(GRReg1_toy,GRReg1_toy$reg)
-   reg2GeneBench$PValue <- seq(0, 1,length.out = length(GRReg1_toy))
+   interactionsBench <- GInteractions(GRReg1_toy,GRReg1_toy$reg)
+   interactionsBench$PValue <- seq(0, 1,length.out = length(GRReg1_toy))
 
 
-confusionMatrix(reg2GeneBench,
+confusionMatrix(interactionsBench,
                 thresholdID = "PValue",
                 thresholdValue = 0.05,
                 benchCol = "anchor1.Bench1Exp",
                 prefilterCol = "anchor1.Filter1Exp",
                 statistics = "ConfusionMatrix")
                 
-confusionMatrix(reg2GeneBench,
+confusionMatrix(interactionsBench,
                 thresholdID = "PValue", 
                 thresholdValue = 0.05,
                 benchCol = "anchor1.Bench1Exp",

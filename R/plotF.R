@@ -11,7 +11,7 @@
 #' could be added as meta-data. Read more about arguments statistics and 
 #' coloring.  
 #' Such object can be produced by modelling [\code{\link{associateReg2Gene}}], 
-#' or meta-analysis [\code{\link{metaAssociations}}] or voting functions from 
+#' or meta-analysis [\code{\link{metaInteractions}}] or voting functions from 
 #' reg2gene package. 
 #' 
 #' @param  rangeGenes (default NULL) By default, function retrieves 
@@ -153,24 +153,24 @@
 #' 
 #'  # simplest example
 #'  # if no info about coloring and height of loops provided, all loops are equal
-#'  plotGenomeInteractions(interactions = GenomeInteractions)
+#'  plotInteractions(interactions = GenomeInteractions)
 #' 
 #' 
 #'  # provide info about statistics * height of loops
-#'  plotGenomeInteractions(interactions = GenomeInteractions,
+#'  plotInteractions(interactions = GenomeInteractions,
 #'                   statistics ="pval",
 #'                   coloring = "color")
 #' 
 #' 
 #' 
 #'   # Specific gene can be individually plotted
-#'     plotGenomeInteractions(interactions = GenomeInteractions,
+#'     plotInteractions(interactions = GenomeInteractions,
 #'                            selectGene = "FTO")
 #' 
 #'   # This should be equal to the example where genes are not selected
 #' 
 #'   # if one wants to plot regulatory region
-#'   plotGenomeInteractions(interactions = GenomeInteractions,
+#'   plotInteractions(interactions = GenomeInteractions,
 #'                selectRegulatoryRegion = "chr16:53112601-53114200")
 #'   # NOTE: red interactions correspond to the enhancer regions that
 #'   # overlap queried region, whereas grey interaction is interactions 
@@ -182,7 +182,7 @@
 #'   # and function plots not regulatory regions queried, but all that
 #'   # are present in the interactions and overlap that region
 #' 
-#'   plotGenomeInteractions(interactions = GenomeInteractions,
+#'   plotInteractions(interactions = GenomeInteractions,
 #'                          selectRegulatoryRegion = "chr16:53112601-53778800",
 #'                          coloring = "color",
 #'                          statistics = "pval")
@@ -192,7 +192,7 @@
 #'   names(GenomeInteractionsList) <- c("EnhP1","EnhP2")
 #' 
 #'   # names from the list are taken as an argument for Enh&Inter plots
-#'   plotGenomeInteractions(interactions = GenomeInteractionsList,
+#'   plotInteractions(interactions = GenomeInteractionsList,
 #'                          coloring = "color",
 #'                          statistics = "pval",
 #'                          interactionsNaming = "EP Interactions",
@@ -201,7 +201,7 @@
 #' 
 #'   # additionaly, benchmark data can be plotted as well
 #' 
-#'   plotGenomeInteractions(interactions = GenomeInteractions,
+#'   plotInteractions(interactions = GenomeInteractions,
 #'                           coloring = "color",
 #'                           statistics = "pval",
 #'                           benchInteractions = GenomeInteractions[1:3])
@@ -213,7 +213,7 @@
 #'   names(benchInteractions) <- c("HiC","ChIA-PET","GTEx")
 #' 
 #' 
-#'  plotGenomeInteractions(interactions = GenomeInteractions,
+#'  plotInteractions(interactions = GenomeInteractions,
 #'                         coloring = "color",
 #'                         statistics = "pval",
 #'                         benchInteractions = benchInteractions,
@@ -222,7 +222,7 @@
 #'                         sizes = 0.4)                  
 #'                                                                       
 #' @export
-plotGenomeInteractions <- function(interactions,
+plotInteractions <- function(interactions,
                                    rangeGenes=NULL,
                                    selectGene=NULL,
                                    selectRegulatoryRegion=NULL,

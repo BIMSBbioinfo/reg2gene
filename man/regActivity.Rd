@@ -4,18 +4,18 @@
 \alias{regActivity}
 \title{Calculates regulatory activity over pre-defined regions}
 \usage{
-regActivity(regRegions, activitySignals, sampleIDs = NULL, isCovNA = FALSE,
+regActivity(windows, target, sampleIDs = NULL, isCovNA = FALSE,
   weightCol = NULL, summaryOperation = "mean", normalize = NULL,
   mc.cores = 1)
 }
 \arguments{
-\item{regRegions}{a GRanges object that contains regulatory regions
+\item{windows}{a GRanges object that contains regulatory regions
 over which the regulatory activity will be calculated. 
 It is strongly suggested to adjust 
 seqlengths of this object to be equal to the seqlenghts Hsapiens from the 
 appropriate package (BSgenome.Hsapiens.UCSC.hg19 or whatever needed version).}
 
-\item{activitySignals}{a named list of BigWig files. Names correspond to 
+\item{target}{a named list of BigWig files. Names correspond to 
 unique sample ids/names.}
 
 \item{sampleIDs}{NULL (default). A vector of unique sample
@@ -73,25 +73,25 @@ in the future.
 test.bw <- system.file("extdata", "test.bw",package = "reg2gene")
 test2.bw <- system.file("extdata", "test2.bw",package = "reg2gene")
 
-# INPUT2: defining regulatory regions:regRegions
+# INPUT2: defining regulatory regions:windows
 
-regRegions <- GRanges(c(rep("chr1",4),rep("chr2",2)),
+windows <- GRanges(c(rep("chr1",4),rep("chr2",2)),
                       IRanges(c(1,7,9,15,1,15),c(4,8,14,20,4,20)),
                                             c(rep("+",3),rep("-",3)))
-regRegions$reg <-  regRegions[c(1,1,3:6)]
-regRegions$name2 <- regRegions$name <- paste0("TEST_Reg",
-                                        c(1,1,3:length(regRegions)))
+windows$reg <-  windows[c(1,1,3:6)]
+windows$name2 <- windows$name <- paste0("TEST_Reg",
+                                        c(1,1,3:length(windows)))
                         
  # OUTPUT  regActivity():                                                      
-regActivity(regRegions,c(test.bw,test2.bw))   
+regActivity(windows,c(test.bw,test2.bw))   
 
 # Additionaly, sample names can changed with sampleIDs argument
 
-regActivity(regRegions,c(test.bw,test2.bw),sampleIDs=c("Cell1","Cell2"))
+regActivity(windows,c(test.bw,test2.bw),sampleIDs=c("Cell1","Cell2"))
 
 # Additionaly, it supports different normalization procedures:
 
-regActivity(regRegions,c(test.bw,test2.bw),normalize ="ratio")
-regActivity(regRegions,c(test.bw,test2.bw),normalize ="quantile")
+regActivity(windows,c(test.bw,test2.bw),normalize ="ratio")
+regActivity(windows,c(test.bw,test2.bw),normalize ="quantile")
 
 }

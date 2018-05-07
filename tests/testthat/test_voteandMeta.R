@@ -31,25 +31,25 @@ associations <- list(AssocObject,AssocObject2)
 names(associations) <- c("AssocObject","AssocObject2")
 
 
-test_that("test that voteAssociations IN/OUTPUT is in correct form",{
+test_that("test that voteInteractions IN/OUTPUT is in correct form",{
   
     expect_is(associations,"list") # expected input is list of
     expect_equal(unique(sapply(associations,class)),"GInteractions") # GIs
   
   # not working for individual GInteractions or GRange
-    expect_error(voteAssociations(AssocObject))
-    expect_error(voteAssociations(AssocObject2))
-    expect_error(voteAssociations(gr))
+    expect_error(voteInteractions(AssocObject))
+    expect_error(voteInteractions(AssocObject2))
+    expect_error(voteInteractions(gr))
   
   # CHECKING output
-  expect_is(voteAssociations(associations),"GInteractions")
+  expect_is(voteInteractions(associations),"GInteractions")
   
   # CHECKING output - for objects without overlap empty GI
-    expect_is(voteAssociations(list(associations$AssocObject[1],
+    expect_is(voteInteractions(list(associations$AssocObject[1],
                           associations$AssocObject[2])),"GInteractions")
   
   #with different threshold still GI is returned
-    expect_is(voteAssociations(list(associations$AssocObject[1],
+    expect_is(voteInteractions(list(associations$AssocObject[1],
                                     associations$AssocObject[2]),
                                vote.threshold=0.51),"GInteractions")
     
@@ -79,40 +79,40 @@ test_that("test that voteAssociations IN/OUTPUT is in correct form",{
     # TESTING
           
      # both ranges fail at filtering    
-        expect_error(voteAssociations(list(AssocExample2,AssocExample)))
+        expect_error(voteInteractions(list(AssocExample2,AssocExample)))
      # should succed with changed threshold to 1 both examples are succesfull
-        expect_equal(length(voteAssociations(list(AssocExample2,AssocExample),
+        expect_equal(length(voteInteractions(list(AssocExample2,AssocExample),
                                            cutoff.val = 1)),1)
     
       # Equal results with different order:  
         # both ranges fail at filtering    
-        expect_error(voteAssociations(list(AssocExample,AssocExample2)))
+        expect_error(voteInteractions(list(AssocExample,AssocExample2)))
         # should succed with changed threshold to 1 both examples are succesfull
-        expect_equal(length(voteAssociations(list(AssocExample,AssocExample2),
+        expect_equal(length(voteInteractions(list(AssocExample,AssocExample2),
                                              cutoff.val = 1)),1)  
         
       # MUTATING: one range fails at filtering    
           AssocExample2$pval <- 0.01
-      expect_equal(length(voteAssociations(list(AssocExample2,AssocExample))),0)
+      expect_equal(length(voteInteractions(list(AssocExample2,AssocExample))),0)
     
       # MUTATING: TWO ranges are filtered    
         AssocExample$pval <- 0.01
-        expect_equal(length(voteAssociations(list(AssocExample,AssocExample2),
+        expect_equal(length(voteInteractions(list(AssocExample,AssocExample2),
                                              cutoff.val = 1)),1)  
         
         
         # MUTATING:   cutoff.stat -> qval (all NA)
-        expect_error(voteAssociations(list(AssocExample2,AssocExample),
+        expect_error(voteInteractions(list(AssocExample2,AssocExample),
                                       cutoff.stat = "qval"))
         
         # MUTATING:   cutoff.stat -> qval (all 0.1)
         AssocExample2$qval <-  AssocExample$qval <- 0.01
-        expect_equal(length(voteAssociations(list(AssocExample2,AssocExample),
+        expect_equal(length(voteInteractions(list(AssocExample2,AssocExample),
                                       cutoff.stat = "qval")),1)
         
         
         # testing cutoff.stat: if NOT existing
-        expect_error(voteAssociations(list(AssocExample2,AssocExample),
+        expect_error(voteInteractions(list(AssocExample2,AssocExample),
                                       cutoff.stat="blablacar"))
         
         
@@ -120,35 +120,35 @@ test_that("test that voteAssociations IN/OUTPUT is in correct form",{
         })
 
 
-test_that("test that voteAssociations output is in correct values",{
+test_that("test that voteInteractions output is in correct values",{
   
   
   # CHECKING output
-  expect_equal(voteAssociations(associations)$votes,2)
+  expect_equal(voteInteractions(associations)$votes,2)
   
   # CHECKING output >1 overlap
-  expect_equal(voteAssociations(list(AssocObject,
+  expect_equal(voteInteractions(list(AssocObject,
                                      AssocObject,
                                      AssocObject2))$votes,c(3,2))
   # MUTATING: check: vote.threshold
           # CHECKING output >1 overlap: different threshold, above 2 expected
-          expect_equal(voteAssociations(list(AssocObject,
+          expect_equal(voteInteractions(list(AssocObject,
                                              AssocObject,
                                              AssocObject2),
                                         vote.threshold = 0.66)$votes,c(3,2))
-          expect_equal(voteAssociations(list(AssocObject,
+          expect_equal(voteInteractions(list(AssocObject,
                                              AssocObject,
                                              AssocObject2),
                                         vote.threshold = 0.67)$votes,3)
          # even if threshold 0, all entries with vote 1 are filtered out 
-          expect_equal(voteAssociations(list(AssocObject,
+          expect_equal(voteInteractions(list(AssocObject,
                                              AssocObject,
                                              AssocObject2),
                                         vote.threshold = 0)$votes,c(3,2))
   
   
   # CHECKING output >1 overlap: different order
-  expect_equal(voteAssociations(list(AssocObject2,
+  expect_equal(voteInteractions(list(AssocObject2,
                                      AssocObject2,
                                      AssocObject))$votes,3)
   
@@ -176,12 +176,12 @@ test_that("test that voteAssociations output is in correct values",{
   ######################################
   # TESTING
           
-    expect_error(expect_equal(voteAssociations(list(AssocExample2,
+    expect_error(expect_equal(voteInteractions(list(AssocExample2,
                                                     AssocExample))$votes,2))
   
  # MUTATING: cutoff.val, if set 1, success
           
-      expect_equal(voteAssociations(list(AssocExample2,AssocExample),
+      expect_equal(voteInteractions(list(AssocExample2,AssocExample),
                                    cutoff.val=1)$votes,2)
       
           
@@ -190,16 +190,16 @@ test_that("test that voteAssociations output is in correct values",{
        
     # MUTATING: TWO ranges are filtered    
         AssocExample$pval <- 0.01
-        expect_equal(voteAssociations(list(AssocExample2,AssocExample))$votes,2)
+        expect_equal(voteInteractions(list(AssocExample2,AssocExample))$votes,2)
   
   # MUTATING:   cutoff.stat
       AssocExample2$qval <-  AssocExample$qval <- 0.01
-        expect_equal(voteAssociations(list(AssocExample2,AssocExample),
+        expect_equal(voteInteractions(list(AssocExample2,AssocExample),
                                 cutoff.stat = "qval")$votes,2)
 
   # MUTATING: cutoff.val, if set >0.01, failure again
         
-        expect_error(expect_equal(voteAssociations(list(AssocExample2,
+        expect_error(expect_equal(voteInteractions(list(AssocExample2,
                                   AssocExample),cutoff.val=0.001)$votes,2))    
         
   
@@ -214,21 +214,21 @@ test_that("test that voteAssociations output is in correct values",{
 # TEST META-ANALYSIS
 
 
-test_that("test that metaAssociations IN/OUTPUT is in correct form",{
+test_that("test that metaInteractions IN/OUTPUT is in correct form",{
   
   expect_is(associations,"list") # expected input is list of
   expect_equal(unique(sapply(associations,class)),"GInteractions") # GIs
   
   # not working for individual GInteractions or GRange
-  expect_error(metaAssociations(AssocObject))
-  expect_error(metaAssociations(AssocObject2))
-  expect_error(metaAssociations(gr))
+  expect_error(metaInteractions(AssocObject))
+  expect_error(metaInteractions(AssocObject2))
+  expect_error(metaInteractions(gr))
   
   # CHECKING output
-  expect_is(metaAssociations(associations),"GInteractions")
+  expect_is(metaInteractions(associations),"GInteractions")
   
   # CHECKING output - for objects without overlap - NULL
-  expect_null(metaAssociations(list(associations$AssocObject[1],
+  expect_null(metaInteractions(list(associations$AssocObject[1],
                                   associations$AssocObject[2])))
   
   
@@ -257,30 +257,30 @@ test_that("test that metaAssociations IN/OUTPUT is in correct form",{
   # TESTING
   
   # both ranges fail at filtering    
-  expect_is(metaAssociations(list(AssocExample2,AssocExample)),"GInteractions")
+  expect_is(metaInteractions(list(AssocExample2,AssocExample)),"GInteractions")
   # Equal results with different order:  
-  expect_is(metaAssociations(list(AssocExample,AssocExample2)),"GInteractions")
+  expect_is(metaInteractions(list(AssocExample,AssocExample2)),"GInteractions")
   
  
   
   
 })
 
-test_that("test that metaAssociations output is in correct values",{
+test_that("test that metaInteractions output is in correct values",{
   
   
   # CHECKING output
   set.seed(4555)
  
-  expect_equal(metaAssociations(associations)$coefs,c(1,0.5))
-  expect_equal(metaAssociations(associations)$n,c(10,10))
+  expect_equal(metaInteractions(associations)$coefs,c(1,0.5))
+  expect_equal(metaInteractions(associations)$n,c(10,10))
   
   # CHECKING output >1 overlap
-  expect_equal(metaAssociations(list(AssocObject,
+  expect_equal(metaInteractions(list(AssocObject,
                                      AssocObject,
                                      AssocObject2))$n,c(15,15))
   
-  expect_equal(round(metaAssociations(list(AssocObject,
+  expect_equal(round(metaInteractions(list(AssocObject,
                                      AssocObject,
                                      AssocObject2))$coefs,2),c(1.00,0.67))
   
@@ -310,23 +310,23 @@ test_that("test that metaAssociations output is in correct values",{
   ######################################
   # TESTING
   
-  expect_equal(metaAssociations(list(AssocExample2,AssocExample))$coefs,
+  expect_equal(metaInteractions(list(AssocExample2,AssocExample))$coefs,
                -0.07232527)
-  expect_equal(metaAssociations(list(AssocExample2,AssocExample))$n,30)
+  expect_equal(metaInteractions(list(AssocExample2,AssocExample))$n,30)
   
   # check procedure of calculating coeficients
-  expect_equal(metaAssociations(list(AssocExample2,AssocExample))$coefs,
+  expect_equal(metaInteractions(list(AssocExample2,AssocExample))$coefs,
             sum(AssocExample2$n*(AssocExample2$coefs)+(AssocExample$n*
                         AssocExample$coefs))/(AssocExample$n+AssocExample2$n))
   
   
-  expect_equal(metaAssociations(list(AssocExample2,AssocExample))$coefs,
+  expect_equal(metaInteractions(list(AssocExample2,AssocExample))$coefs,
                sum(15*-0.1006173+15*-0.04403323)/30)
   
     comb <- -2 * sum(log(c(0.766882,0.9262192)))
     pval=1-pchisq(comb,df=4)
   
-    expect_equal(metaAssociations(list(AssocExample2,AssocExample))$pval,pval)
+    expect_equal(metaInteractions(list(AssocExample2,AssocExample))$pval,pval)
     
   
 })

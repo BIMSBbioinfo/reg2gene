@@ -4,16 +4,18 @@
 \alias{forceByname}
 \title{Benchmarks help function - forceByName}
 \usage{
-forceByname(benchData, reg2Gene)
+forceByname(benchInteractions, interactions)
 }
 \description{
-Forces benchmark input object to use gene coordinates of reg2Gene object if
-gene names overlap. It is crucial that benchData & reg2Gene both contain
+Forces benchmark input object to use gene coordinates of interactions object 
+if
+gene names overlap. It is crucial that benchInteractions 
+& interactions both contain
 meta-data named "name" -> where gene names are stored, 
 and that anchor2 in both objects corresponds to gene object.
 }
 \details{
-Read description for \code{benchmarkAssociations}
+Read description for \code{benchmarkInteractions}
 }
 \author{
 Inga Patarcic

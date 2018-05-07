@@ -73,49 +73,49 @@ exonsGI= GInteractions(exons,exons$reg,
    # if meta-data column order is different for GRanges it should still work!
    exonsM <- exons
    mcols(exonsM) <- mcols(exonsM)[c(2,3,1)]
-   expect_is(bwToGeneExp(exons = exonsM,geneActSignals = test.bw),"GRanges")
-   expect_true(length(bwToGeneExp(exons = exons,geneActSignals = test.bw))==
-                 length(bwToGeneExp(exons = exonsM,geneActSignals = test.bw)))
+   expect_is(bwToGeneExp(exons = exonsM,target = test.bw),"GRanges")
+   expect_true(length(bwToGeneExp(exons = exons,target = test.bw))==
+                 length(bwToGeneExp(exons = exonsM,target = test.bw)))
    
    # if meta-data order is different for GI it should still work!
    exonsGIM <- exonsGI
    mcols(exonsGIM) <- mcols(exonsGIM)[c(2,3,4,5,1)]
-   expect_is(bwToGeneExp(exons = exonsGIM,geneActSignals = test.bw),"GRanges")
-   expect_true(length(bwToGeneExp(exons = exonsGIM,geneActSignals = test.bw))==
-                 length(bwToGeneExp(exons = exonsGIM,geneActSignals = test.bw)))
+   expect_is(bwToGeneExp(exons = exonsGIM,target = test.bw),"GRanges")
+   expect_true(length(bwToGeneExp(exons = exonsGIM,target = test.bw))==
+                 length(bwToGeneExp(exons = exonsGIM,target = test.bw)))
    
    
    # if input names incorrect: GI and GRanges:
    # 1st checked if name is missing
    colnames(mcols(exonsM)) <- c("wrong","is","this")
-   expect_error(bwToGeneExp(exons = exonsM,geneActSignals = test.bw))
+   expect_error(bwToGeneExp(exons = exonsM,target = test.bw))
    # 2nd check if reg is missing
    colnames(mcols(exonsM)) <- c("wrong","name","this")
-   expect_error(bwToGeneExp(exons = exonsM,geneActSignals = test.bw))
+   expect_error(bwToGeneExp(exons = exonsM,target = test.bw))
    
    # if reg&name are present then success:
    colnames(mcols(exonsM)) <- c("wrong","name","reg")
-   expect_is(bwToGeneExp(exons = exonsM,geneActSignals = test.bw),"GRanges")
+   expect_is(bwToGeneExp(exons = exonsM,target = test.bw),"GRanges")
    
    # test for GI
    colnames(mcols(exonsGIM)) <- c("wrong","is","this","and","this2")
-   expect_error(bwToGeneExp(exons = exonsGIM,geneActSignals = test.bw))
+   expect_error(bwToGeneExp(exons = exonsGIM,target = test.bw))
    
    colnames(mcols(exonsGIM)) <- c("wrong","is","this","and","name")
-   expect_error(bwToGeneExp(exons = exonsGIM,geneActSignals = test.bw))
+   expect_error(bwToGeneExp(exons = exonsGIM,target = test.bw))
    
    # requires 
    colnames(mcols(exonsGIM)) <- c("name2","is","this","and","name")
-   expect_is(bwToGeneExp(exons = exonsGIM,geneActSignals = test.bw),"GRanges")
+   expect_is(bwToGeneExp(exons = exonsGIM,target = test.bw),"GRanges")
    
 
    # TEST OUTPUT
    # is GRanges with lenght>0
-   expect_is(bwToGeneExp(exons = exons,geneActSignals = test.bw),"GRanges")
-   expect_true(length(bwToGeneExp(exons = exons,geneActSignals = test.bw))!=0)
+   expect_is(bwToGeneExp(exons = exons,target = test.bw),"GRanges")
+   expect_true(length(bwToGeneExp(exons = exons,target = test.bw))!=0)
    # and works for >1 .bw file
    expect_true(length(bwToGeneExp(exons = exons,
-                                  geneActSignals = c(test.bw,test2.bw)))!=0)
+                                  target = c(test.bw,test2.bw)))!=0)
    
    
    
@@ -123,20 +123,20 @@ exonsGI= GInteractions(exons,exons$reg,
    
    # adding different sample IDs:
    expect_equal(names(mcols(bwToGeneExp(exons = exons,
-                              geneActSignals = c(test.bw,test2.bw),
+                              target = c(test.bw,test2.bw),
                               sampleIDs=c("CellType1","CellType2")))[-c(1:2)]),
                   c("CellType1","CellType2"))
    
    
    # adding different sample IDs - swap
    expect_equal(names(mcols(bwToGeneExp(exons = exons,
-                              geneActSignals = c(test.bw,test2.bw),
+                              target = c(test.bw,test2.bw),
                               sampleIDs=c("CellType2","CellType1")))[-c(1:2)]),
                 c("CellType2","CellType1"))
    
    # test default names - basenames expected
     expect_false(all(names(mcols(bwToGeneExp(exons = exons,
-                    geneActSignals = c(test.bw,test2.bw)))[-c(1:2)])==
+                    target = c(test.bw,test2.bw)))[-c(1:2)])==
                 c("CellType2","CellType1")))
    
    })
@@ -150,32 +150,32 @@ exonsGI= GInteractions(exons,exons$reg,
    
    
    # test that N of genes correspond correctly gene name: for GI and GRanges
-   expect_equal(sort(bwToGeneExp(exons = exons,geneActSignals = test.bw)$name),
+   expect_equal(sort(bwToGeneExp(exons = exons,target = test.bw)$name),
                 unique(exons$name))
-   expect_equal(sort(bwToGeneExp(exons = exonsGI,geneActSignals = test.bw)$name),
+   expect_equal(sort(bwToGeneExp(exons = exonsGI,target = test.bw)$name),
                 unique(exonsGI$name)) 
    # and for >1 .bw file
     expect_equal(sort(bwToGeneExp(exons = exons,
-            geneActSignals = c(test.bw,test2.bw))$name),unique(exons$name))
+            target = c(test.bw,test2.bw))$name),unique(exons$name))
    # by hand  
-    expect_equal(sort(bwToGeneExp(exons = exons,geneActSignals = test.bw)$name),
+    expect_equal(sort(bwToGeneExp(exons = exons,target = test.bw)$name),
                  c("TEST_Reg1","TEST_Reg3","TEST_Reg5"))
     
     exonsM <- exons
     exonsM$name <- c("this","this","is","wrong","wrong","wrong")
    # names changed: OK!   
     expect_error(expect_equal(bwToGeneExp(exons = exonsM,
-                                          geneActSignals = test.bw)$name,
+                                          target = test.bw)$name,
                  c("this","is","wrong")))
     
     expect_equal(bwToGeneExp(exons = exonsM,
-                                          geneActSignals = test.bw)$name,
+                                          target = test.bw)$name,
                               c("wrong","this","is"))
     
     
     # names changed 2 > more genes obtained
     exonsM$name <- c("this","is","wrong")
-    expect_equal(bwToGeneExp(exons = exonsM,geneActSignals = test.bw)$name,
+    expect_equal(bwToGeneExp(exons = exonsM,target = test.bw)$name,
                  c("this","is","wrong","this","is","wrong"))
 
    
@@ -183,30 +183,30 @@ exonsGI= GInteractions(exons,exons$reg,
     
     # test that TSS of a gene is correctly reported
    expect_equal(granges(bwToGeneExp(exons = exonsGI,
-                                    geneActSignals = test.bw))[c(2,3,1)],
+                                    target = test.bw))[c(2,3,1)],
     promoters(unique(second(exonsGI)),1,1))
    
-   expect_equal(granges(bwToGeneExp(exons = exonsGI,geneActSignals = test.bw)),
+   expect_equal(granges(bwToGeneExp(exons = exonsGI,target = test.bw)),
                 GRanges(c("chr1","chr1","chr2"),
                         IRanges(c(4,0,8),c(5,1,9)),
                         c("-","+","+")))
     
    # if genes defined differently: as before
-   expect_equal(granges(bwToGeneExp(exons = exonsM,geneActSignals = test.bw)),
+   expect_equal(granges(bwToGeneExp(exons = exonsM,target = test.bw)),
                 GRanges(c("chr1","chr1","chr1","chr1","chr1","chr2"),
                         IRanges(c(4,4,4,0,0,8),c(5,5,5,1,1,9)),
                         c("-","-","-","+","+","+")))
    
    
    # check what happens if no overlap in regions between .bw and exons
-   expect_error(bwToGeneExp(exons =  shift(exonsM,100),geneActSignals = test.bw))
+   expect_error(bwToGeneExp(exons =  shift(exonsM,100),target = test.bw))
    expect_error(bwToGeneExp(exons =  shift(exonsM,100),
-                            geneActSignals = c(test.bw,test2.bw)))
+                            target = c(test.bw,test2.bw)))
    # even if it fails for one .bw it fails for all others as well:
   expect_error(bwToGeneExp(exons =  shift(exonsM,100),
-                           geneActSignals = c(test3.bw,test2.bw)))
+                           target = c(test3.bw,test2.bw)))
    # success for shifted .bw file
-  expect_is(bwToGeneExp(exons =  shift(exonsM,100),geneActSignals = test3.bw),
+  expect_is(bwToGeneExp(exons =  shift(exonsM,100),target = test3.bw),
             "GRanges")
    
    })
@@ -219,12 +219,12 @@ exonsGI= GInteractions(exons,exons$reg,
    
   # test2 quantified correctly
     expect_equal(round(
-      bwToGeneExp(exons = exonsGI,geneActSignals = test2.bw)$test2,4),Test2Exp)
+      bwToGeneExp(exons = exonsGI,target = test2.bw)$test2,4),Test2Exp)
     
   
   # test quantified correctly
     expect_equal(round(bwToGeneExp(exons = exonsGI,
-                                   geneActSignals = test.bw)$test,4),TestExp) 
+                                   target = test.bw)$test,4),TestExp) 
     
     
   # if strandness is changed: then genes on - strand and + strand get quantified
@@ -235,49 +235,49 @@ exonsGI= GInteractions(exons,exons$reg,
     
     # libraries: +/-
     expect_equal(round(bwToGeneExp(exons = exonsGI,
-                                   geneActSignals =  c(test.bw,test2.bw),
+                                   target =  c(test.bw,test2.bw),
                                    libStrand = c("+","-"))$test,4),
                     c(Test2Exp[1:2],TestExp[3]))
     
     # libraries: -/+
     
     expect_equal(round(bwToGeneExp(exons = exonsGI,
-                                   geneActSignals =  c(test.bw,test2.bw),
+                                   target =  c(test.bw,test2.bw),
                                    libStrand = c("-","+"))$test,4),
                  c(TestExp[1:2],Test2Exp[3]))
     
     # + library needs to be followed by - library
    expect_error(bwToGeneExp(exons = exonsGI,
-               geneActSignals = c(test.bw,test2.bw),
+               target = c(test.bw,test2.bw),
                libStrand = c("+","+")))
    
    # -/+/*
    # works correctly with combination of stranded and unstranded libraries
    expect_is(bwToGeneExp(exons = exonsGI,
-               geneActSignals = c(test.bw,test2.bw,test.bw),
+               target = c(test.bw,test2.bw,test.bw),
                libStrand = c("-","+","*")),"GRanges")
    
    
    # -/+/* example
    
    expect_equal(round(bwToGeneExp(exons = exonsGI,
-                                  geneActSignals =  c(test.bw,test2.bw,test.bw),
+                                  target =  c(test.bw,test2.bw,test.bw),
                                   libStrand = c("-","+","*"))$test,4),TestExp)
    
    
    expect_equal(round(bwToGeneExp(exons = exonsGI,
-                                  geneActSignals =  c(test.bw,test2.bw,test.bw),
+                                  target =  c(test.bw,test2.bw,test.bw),
                                   libStrand = c("-","+","*"))$test2,4),
                 c(TestExp[1:2],Test2Exp[3]))
 
  
    # +/-/* example  
    expect_equal(round(bwToGeneExp(exons = exonsGI,
-                                  geneActSignals =  c(test.bw,test2.bw,test2.bw),
+                                  target =  c(test.bw,test2.bw,test2.bw),
                                   libStrand = c("+","-","*"))$test2,4),Test2Exp)
    
    expect_equal(round(bwToGeneExp(exons = exonsGI,
-                                  geneActSignals =  c(test.bw,test2.bw,test2.bw),
+                                  target =  c(test.bw,test2.bw,test2.bw),
                                   libStrand = c("+","-","*"))$test,4),
                 c(Test2Exp[1],TestExp[2:3]))
  
@@ -285,11 +285,11 @@ exonsGI= GInteractions(exons,exons$reg,
    # */+/- example  
    
    expect_equal(round(bwToGeneExp(exons = exonsGI,
-                                  geneActSignals =  c(test.bw,test2.bw,test.bw),
+                                  target =  c(test.bw,test2.bw,test.bw),
                                   libStrand = c("*","+","-"))$test,4),TestExp)
    
    expect_equal(round(bwToGeneExp(exons = exonsGI,
-                                  geneActSignals =  c(test.bw,test2.bw,test.bw),
+                                  target =  c(test.bw,test2.bw,test.bw),
                                   libStrand = c("*","+","-"))$test2,4),
                 c(TestExp[1],Test2Exp[2:3]))
    
@@ -298,11 +298,11 @@ exonsGI= GInteractions(exons,exons$reg,
    # */-/+ example  
    
    expect_equal(round(bwToGeneExp(exons = exonsGI,
-                                  geneActSignals =  c(test.bw,test.bw,test2.bw),
+                                  target =  c(test.bw,test.bw,test2.bw),
                                   libStrand = c("*","-","+"))$test,4),TestExp)
    
    expect_equal(round(bwToGeneExp(exons = exonsGI,
-                                  geneActSignals =  c(test.bw,test.bw,test2.bw),
+                                  target =  c(test.bw,test.bw,test2.bw),
                                   libStrand = c("*","-","+"))$test2,4),
                 c(TestExp[1],Test2Exp[2:3]))
    
@@ -310,7 +310,7 @@ exonsGI= GInteractions(exons,exons$reg,
    # +/-/*/-/+ example  
    
    tmp <- bwToGeneExp(exons = exonsGI,
-               geneActSignals =  c(test.bw,test2.bw,
+               target =  c(test.bw,test2.bw,
                                    test.bw,test.bw,test2.bw),
                sampleIDs = c("name1","name1","name3","name4","name4"),
                libStrand = c("+","-","*","-","+"))
@@ -323,7 +323,7 @@ exonsGI= GInteractions(exons,exons$reg,
    #test what happens when names differ
    
        tmp2 <- bwToGeneExp(exons = exonsGI,
-                          geneActSignals =  c(test.bw,test2.bw,
+                          target =  c(test.bw,test2.bw,
                                               test.bw,test.bw,test2.bw),
                           sampleIDs = c("name1","name3","name1","name4","name4"),
                           libStrand = c("+","-","*","-","+"))
@@ -334,25 +334,25 @@ exonsGI= GInteractions(exons,exons$reg,
        
    # test exon orientation
          expect_equal (bwToGeneExp(exons = exonsGI,
-                     geneActSignals =  c(test.bw,test2.bw),
+                     target =  c(test.bw,test2.bw),
                      libStrand = c("+","-"))$test,
                     bwToGeneExp(exons = c(exonsGI[4:6],exonsGI[1:3]),
-                     geneActSignals =  c(test.bw,test2.bw),
+                     target =  c(test.bw,test2.bw),
                      libStrand = c("+","-"))$test)
          
          
          expect_equal (bwToGeneExp(exons = exonsGI,
-                                   geneActSignals =  c(test2.bw,test.bw),
+                                   target =  c(test2.bw,test.bw),
                                    libStrand = c("+","-"))$test,
                        bwToGeneExp(exons = c(exonsGI[4:6],exonsGI[1:3]),
-                                   geneActSignals =  c(test2.bw,test.bw),
+                                   target =  c(test2.bw,test.bw),
                                    libStrand = c("+","-"))$test)
    
    
    # works correctly with combination of stranded and unstranded libraries if 
    # stranded are on behind other
    expect_error(bwToGeneExp(exons = exonsGI,
-                         geneActSignals = c(test.bw,test2.bw,test.bw),
+                         target = c(test.bw,test2.bw,test.bw),
                          libStrand = c("-","*","-")))
    
   
@@ -384,7 +384,7 @@ exonsGI= GInteractions(exons,exons$reg,
           TestNormF <- function(y,norm=NULL){
           
             Res <- bwToGeneExp(exons = exonsGI,
-                        geneActSignals = c(test.bw,test2.bw),
+                        target = c(test.bw,test2.bw),
                         normalize = norm)
             
             TestR <- apply(mcols(Res)[-c(1:2)],1,round,2)
@@ -405,7 +405,7 @@ exonsGI= GInteractions(exons,exons$reg,
         QuantileExp <- DataFrame(preprocessCore::normalize.quantiles(TestNorm))
         names(QuantileExp) <- c("test","test2")
 
-        Res <- bwToGeneExp(exons = exonsGI,geneActSignals = c(test2.bw,test.bw),
+        Res <- bwToGeneExp(exons = exonsGI,target = c(test2.bw,test.bw),
                            normalize = "quantile")
 
          expect_true(all(apply(mcols(Res)[-c(1:2)],1,round,2)==
@@ -603,14 +603,14 @@ exonsGI= GInteractions(exons,exons$reg,
     
      # TEST OUTPUTs
       # if regActivity and tss arguments are switched - error is reported
-     expect_error(regActivityAroundTSS(tss = EnhActivity,
+     expect_error(regActivityAroundTSS(geneExpression = EnhActivity,
                                        regActivity=GeneExpression,
                                        upstream=1,downstream=1))
      
      # TEST OUTPUT:
      # Successful example:
      regActivityAroundTSSR <- regActivityAroundTSS(regActivity = EnhActivity,
-                                      tss=GeneExpression,
+                                                   geneExpression=GeneExpression,
                                       upstream=1,downstream=1)
      
      ########################

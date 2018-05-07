@@ -5,7 +5,7 @@
 \title{this function creates a table of keys and pvals from
 a GRangesList which contains GRanges as the
 output of associateReg2Gene or metaAssociate functions.
-this is needed to process the associations that
+this is needed to process the interactions that
 exist in many datasets and merge them into the same table with
 stats from the statistical tests}
 \usage{
@@ -27,7 +27,7 @@ Which statistics to filter:"qval" or "pval"}
 this function creates a table of keys and pvals from
 a GRangesList which contains GRanges as the
 output of associateReg2Gene or metaAssociate functions.
-this is needed to process the associations that
+this is needed to process the interactions that
 exist in many datasets and merge them into the same table with
 stats from the statistical tests
 }

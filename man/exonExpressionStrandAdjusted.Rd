@@ -4,11 +4,11 @@
 \alias{exonExpressionStrandAdjusted}
 \title{Function that quantifies exon expression based on strand specificity}
 \usage{
-exonExpressionStrandAdjusted(exonsForQuant, exonsSplitted, geneActSignals,
-  sampleIDs, libStrand, mc.cores, summaryOperation)
+exonExpressionStrandAdjusted(exonsForQuant, exonsSplitted, target, sampleIDs,
+  libStrand, mc.cores, summaryOperation)
 }
 \arguments{
-\item{geneActSignals}{character, paths to bigwig files}
+\item{target}{character, paths to bigwig files}
 
 \item{sampleIDs}{character, name of samples/bigwig files}
 
